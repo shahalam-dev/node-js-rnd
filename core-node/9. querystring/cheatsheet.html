@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Node.js querystring Module Cheat Sheet</title>
+  <style>
+    :root {
+      --bg: #0d1117;
+      --card: #161b22;
+      --border: #30363d;
+      --text: #c9d1d9;
+      --heading: #f0f6fc;
+      --code-bg: #1f2937;
+      --code-text: #e6edf3;
+      --accent: #58a6ff;
+      --accent2: #3fb950;
+      --accent3: #d29922;
+      --accent4: #f85149;
+      --muted: #8b949e;
+      --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      line-height: 1.6;
+      padding: 2rem 1rem;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+    h1 {
+      color: var(--heading);
+      font-size: 2.2rem;
+      margin-bottom: 0.5rem;
+      border-bottom: 2px solid var(--accent3);
+      padding-bottom: 0.5rem;
+    }
+    .subtitle {
+      color: var(--muted);
+      font-size: 0.95rem;
+      margin-bottom: 2rem;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 1.5rem;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem;
+      transition: border-color 0.2s;
+    }
+    .card:hover { border-color: var(--accent3); }
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.75rem;
+    }
+    .badge {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      padding: 2px 8px;
+      border-radius: 4px;
+      letter-spacing: 0.5px;
+    }
+    .badge-parse { background: rgba(88,166,255,0.15); color: var(--accent); }
+    .badge-stringify { background: rgba(63,185,80,0.15); color: var(--accent2); }
+    .badge-escape { background: rgba(210,153,34,0.15); color: var(--accent3); }
+    .badge-util { background: rgba(248,81,73,0.15); color: var(--accent4); }
+    h2 {
+      color: var(--heading);
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
+    .method {
+      font-family: "SFMono-Regular", Consolas, monospace;
+      font-size: 0.85rem;
+      color: var(--accent3);
+      background: rgba(210,153,34,0.08);
+      padding: 2px 6px;
+      border-radius: 4px;
+      margin-bottom: 0.4rem;
+      display: inline-block;
+    }
+    p.desc {
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-bottom: 0.6rem;
+    }
+    pre {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      overflow-x: auto;
+      font-size: 0.8rem;
+      line-height: 1.5;
+    }
+    code {
+      font-family: "SFMono-Regular", Consolas, monospace;
+      color: var(--code-text);
+    }
+    .comment { color: #8b949e; }
+    .keyword { color: #ff7b72; }
+    .string { color: #a5d6ff; }
+    .func { color: #d2a8ff; }
+    .var { color: #79c0ff; }
+    .output { color: #7ee787; }
+    .note {
+      font-size: 0.8rem;
+      color: var(--accent3);
+      margin-top: 0.5rem;
+      padding-left: 0.5rem;
+      border-left: 2px solid var(--accent3);
+    }
+    .tip {
+      background: rgba(210,153,34,0.08);
+      border: 1px solid rgba(210,153,34,0.3);
+      border-radius: 8px;
+      padding: 1rem;
+      margin: 2rem 0;
+      font-size: 0.9rem;
+    }
+    .tip strong { color: var(--accent3); }
+    .footer {
+      text-align: center;
+      margin-top: 3rem;
+      color: var(--muted);
+      font-size: 0.8rem;
+    }
+    .section-title {
+      grid-column: 1 / -1;
+      color: var(--heading);
+      font-size: 1.3rem;
+      margin-top: 1rem;
+      margin-bottom: -0.5rem;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 0.5rem;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+      margin-top: 0.5rem;
+    }
+    th, td {
+      text-align: left;
+      padding: 0.5rem 0.75rem;
+      border-bottom: 1px solid var(--border);
+    }
+    th { color: var(--heading); font-weight: 600; }
+    td code { color: var(--accent3); }
+    .const-table td:first-child { font-family: monospace; color: var(--accent); }
+  </style>
+  <base target="_blank">
+</head>
+<body>
+
+<h1>🔢 Node.js <code>querystring</code> Module Cheat Sheet</h1>
+<p class="subtitle">Parse and stringify URL query strings — Node.js 18+</p>
+
+<div class="tip">
+  <strong>💡 Golden Rule:</strong> For new projects, consider using <strong>WHATWG <code>URLSearchParams</code></strong> (built into Node.js) as a more modern alternative. The <code>querystring</code> module is still useful for legacy compatibility and specific edge cases. Import with <code>node:querystring</code> prefix.
+</div>
+
+<div class="grid">
+
+  <div class="section-title">📖 Parsing</div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-parse">Parse</span>
+      <h2>querystring.parse</h2>
+    </div>
+    <div class="method">qs.parse(str, sep?, eq?, options?)</div>
+    <p class="desc">Parse a query string into an object. Handles URL encoding (e.g., <code>%20</code> → space).</p>
+    <pre><code><span class="keyword">import</span> <span class="var">qs</span> <span class="keyword">from</span> <span class="string">'node:querystring'</span>;
+
+<span class="comment">// Basic parse</span>
+<span class="var">qs</span>.<span class="func">parse</span>(<span class="string">'foo=bar&baz=qux&baz=quux&corge'</span>);
+<span class="comment">// → { foo: 'bar', baz: ['qux', 'quux'], corge: '' }</span>
+
+<span class="comment">// Custom separator & delimiter</span>
+<span class="var">qs</span>.<span class="func">parse</span>(<span class="string">'foo=bar;baz=qux'</span>, <span class="string">';'</span>);
+<span class="comment">// → { foo: 'bar', baz: 'qux' }</span>
+
+<span class="comment">// With custom eq sign</span>
+<span class="var">qs</span>.<span class="func">parse</span>(<span class="string">'foo:bar,baz:qux'</span>, <span class="string">','</span>, <span class="string">':'</span>);
+<span class="comment">// → { foo: 'bar', baz: 'qux' }</span>
+
+<span class="comment">// Max keys limit (security)</span>
+<span class="var">qs</span>.<span class="func">parse</span>(<span class="string">'a=1&b=2&c=3'</span>, <span class="string">'&'</span>, <span class="string">'='</span>, { <span class="var">maxKeys</span>: <span class="number">2</span> });
+<span class="comment">// → { a: '1', b: '2' }  (ignores 'c=3')</span>
+
+<span class="comment">// Decode URI components automatically</span>
+<span class="var">qs</span>.<span class="func">parse</span>(<span class="string">'q=hello%20world'</span>);
+<span class="comment">// → { q: 'hello world' }</span></code></pre>
+    <div class="note">✅ Use for: parsing query strings from URLs, form data, or legacy APIs.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-parse">Parse</span>
+      <h2>Handling Arrays & Objects</h2>
+    </div>
+    <div class="method">Array syntax & nested objects</div>
+    <p class="desc"><code>querystring.parse</code> does NOT support nested objects or array syntax by default. It only supports flat key-value pairs.</p>
+    <pre><code><span class="comment">// 💡 querystring.parse does NOT create nested objects</span>
+<span class="var">qs</span>.<span class="func">parse</span>(<span class="string">'a[b]=1&a[c]=2'</span>);
+<span class="comment">// → { 'a[b]': '1', 'a[c]': '2' }  (not nested!)</span>
+
+<span class="comment">// ✅ For nested objects, use URLSearchParams or a library</span>
+<span class="keyword">const</span> <span class="var">params</span> = <span class="keyword">new</span> <span class="func">URLSearchParams</span>(<span class="string">'a[b]=1&a[c]=2'</span>);
+<span class="comment">// But even URLSearchParams doesn't create nested objects.</span>
+
+<span class="comment">// ⚠️ Many npm packages (like qs) support nested objects.</span>
+<span class="comment">// For built-in, flatten your data before stringifying.</span></code></pre>
+    <div class="note">⚠️ <code>querystring.parse</code> is flat by design. For nested structures, use the <code>qs</code> npm package or handle manually.</div>
+  </div>
+
+  <div class="section-title">✏️ Stringifying</div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-stringify">Stringify</span>
+      <h2>querystring.stringify</h2>
+    </div>
+    <div class="method">qs.stringify(obj, sep?, eq?, options?)</div>
+    <p class="desc">Convert an object to a query string. URL-encodes keys and values.</p>
+    <pre><code><span class="keyword">import</span> <span class="var">qs</span> <span class="keyword">from</span> <span class="string">'node:querystring'</span>;
+
+<span class="comment">// Basic stringify</span>
+<span class="var">qs</span>.<span class="func">stringify</span>({ <span class="var">foo</span>: <span class="string">'bar'</span>, <span class="var">baz</span>: [<span class="string">'qux'</span>, <span class="string">'quux'</span>], <span class="var">corge</span>: <span class="string">''</span> });
+<span class="comment">// → 'foo=bar&baz=qux&baz=quux&corge='</span>
+
+<span class="comment">// Custom separators</span>
+<span class="var">qs</span>.<span class="func">stringify</span>({ <span class="var">foo</span>: <span class="string">'bar'</span>, <span class="var">baz</span>: <span class="string">'qux'</span> }, <span class="string">';'</span>, <span class="string">':'</span>);
+<span class="comment">// → 'foo:bar;baz:qux'</span>
+
+<span class="comment">// Encode URI components</span>
+<span class="var">qs</span>.<span class="func">stringify</span>({ <span class="var">q</span>: <span class="string">'hello world'</span>, <span class="var">special</span>: <span class="string">'$&+,/:;=?@'</span> });
+<span class="comment">// → 'q=hello%20world&special=%24%26%2B%2C%2F%3A%3B%3D%3F%40'</span>
+
+<span class="comment">// encodeURIComponent options (escape)</span>
+<span class="var">qs</span>.<span class="func">stringify</span>({ <span class="var">a</span>: <span class="string">'b'</span> }, <span class="string">'&'</span>, <span class="string">'='</span>, {
+  <span class="var">encodeURIComponent</span>: <span class="var">str</span> => <span class="func">encodeURIComponent</span>(<span class="var">str</span>).<span class="func">replace</span>(<span class="regex">/\(/g</span>, <span class="string">'%28'</span>)
+});</code></pre>
+    <div class="note">✅ Use for: building query strings for URLs, API calls, or redirects.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-stringify">Stringify</span>
+      <h2>Handling null & undefined</h2>
+    </div>
+    <div class="method">Stringifying special values</div>
+    <p class="desc"><code>null</code> and <code>undefined</code> are stringified as empty strings. Use <code>encodeURIComponent</code> for custom handling.</p>
+    <pre><code><span class="keyword">const</span> <span class="var">qs</span> = <span class="keyword">require</span>(<span class="string">'node:querystring'</span>);
+
+<span class="var">qs</span>.<span class="func">stringify</span>({ <span class="var">a</span>: <span class="keyword">null</span>, <span class="var">b</span>: <span class="keyword">undefined</span>, <span class="var">c</span>: <span class="string">'value'</span> });
+<span class="comment">// → 'a=&b=&c=value'</span>
+
+<span class="comment">// Custom encode to skip null/undefined</span>
+<span class="keyword">const</span> <span class="var">filtered</span> = <span class="var">obj</span> => <span class="var">Object</span>.<span class="func">fromEntries</span>(
+  <span class="var">Object</span>.<span class="func">entries</span>(<span class="var">obj</span>).<span class="func">filter</span>(([, v]) => <span class="var">v</span> != <span class="keyword">null</span>)
+);
+<span class="var">qs</span>.<span class="func">stringify</span>(<span class="func">filtered</span>({ <span class="var">a</span>: <span class="keyword">null</span>, <span class="var">b</span>: <span class="string">'value'</span> }));
+<span class="comment">// → 'b=value'</span></code></pre>
+    <div class="note">⚠️ Be careful: <code>null</code> and <code>undefined</code> become empty strings, which might not be intended.</div>
+  </div>
+
+  <div class="section-title">🔧 Escaping & Unescaping</div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-escape">Escape</span>
+      <h2>querystring.escape</h2>
+    </div>
+    <div class="method">qs.escape(str)</div>
+    <p class="desc">Percent-encode a string for use in a query string. Similar to <code>encodeURIComponent</code> but with slightly different behavior.</p>
+    <pre><code><span class="keyword">import</span> <span class="var">qs</span> <span class="keyword">from</span> <span class="string">'node:querystring'</span>;
+
+<span class="var">qs</span>.<span class="func">escape</span>(<span class="string">'hello world'</span>);
+<span class="comment">// → 'hello%20world'</span>
+
+<span class="var">qs</span>.<span class="func">escape</span>(<span class="string">'$&+,/:;=?@'</span>);
+<span class="comment">// → '%24%26%2B%2C%2F%3A%3B%3D%3F%40'</span>
+
+<span class="comment">// Difference from encodeURIComponent:</span>
+<span class="func">encodeURIComponent</span>(<span class="string">"'"</span>); <span class="comment">// '%27'</span>
+<span class="var">qs</span>.<span class="func">escape</span>(<span class="string">"'"</span>);       <span class="comment">// "'" (not encoded!)</span>
+
+<span class="func">encodeURIComponent</span>(<span class="string">'!'</span>); <span class="comment">// '%21'</span>
+<span class="var">qs</span>.<span class="func">escape</span>(<span class="string">'!'</span>);       <span class="comment">// '!' (not encoded!)</span></code></pre>
+    <div class="note">⚠️ <code>qs.escape</code> does not encode <code>!</code> and <code>'</code> by default. Use with caution.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-escape">Escape</span>
+      <h2>querystring.unescape</h2>
+    </div>
+    <div class="method">qs.unescape(str)</div>
+    <p class="desc">Decode a percent-encoded string. Similar to <code>decodeURIComponent</code>.</p>
+    <pre><code><span class="keyword">import</span> <span class="var">qs</span> <span class="keyword">from</span> <span class="string">'node:querystring'</span>;
+
+<span class="var">qs</span>.<span class="func">unescape</span>(<span class="string">'hello%20world'</span>);
+<span class="comment">// → 'hello world'</span>
+
+<span class="var">qs</span>.<span class="func">unescape</span>(<span class="string">'%24%26%2B%2C%2F%3A%3B%3D%3F%40'</span>);
+<span class="comment">// → '$&+,/:;=?@'</span>
+
+<span class="comment">// Difference: qs.unescape uses the decode function from the module</span>
+<span class="func">decodeURIComponent</span>(<span class="string">'%27'</span>); <span class="comment">// "'"</span>
+<span class="var">qs</span>.<span class="func">unescape</span>(<span class="string">'%27'</span>);      <span class="comment">// "'" (same)</span></code></pre>
+    <div class="note">ℹ️ <code>unescape</code> is used internally by <code>parse</code> to decode values.</div>
+  </div>
+
+  <div class="section-title">🧪 Comparison: querystring vs URLSearchParams</div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-util">Util</span>
+      <h2>querystring vs URLSearchParams</h2>
+    </div>
+    <div class="method">When to use which?</div>
+    <p class="desc">Both parse & stringify query strings, but with different capabilities.</p>
+    <pre><code><span class="comment">// querystring (Node.js built-in)</span>
+<span class="keyword">import</span> <span class="var">qs</span> <span class="keyword">from</span> <span class="string">'node:querystring'</span>;
+<span class="var">qs</span>.<span class="func">parse</span>(<span class="string">'a=1&a=2'</span>);  <span class="comment">// { a: ['1', '2'] }</span>
+<span class="var">qs</span>.<span class="func">stringify</span>({ <span class="var">a</span>: [<span class="string">'1'</span>, <span class="string">'2'</span>] }); <span class="comment">// 'a=1&a=2'</span>
+
+<span class="comment">// URLSearchParams (WHATWG standard)</span>
+<span class="keyword">const</span> <span class="var">sp</span> = <span class="keyword">new</span> <span class="func">URLSearchParams</span>(<span class="string">'a=1&a=2'</span>);
+<span class="var">sp</span>.<span class="func">get</span>(<span class="string">'a'</span>);  <span class="comment">// '1' (first value)</span>
+<span class="var">sp</span>.<span class="func">getAll</span>(<span class="string">'a'</span>); <span class="comment">// ['1', '2']</span>
+<span class="var">sp</span>.<span class="func">toString</span>(); <span class="comment">// 'a=1&a=2'</span>
+
+<span class="comment">// 🔥 URLSearchParams supports iterative methods</span>
+<span class="keyword">for</span> (<span class="keyword">const</span> [<span class="var">k</span>, <span class="var">v</span>] <span class="keyword">of</span> <span class="var">sp</span>) { <span class="comment">/* ... */</span> }
+<span class="var">sp</span>.<span class="func">has</span>(<span class="string">'a'</span>);  <span class="comment">// true</span>
+<span class="var">sp</span>.<span class="func">set</span>(<span class="string">'a'</span>, <span class="string">'3'</span>);
+<span class="var">sp</span>.<span class="func">delete</span>(<span class="string">'a'</span>);</code></pre>
+    <div class="note">✅ <strong>Recommendation:</strong> Use <code>URLSearchParams</code> for new code. It's standard and works in browsers too.</div>
+  </div>
+
+</div>
+
+<div class="tip">
+  <strong>🚀 Pro Pattern — Safe Query String Building:</strong>
+  <pre style="margin-top:0.5rem; background:rgba(0,0,0,0.2); border:none;"><code><span class="keyword">import</span> <span class="var">qs</span> <span class="keyword">from</span> <span class="string">'node:querystring'</span>;
+
+<span class="comment">// Build query string safely with filtering</span>
+<span class="keyword">function</span> <span class="func">buildQuery</span>(<span class="var">params</span>) {
+  <span class="comment">// Remove null/undefined values</span>
+  <span class="keyword">const</span> <span class="var">clean</span> = <span class="var">Object</span>.<span class="func">fromEntries</span>(
+    <span class="var">Object</span>.<span class="func">entries</span>(<span class="var">params</span>).<span class="func">filter</span>(([, v]) => <span class="var">v</span> != <span class="keyword">null</span>)
+  );
+  <span class="keyword">return</span> <span class="var">qs</span>.<span class="func">stringify</span>(<span class="var">clean</span>);
+}
+
+<span class="comment">// Use with URL</span>
+<span class="keyword">const</span> <span class="var">url</span> = <span class="string">`https://api.com?${buildQuery({ page: 1, limit: 20, filter: null })}`</span>;
+<span class="comment">// → 'https://api.com?page=1&limit=20'</span>
+
+<span class="comment">// For arrays, use duplicate keys</span>
+<span class="var">qs</span>.<span class="func">stringify</span>({ <span class="var">id</span>: [<span class="string">'1'</span>, <span class="string">'2'</span>, <span class="string">'3'</span>] });
+<span class="comment">// → 'id=1&id=2&id=3'</span></code></pre>
+</div>
+
+<h2 style="margin-top:2rem; color:var(--heading); border-bottom:1px solid var(--border); padding-bottom:0.5rem;">📋 Quick Decision Guide</h2>
+<table>
+  <tr><th>Goal</th><th>Recommended</th></tr>
+  <tr><td>Parse simple query string</td><td><code>qs.parse()</code> or <code>URLSearchParams</code></td></tr>
+  <tr><td>Stringify simple object</td><td><code>qs.stringify()</code> or <code>URLSearchParams</code></td></tr>
+  <tr><td>Need iterative methods (has, get, set)</td><td><code>URLSearchParams</code></td></tr>
+  <tr><td>Need custom separators (; or :)</td><td><code>qs.parse/stringify</code></td></tr>
+  <tr><td>Browser compatibility</td><td><code>URLSearchParams</code> (native)</td></tr>
+  <tr><td>Nested objects support</td><td><code>qs</code> npm package (not built-in)</td></tr>
+  <tr><td>Custom encode/decode</td><td>Both support via options</td></tr>
+</table>
+
+<h2 style="margin-top:2rem; color:var(--heading); border-bottom:1px solid var(--border); padding-bottom:0.5rem;">⚠️ Common Pitfalls</h2>
+<table>
+  <tr><th>Mistake</th><th>Why It's Wrong</th><th>Fix</th></tr>
+  <tr><td>Using <code>querystring</code> for nested objects</td><td>Does not support nested structures</td><td>Use <code>URLSearchParams</code> or <code>qs</code> npm package</td></tr>
+  <tr><td>Not encoding values</td><td>Special characters break URLs</td><td><code>stringify</code> auto-encodes; <code>parse</code> auto-decodes</td></tr>
+  <tr><td><code>null</code>/<code>undefined</code> become empty strings</td><td>May cause unexpected behavior</td><td>Filter out <code>null</code>/<code>undefined</code> before stringifying</td></tr>
+  <tr><td>Assuming array support in <code>parse</code></td><td>Arrays are just keys with same name</td><td>Use <code>URLSearchParams.getAll()</code> for arrays</td></tr>
+  <tr><td>Using legacy <code>querystring</code> over <code>URLSearchParams</code></td><td>Missing modern features</td><td>Prefer <code>URLSearchParams</code> for new code</td></tr>
+</table>
+
+<div class="footer">
+  Node.js querystring Module Cheat Sheet &mdash; Save this file and open in any browser for quick reference.<br>
+  Based on Node.js 18+ with <code>node:querystring</code> API. Consider <code>URLSearchParams</code> for modern code.
+</div>
+
+</body>
+</html>

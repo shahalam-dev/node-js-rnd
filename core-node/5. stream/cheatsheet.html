@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Node.js stream Module Cheat Sheet</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --card: #161b22;
+    --border: #30363d;
+    --text: #c9d1d9;
+    --heading: #f0f6fc;
+    --code-bg: #1f2937;
+    --code-text: #e6edf3;
+    --accent: #58a6ff;
+    --accent2: #3fb950;
+    --accent3: #d29922;
+    --accent4: #f85149;
+    --accent5: #bc8cff;
+    --accent6: #56d4dd;
+    --accent7: #ff9bce;
+    --muted: #8b949e;
+    --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    line-height: 1.6;
+    padding: 2rem 1rem;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+  h1 {
+    color: var(--heading);
+    font-size: 2.2rem;
+    margin-bottom: 0.5rem;
+    border-bottom: 2px solid var(--accent7);
+    padding-bottom: 0.5rem;
+  }
+  .subtitle {
+    color: var(--muted);
+    font-size: 0.95rem;
+    margin-bottom: 2rem;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 1.5rem;
+  }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.25rem;
+    transition: border-color 0.2s;
+  }
+  .card:hover { border-color: var(--accent7); }
+  .card-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+  }
+  .badge {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    padding: 2px 8px;
+    border-radius: 4px;
+    letter-spacing: 0.5px;
+  }
+  .badge-read { background: rgba(88,166,255,0.15); color: var(--accent); }
+  .badge-write { background: rgba(63,185,80,0.15); color: var(--accent2); }
+  .badge-transform { background: rgba(188,140,255,0.15); color: var(--accent5); }
+  .badge-pipe { background: rgba(255,155,206,0.15); color: var(--accent7); }
+  .badge-util { background: rgba(210,153,34,0.15); color: var(--accent3); }
+  .badge-error { background: rgba(248,81,73,0.15); color: var(--accent4); }
+  h2 {
+    color: var(--heading);
+    font-size: 1.1rem;
+    font-weight: 600;
+  }
+  .method {
+    font-family: "SFMono-Regular", Consolas, monospace;
+    font-size: 0.85rem;
+    color: var(--accent7);
+    background: rgba(255,155,206,0.08);
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-bottom: 0.4rem;
+    display: inline-block;
+  }
+  p.desc {
+    font-size: 0.85rem;
+    color: var(--muted);
+    margin-bottom: 0.6rem;
+  }
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    overflow-x: auto;
+    font-size: 0.8rem;
+    line-height: 1.5;
+  }
+  code {
+    font-family: "SFMono-Regular", Consolas, monospace;
+    color: var(--code-text);
+  }
+  .comment { color: #8b949e; }
+  .keyword { color: #ff7b72; }
+  .string { color: #a5d6ff; }
+  .func { color: #d2a8ff; }
+  .var { color: #79c0ff; }
+  .output { color: #7ee787; }
+  .note {
+    font-size: 0.8rem;
+    color: var(--accent3);
+    margin-top: 0.5rem;
+    padding-left: 0.5rem;
+    border-left: 2px solid var(--accent3);
+  }
+  .tip {
+    background: rgba(63,185,80,0.08);
+    border: 1px solid rgba(63,185,80,0.3);
+    border-radius: 8px;
+    padding: 1rem;
+    margin: 2rem 0;
+    font-size: 0.9rem;
+  }
+  .tip strong { color: var(--accent2); }
+  .warning {
+    background: rgba(248,81,73,0.08);
+    border: 1px solid rgba(248,81,73,0.3);
+    border-radius: 8px;
+    padding: 1rem;
+    margin: 2rem 0;
+    font-size: 0.9rem;
+  }
+  .warning strong { color: var(--accent4); }
+  .footer {
+    text-align: center;
+    margin-top: 3rem;
+    color: var(--muted);
+    font-size: 0.8rem;
+  }
+  .section-title {
+    grid-column: 1 / -1;
+    color: var(--heading);
+    font-size: 1.3rem;
+    margin-top: 1rem;
+    margin-bottom: -0.5rem;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 0.5rem;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+    margin-top: 0.5rem;
+  }
+  th, td {
+    text-align: left;
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid var(--border);
+  }
+  th { color: var(--heading); font-weight: 600; }
+  td code { color: var(--accent7); }
+  .full-width { grid-column: 1 / -1; }
+  .type-box {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin-right: 4px;
+  }
+  .type-read { background: rgba(88,166,255,0.15); color: var(--accent); }
+  .type-write { background: rgba(63,185,80,0.15); color: var(--accent2); }
+  .type-duplex { background: rgba(188,140,255,0.15); color: var(--accent5); }
+  .type-transform { background: rgba(255,155,206,0.15); color: var(--accent7); }
+</style>
+<base target="_blank">
+</head>
+<body>
+
+<h1>🌊 Node.js <code>stream</code> Module Cheat Sheet</h1>
+<p class="subtitle">Efficient data handling with streams — Node.js 18+</p>
+
+<div class="tip">
+  <strong>💡 Golden Rule:</strong> Streams are the secret to Node.js performance. They process data chunk-by-chunk instead of loading everything into memory. Every core I/O module (<code>fs</code>, <code>http</code>, <code>net</code>, <code>zlib</code>, <code>crypto</code>) is built on streams.
+</div>
+
+<div class="grid">
+
+  <div class="section-title">📊 The Four Stream Types</div>
+
+  <div class="card full-width">
+    <table>
+      <tr>
+        <th>Type</th>
+        <th>Direction</th>
+        <th>Example Use</th>
+        <th>Base Class</th>
+      </tr>
+      <tr>
+        <td><span class="type-box type-read">Readable</span></td>
+        <td>Source → You</td>
+        <td>Reading files, HTTP requests, stdin</td>
+        <td><code>stream.Readable</code></td>
+      </tr>
+      <tr>
+        <td><span class="type-box type-write">Writable</span></td>
+        <td>You → Destination</td>
+        <td>Writing files, HTTP responses, stdout</td>
+        <td><code>stream.Writable</code></td>
+      </tr>
+      <tr>
+        <td><span class="type-box type-duplex">Duplex</span></td>
+        <td>Both directions</td>
+        <td>TCP sockets, TLS connections</td>
+        <td><code>stream.Duplex</code></td>
+      </tr>
+      <tr>
+        <td><span class="type-box type-transform">Transform</span></td>
+        <td>Modify in transit</td>
+        <td>Compression, encryption, CSV parsing</td>
+        <td><code>stream.Transform</code></td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="section-title">📖 Readable Streams</div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-read">Readable</span>
+      <h2>Consuming Readable Streams</h2>
+    </div>
+    <p class="desc">Three ways to consume data: flowing mode, paused mode, and async iteration.</p>
+    <pre><code><span class="keyword">import</span> <span class="var">fs</span> <span class="keyword">from</span> <span class="string">'node:fs'</span>;
+
+<span class="keyword">const</span> <span class="var">readable</span> = <span class="var">fs</span>.<span class="func">createReadStream</span>(<span class="string">'./big-file.txt'</span>, <span class="string">'utf-8'</span>);
+
+<span class="comment">// Method 1: Flowing mode (event-driven)</span>
+<span class="var">readable</span>.<span class="func">on</span>(<span class="string">'data'</span>, (<span class="var">chunk</span>) => {
+  <span class="var">console</span>.<span class="func">log</span>(<span class="string">'Chunk:'</span>, <span class="var">chunk</span>.<span class="var">length</span>);
+});
+<span class="var">readable</span>.<span class="func">on</span>(<span class="string">'end'</span>, () => <span class="var">console</span>.<span class="func">log</span>(<span class="string">'Done!'</span>));
+<span class="var">readable</span>.<span class="func">on</span>(<span class="string">'error'</span>, (<span class="var">err</span>) => <span class="var">console</span>.<span class="func">error</span>(<span class="var">err</span>));
+
+<span class="comment">// Method 2: Paused mode (explicit read)</span>
+<span class="var">readable</span>.<span class="func">on</span>(<span class="string">'readable'</span>, () => {
+  <span class="keyword">let</span> <span class="var">chunk</span>;
+  <span class="keyword">while</span> ((<span class="var">chunk</span> = <span class="var">readable</span>.<span class="func">read</span>()) !== <span class="keyword">null</span>) {
+    <span class="var">console</span>.<span class="func">log</span>(<span class="var">chunk</span>);
+  }
+});
+
+<span class="comment">// Method 3: Async iteration (modern, cleanest)</span>
+<span class="keyword">for await</span> (<span class="keyword">const</span> <span class="var">chunk</span> <span class="keyword">of</span> <span class="var">readable</span>) {
+  <span class="var">console</span>.<span class="func">log</span>(<span class="var">chunk</span>);
+}</code></pre>
+    <div class="note">✅ Prefer async iteration (Method 3) for clean, sequential processing with automatic error handling.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-read">Readable</span>
+      <h2>Controlling Flow</h2>
+    </div>
+    <div class="method">readable.pause() / .resume() / .pipe()</div>
+    <p class="desc">Manage backpressure manually when you need fine-grained control.</p>
+    <pre><code><span class="comment">// Pause the stream (stop emitting 'data')</span>
+<span class="var">readable</span>.<span class="func">pause</span>();
+
+<span class="comment">// Resume the stream</span>
+<span class="var">readable</span>.<span class="func">resume</span>();
+
+<span class="comment">// Check if in flowing mode</span>
+<span class="var">readable</span>.<span class="var">readableFlowing</span>;  <span class="comment">// true | false | null</span>
+
+<span class="comment">// Check if stream is readable</span>
+<span class="var">readable</span>.<span class="var">readable</span>;       <span class="comment">// true until 'end'</span>
+
+<span class="comment">// Destroy and cleanup</span>
+<span class="var">readable</span>.<span class="func">destroy</span>();        <span class="comment">// forcibly end</span>
+<span class="var">readable</span>.<span class="func">destroy</span>(<span class="keyword">new</span> <span class="var">Error</span>(<span class="string">'Aborted'</span>));</code></pre>
+  </div>
+
+  <div class="section-title">✏️ Writable Streams</div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-write">Writable</span>
+      <h2>Writing to Streams</h2>
+    </div>
+    <p class="desc">Write data chunk-by-chunk. Handle backpressure when the buffer is full.</p>
+    <pre><code><span class="keyword">import</span> <span class="var">fs</span> <span class="keyword">from</span> <span class="string">'node:fs'</span>;
+
+<span class="keyword">const</span> <span class="var">writable</span> = <span class="var">fs</span>.<span class="func">createWriteStream</span>(<span class="string">'./output.txt'</span>);
+
+<span class="comment">// Write returns boolean: true = buffer not full, false = backpressure</span>
+<span class="keyword">const</span> <span class="var">ok</span> = <span class="var">writable</span>.<span class="func">write</span>(<span class="string">'Hello '</span>);
+<span class="var">writable</span>.<span class="func">write</span>(<span class="string">'World!\n'</span>);
+
+<span class="comment">// When backpressure hits, wait for 'drain' before writing more</span>
+<span class="keyword">if</span> (!<span class="var">ok</span>) {
+  <span class="var">writable</span>.<span class="func">once</span>(<span class="string">'drain'</span>, () => {
+    <span class="var">writable</span>.<span class="func">write</span>(<span class="string">'More data...'</span>);
+  });
+}
+
+<span class="comment">// Finish writing and close the stream</span>
+<span class="var">writable</span>.<span class="func">end</span>(<span class="string">'Final chunk'</span>);
+
+<span class="var">writable</span>.<span class="func">on</span>(<span class="string">'finish'</span>, () => <span class="var">console</span>.<span class="func">log</span>(<span class="string">'All data written'</span>));
+<span class="var">writable</span>.<span class="func">on</span>(<span class="string">'error'</span>, (<span class="var">err</span>) => <span class="var">console</span>.<span class="func">error</span>(<span class="var">err</span>));</code></pre>
+    <div class="note">⚠️ Always handle the <code>'drain'</code> event when <code>write()</code> returns <code>false</code> to avoid memory issues with high-volume writes.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-write">Writable</span>
+      <h2>Writable Events & Properties</h2>
+    </div>
+    <pre><code><span class="var">writable</span>.<span class="func">on</span>(<span class="string">'finish'</span>, () => {});    <span class="comment">// All data flushed, stream ended</span>
+<span class="var">writable</span>.<span class="func">on</span>(<span class="string">'drain'</span>, () => {});     <span class="comment">// Buffer emptied, safe to write more</span>
+<span class="var">writable</span>.<span class="func">on</span>(<span class="string">'error'</span>, (<span class="var">err</span>) => {});  <span class="comment">// Write error occurred</span>
+<span class="var">writable</span>.<span class="func">on</span>(<span class="string">'close'</span>, () => {});    <span class="comment">// Stream fully closed</span>
+
+<span class="var">writable</span>.<span class="var">writable</span>;                  <span class="comment">// true if stream is open for writing</span>
+<span class="var">writable</span>.<span class="var">writableEnded</span>;             <span class="comment">// true after .end() called</span>
+<span class="var">writable</span>.<span class="var">writableFinished</span>;          <span class="comment">// true after 'finish' event</span>
+<span class="var">writable</span>.<span class="var">writableLength</span>;            <span class="comment">// bytes in internal buffer</span>
+
+<span class="var">writable</span>.<span class="func">destroy</span>();                 <span class="comment">// forcibly close</span></code></pre>
+  </div>
+
+  <div class="section-title">🔀 Piping & Pipeline</div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-pipe">Pipe</span>
+      <h2>stream.pipe (Classic)</h2>
+    </div>
+    <div class="method">readable.pipe(destination, options?)</div>
+    <p class="desc">The classic way to connect streams. Simple but requires manual error handling.</p>
+    <pre><code><span class="keyword">import</span> <span class="var">fs</span> <span class="keyword">from</span> <span class="string">'node:fs'</span>;
+<span class="keyword">import</span> <span class="var">zlib</span> <span class="keyword">from</span> <span class="string">'node:zlib'</span>;
+
+<span class="keyword">const</span> <span class="var">source</span> = <span class="var">fs</span>.<span class="func">createReadStream</span>(<span class="string">'./input.txt'</span>);
+<span class="keyword">const</span> <span class="var">gzip</span> = <span class="var">zlib</span>.<span class="func">createGzip</span>();
+<span class="keyword">const</span> <span class="var">dest</span> = <span class="var">fs</span>.<span class="func">createWriteStream</span>(<span class="string">'./input.txt.gz'</span>);
+
+<span class="comment">// Chain pipes</span>
+<span class="var">source</span>.<span class="func">pipe</span>(<span class="var">gzip</span>).<span class="func">pipe</span>(<span class="var">dest</span>);
+
+<span class="comment">// Manual error handling (pipe does NOT forward errors)</span>
+<span class="var">source</span>.<span class="func">on</span>(<span class="string">'error'</span>, <span class="var">handleError</span>);
+<span class="var">gzip</span>.<span class="func">on</span>(<span class="string">'error'</span>, <span class="var">handleError</span>);
+<span class="var">dest</span>.<span class="func">on</span>(<span class="string">'error'</span>, <span class="var">handleError</span>);
+
+<span class="comment">// Unpipe when done</span>
+<span class="var">dest</span>.<span class="func">on</span>(<span class="string">'finish'</span>, () => {
+  <span class="var">source</span>.<span class="func">unpipe</span>(<span class="var">gzip</span>);
+});</code></pre>
+    <div class="note">⚠️ <code>pipe()</code> does NOT handle errors automatically. A broken stream in the middle silently hangs.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-pipe">Pipe</span>
+      <h2>stream.pipeline (Modern)</h2>
+    </div>
+    <div class="method">pipeline(source, ...transforms, destination, callback)</div>
+    <p class="desc">The modern, safer way to pipe streams. Forwards errors, cleans up, and handles backpressure properly.</p>
+    <pre><code><span class="keyword">import</span> { <span class="var">pipeline</span> } <span class="keyword">from</span> <span class="string">'node:stream'</span>;
+<span class="keyword">import</span> <span class="var">fs</span> <span class="keyword">from</span> <span class="string">'node:fs'</span>;
+<span class="keyword">import</span> <span class="var">zlib</span> <span class="keyword">from</span> <span class="string">'node:zlib'</span>;
+
+<span class="comment">// Callback style</span>
+<span class="func">pipeline</span>(
+  <span class="var">fs</span>.<span class="func">createReadStream</span>(<span class="string">'./input.txt'</span>),
+  <span class="var">zlib</span>.<span class="func">createGzip</span>(),
+  <span class="var">fs</span>.<span class="func">createWriteStream</span>(<span class="string">'./input.txt.gz'</span>),
+  (<span class="var">err</span>) => {
+    <span class="keyword">if</span> (<span class="var">err</span>) <span class="var">console</span>.<span class="func">error</span>(<span class="string">'Pipeline failed:'</span>, <span class="var">err</span>);
+    <span class="keyword">else</span> <span class="var">console</span>.<span class="func">log</span>(<span class="string">'Pipeline succeeded!'</span>);
+  }
+);
+
+<span class="comment">// Promise style (preferred)</span>
+<span class="keyword">import</span> { <span class="var">pipeline</span> } <span class="keyword">from</span> <span class="string">'node:stream/promises'</span>;
+
+<span class="keyword">try</span> {
+  <span class="keyword">await</span> <span class="func">pipeline</span>(
+    <span class="var">fs</span>.<span class="func">createReadStream</span>(<span class="string">'./input.txt'</span>),
+    <span class="var">zlib</span>.<span class="func">createGzip</span>(),
+    <span class="var">fs</span>.<span class="func">createWriteStream</span>(<span class="string">'./input.txt.gz'</span>)
+  );
+  <span class="var">console</span>.<span class="func">log</span>(<span class="string">'Done!'</span>);
+} <span class="keyword">catch</span> (<span class="var">err</span>) {
+  <span class="var">console</span>.<span class="func">error</span>(<span class="var">err</span>);
+}</code></pre>
+    <div class="note">✅ Always use <code>pipeline()</code> over <code>.pipe()</code> in production. It handles errors, cleanup, and backpressure automatically.</div>
+  </div>
+
+  <div class="section-title">🔧 Transform Streams</div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-transform">Transform</span>
+      <h2>Creating Custom Transforms</h2>
+    </div>
+    <div class="method">new Transform({ transform(chunk, encoding, callback) })</div>
+    <p class="desc">Transform streams sit in the middle of a pipeline, modifying data as it flows through.</p>
+    <pre><code><span class="keyword">import</span> { <span class="var">Transform</span> } <span class="keyword">from</span> <span class="string">'node:stream'</span>;
+
+<span class="comment">// Uppercase transform</span>
+<span class="keyword">const</span> <span class="var">uppercase</span> = <span class="keyword">new</span> <span class="var">Transform</span>({
+  <span class="func">transform</span>(<span class="var">chunk</span>, <span class="var">encoding</span>, <span class="var">callback</span>) {
+    <span class="keyword">this</span>.<span class="func">push</span>(<span class="var">chunk</span>.<span class="func">toString</span>().<span class="func">toUpperCase</span>());
+    <span class="func">callback</span>();
+  }
+});
+
+<span class="comment">// JSON parse transform</span>
+<span class="keyword">const</span> <span class="var">parseJSON</span> = <span class="keyword">new</span> <span class="var">Transform</span>({
+  <span class="func">transform</span>(<span class="var">chunk</span>, <span class="var">enc</span>, <span class="var">cb</span>) {
+    <span class="keyword">try</span> {
+      <span class="keyword">const</span> <span class="var">obj</span> = <span class="var">JSON</span>.<span class="func">parse</span>(<span class="var">chunk</span>);
+      <span class="keyword">this</span>.<span class="func">push</span>(<span class="var">JSON</span>.<span class="func">stringify</span>({ ...<span class="var">obj</span>, <span class="var">parsed</span>: <span class="keyword">true</span> }));
+      <span class="func">cb</span>();
+    } <span class="keyword">catch</span> (<span class="var">err</span>) {
+      <span class="func">cb</span>(<span class="var">err</span>);  <span class="comment">// Pass error to pipeline</span>
+    }
+  }
+});</code></pre>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-transform">Transform</span>
+      <h2>Object Mode Streams</h2>
+    </div>
+    <p class="desc">By default streams pass Buffers/strings. Enable <code>objectMode</code> to pass JavaScript objects.</p>
+    <pre><code><span class="keyword">import</span> { <span class="var">Transform</span> } <span class="keyword">from</span> <span class="string">'node:stream'</span>;
+
+<span class="keyword">const</span> <span class="var">doubler</span> = <span class="keyword">new</span> <span class="var">Transform</span>({
+  <span class="var">objectMode</span>: <span class="keyword">true</span>,
+  <span class="func">transform</span>(<span class="var">obj</span>, <span class="var">enc</span>, <span class="var">cb</span>) {
+    <span class="keyword">this</span>.<span class="func">push</span>({ ...<span class="var">obj</span>, <span class="var">value</span>: <span class="var">obj</span>.<span class="var">value</span> * 2 });
+    <span class="func">cb</span>();
+  }
+});
+
+<span class="var">doubler</span>.<span class="func">write</span>({ <span class="var">value</span>: 5 });   <span class="comment">// Pass objects directly</span>
+<span class="var">doubler</span>.<span class="func">on</span>(<span class="string">'data'</span>, (<span class="var">obj</span>) => {
+  <span class="var">console</span>.<span class="func">log</span>(<span class="var">obj</span>);  <span class="comment">// { value: 10 }</span>
+});</code></pre>
+    <div class="note">ℹ️ Object mode is great for data pipelines (ETL, log processing) but disables some byte-level optimizations.</div>
+  </div>
+
+  <div class="section-title">🛠️ Utility Functions</div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-util">Util</span>
+      <h2>stream.Readable.from</h2>
+    </div>
+    <div class="method">Readable.from(iterable, options?)</div>
+    <p class="desc">Convert arrays, generators, or async iterables into a readable stream.</p>
+    <pre><code><span class="keyword">import</span> { <span class="var">Readable</span> } <span class="keyword">from</span> <span class="string">'node:stream'</span>;
+
+<span class="comment">// From array</span>
+<span class="keyword">const</span> <span class="var">stream1</span> = <span class="var">Readable</span>.<span class="func">from</span>([<span class="string">'a'</span>, <span class="string">'b'</span>, <span class="string">'c'</span>]);
+
+<span class="comment">// From generator</span>
+<span class="keyword">function*</span> <span class="func">generate</span>() {
+  <span class="keyword">yield</span> <span class="string">'chunk 1'</span>;
+  <span class="keyword">yield</span> <span class="string">'chunk 2'</span>;
+}
+<span class="keyword">const</span> <span class="var">stream2</span> = <span class="var">Readable</span>.<span class="func">from</span>(<span class="func">generate</span>());
+
+<span class="comment">// From async generator</span>
+<span class="keyword">async function*</span> <span class="func">asyncGenerate</span>() {
+  <span class="keyword">yield</span> <span class="keyword">await</span> <span class="func">fetchData</span>(1);
+  <span class="keyword">yield</span> <span class="keyword">await</span> <span class="func">fetchData</span>(2);
+}
+<span class="keyword">const</span> <span class="var">stream3</span> = <span class="var">Readable</span>.<span class="func">from</span>(<span class="func">asyncGenerate</span>());</code></pre>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-util">Util</span>
+      <h2>stream.finished</h2>
+    </div>
+    <div class="method">finished(stream, callback) / finished(stream, options)</div>
+    <p class="desc">Wait for a stream to finish or close. Useful for cleanup and testing.</p>
+    <pre><code><span class="keyword">import</span> { <span class="var">finished</span> } <span class="keyword">from</span> <span class="string">'node:stream'</span>;
+<span class="keyword">import</span> { <span class="var">finished</span> <span class="keyword">as</span> <span class="var">finishedPromise</span> } <span class="keyword">from</span> <span class="string">'node:stream/promises'</span>;
+
+<span class="comment">// Callback style</span>
+<span class="func">finished</span>(<span class="var">readable</span>, (<span class="var">err</span>) => {
+  <span class="var">console</span>.<span class="func">log</span>(<span class="var">err</span> ? <span class="string">'Failed'</span> : <span class="string">'Done'</span>);
+});
+
+<span class="comment">// Promise style</span>
+<span class="keyword">await</span> <span class="var">finishedPromise</span>(<span class="var">writable</span>);</code></pre>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-util">Util</span>
+      <h2>stream.compose</h2>
+    </div>
+    <div class="method">compose(...streams)</div>
+    <p class="desc">Compose multiple streams into a single stream. New in Node.js 20+.</p>
+    <pre><code><span class="keyword">import</span> { <span class="var">compose</span> } <span class="keyword">from</span> <span class="string">'node:stream'</span>;
+
+<span class="keyword">const</span> <span class="var">composed</span> = <span class="func">compose</span>(
+  <span class="var">fs</span>.<span class="func">createReadStream</span>(<span class="string">'input.txt'</span>),
+  <span class="var">zlib</span>.<span class="func">createGzip</span>(),
+  <span class="var">fs</span>.<span class="func">createWriteStream</span>(<span class="string">'output.gz'</span>)
+);
+
+<span class="comment">// composed is a single stream with composed behavior</span></code></pre>
+  </div>
+
+</div>
+
+<div class="warning">
+  <strong>⚠️ Memory Leak Warning:</strong> Never ignore backpressure. If you write faster than the consumer can handle, the internal buffer grows unbounded and crashes with OOM. Always respect <code>write()</code> return value and the <code>'drain'</code> event, or use <code>pipeline()</code> which handles this automatically.
+</div>
+
+<div class="tip">
+  <strong>🚀 Pro Pattern — Full Pipeline Example:</strong>
+  <pre style="margin-top:0.5rem; background:rgba(0,0,0,0.2); border:none;"><code><span class="keyword">import</span> { <span class="var">pipeline</span> } <span class="keyword">from</span> <span class="string">'node:stream/promises'</span>;
+<span class="keyword">import</span> { <span class="var">Transform</span> } <span class="keyword">from</span> <span class="string">'node:stream'</span>;
+<span class="keyword">import</span> <span class="var">fs</span> <span class="keyword">from</span> <span class="string">'node:fs'</span>;
+<span class="keyword">import</span> <span class="var">zlib</span> <span class="keyword">from</span> <span class="string">'node:zlib'</span>;
+
+<span class="comment">// Custom transform: add line numbers</span>
+<span class="keyword">const</span> <span class="var">lineNumberer</span> = <span class="keyword">new</span> <span class="var">Transform</span>({
+  <span class="func">transform</span>(<span class="var">chunk</span>, <span class="var">enc</span>, <span class="var">cb</span>) {
+    <span class="keyword">this</span>.<span class="var">lineNum</span> = (<span class="keyword">this</span>.<span class="var">lineNum</span> || 0) + 1;
+    <span class="keyword">this</span>.<span class="func">push</span>(<span class="string">`${this.lineNum}: ${chunk}`</span>);
+    <span class="func">cb</span>();
+  }
+});
+
+<span class="keyword">await</span> <span class="func">pipeline</span>(
+  <span class="var">fs</span>.<span class="func">createReadStream</span>(<span class="string">'./input.txt'</span>, <span class="string">'utf-8'</span>),
+  <span class="var">lineNumberer</span>,
+  <span class="var">zlib</span>.<span class="func">createGzip</span>(),
+  <span class="var">fs</span>.<span class="func">createWriteStream</span>(<span class="string">'./output.txt.gz'</span>)
+);
+
+<span class="var">console</span>.<span class="func">log</span>(<span class="string">'Pipeline complete!'</span>);</code></pre>
+</div>
+
+<h2 style="margin-top:2rem; color:var(--heading); border-bottom:1px solid var(--border); padding-bottom:0.5rem;">📋 Quick Decision Guide</h2>
+<table>
+  <tr><th>Goal</th><th>Use</th></tr>
+  <tr><td>Read file efficiently</td><td><code>fs.createReadStream(path)</code></td></tr>
+  <tr><td>Write file efficiently</td><td><code>fs.createWriteStream(path)</code></td></tr>
+  <tr><td>Connect streams safely</td><td><code>pipeline(source, transform, dest)</code></td></tr>
+  <tr><td>Quick one-off pipe</td><td><code>readable.pipe(writable)</code> (with error handling)</td></tr>
+  <tr><td>Transform data mid-pipe</td><td><code>new Transform({ transform(chunk, enc, cb) })</code></td></tr>
+  <tr><td>Convert array to stream</td><td><code>Readable.from(array)</code></td></tr>
+  <tr><td>Wait for stream to finish</td><td><code>await finished(stream)</code></td></tr>
+  <tr><td>Compress on the fly</td><td><code>zlib.createGzip()</code> in pipeline</td></tr>
+  <tr><td>Process objects as stream</td><td><code>{ objectMode: true }</code></td></tr>
+  <tr><td>Handle backpressure manually</td><td>Check <code>write()</code> return, listen for <code>'drain'</code></td></tr>
+</table>
+
+<h2 style="margin-top:2rem; color:var(--heading); border-bottom:1px solid var(--border); padding-bottom:0.5rem;">📡 Common Stream Events</h2>
+<table>
+  <tr><th>Event</th><th>When Fired</th><th>Applies To</th></tr>
+  <tr><td><code>'data'</code></td><td>Chunk of data is available</td><td>Readable</td></tr>
+  <tr><td><code>'end'</code></td><td>No more data to read</td><td>Readable</td></tr>
+  <tr><td><code>'readable'</code></td><td>Data is ready to be read explicitly</td><td>Readable (paused mode)</td></tr>
+  <tr><td><code>'drain'</code></td><td>Buffer is empty, safe to write more</td><td>Writable</td></tr>
+  <tr><td><code>'finish'</code></td><td>All data written and flushed</td><td>Writable</td></tr>
+  <tr><td><code>'close'</code></td><td>Stream fully closed</td><td>All</td></tr>
+  <tr><td><code>'error'</code></td><td>An error occurred</td><td>All</td></tr>
+  <tr><td><code>'pipe'</code></td><td>Stream is piped to a destination</td><td>Readable</td></tr>
+  <tr><td><code>'unpipe'</code></td><td>Stream is unpiped</td><td>Readable</td></tr>
+</table>
+
+<h2 style="margin-top:2rem; color:var(--heading); border-bottom:1px solid var(--border); padding-bottom:0.5rem;">⚠️ Common Pitfalls</h2>
+<table>
+  <tr><th>Mistake</th><th>Why It's Wrong</th><th>Fix</th></tr>
+  <tr><td>Using <code>.pipe()</code> without error handling</td><td>Silent hangs on error</td><td>Use <code>pipeline()</code> instead</td></tr>
+  <tr><td>Ignoring <code>write()</code> return value</td><td>Memory leak / OOM crash</td><td>Wait for <code>'drain'</code> when <code>false</code></td></tr>
+  <tr><td>Not handling <code>'error'</code> on streams</td><td>Unhandled error crashes process</td><td>Always attach <code>.on('error', ...)</code></td></tr>
+  <tr><td>Buffering entire stream into memory</td><td>Defeats the purpose of streams</td><td>Process chunks, use pipeline</td></tr>
+  <tr><td>Calling <code>.end()</code> then <code>.write()</code></td><td>Error: write after end</td><td>End only when truly done</td></tr>
+  <tr><td>Not awaiting pipeline</td><td>Errors swallowed, async issues</td><td><code>await pipeline(...)</code> or handle callback</td></tr>
+</table>
+
+<div class="footer">
+  Node.js stream Module Cheat Sheet &mdash; Save this file and open in any browser for quick reference.<br>
+  Based on Node.js 18+ with <code>node:stream</code> API.
+</div>
+
+</body>
+</html>

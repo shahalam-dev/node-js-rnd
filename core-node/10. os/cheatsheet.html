@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Node.js os Module Cheat Sheet</title>
+  <style>
+    :root {
+      --bg: #0d1117;
+      --card: #161b22;
+      --border: #30363d;
+      --text: #c9d1d9;
+      --heading: #f0f6fc;
+      --code-bg: #1f2937;
+      --code-text: #e6edf3;
+      --accent: #58a6ff;
+      --accent2: #3fb950;
+      --accent3: #d29922;
+      --accent4: #f85149;
+      --muted: #8b949e;
+      --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      line-height: 1.6;
+      padding: 2rem 1rem;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+    h1 {
+      color: var(--heading);
+      font-size: 2.2rem;
+      margin-bottom: 0.5rem;
+      border-bottom: 2px solid var(--accent4);
+      padding-bottom: 0.5rem;
+    }
+    .subtitle {
+      color: var(--muted);
+      font-size: 0.95rem;
+      margin-bottom: 2rem;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 1.5rem;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem;
+      transition: border-color 0.2s;
+    }
+    .card:hover { border-color: var(--accent4); }
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.75rem;
+    }
+    .badge {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      padding: 2px 8px;
+      border-radius: 4px;
+      letter-spacing: 0.5px;
+    }
+    .badge-sys { background: rgba(248,81,73,0.15); color: var(--accent4); }
+    .badge-cpu { background: rgba(88,166,255,0.15); color: var(--accent); }
+    .badge-net { background: rgba(63,185,80,0.15); color: var(--accent2); }
+    .badge-mem { background: rgba(210,153,34,0.15); color: var(--accent3); }
+    .badge-util { background: rgba(139,148,158,0.15); color: var(--muted); }
+    h2 {
+      color: var(--heading);
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
+    .method {
+      font-family: "SFMono-Regular", Consolas, monospace;
+      font-size: 0.85rem;
+      color: var(--accent4);
+      background: rgba(248,81,73,0.08);
+      padding: 2px 6px;
+      border-radius: 4px;
+      margin-bottom: 0.4rem;
+      display: inline-block;
+    }
+    p.desc {
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-bottom: 0.6rem;
+    }
+    pre {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      overflow-x: auto;
+      font-size: 0.8rem;
+      line-height: 1.5;
+    }
+    code {
+      font-family: "SFMono-Regular", Consolas, monospace;
+      color: var(--code-text);
+    }
+    .comment { color: #8b949e; }
+    .keyword { color: #ff7b72; }
+    .string { color: #a5d6ff; }
+    .func { color: #d2a8ff; }
+    .var { color: #79c0ff; }
+    .output { color: #7ee787; }
+    .note {
+      font-size: 0.8rem;
+      color: var(--accent3);
+      margin-top: 0.5rem;
+      padding-left: 0.5rem;
+      border-left: 2px solid var(--accent3);
+    }
+    .tip {
+      background: rgba(248,81,73,0.08);
+      border: 1px solid rgba(248,81,73,0.3);
+      border-radius: 8px;
+      padding: 1rem;
+      margin: 2rem 0;
+      font-size: 0.9rem;
+    }
+    .tip strong { color: var(--accent4); }
+    .footer {
+      text-align: center;
+      margin-top: 3rem;
+      color: var(--muted);
+      font-size: 0.8rem;
+    }
+    .section-title {
+      grid-column: 1 / -1;
+      color: var(--heading);
+      font-size: 1.3rem;
+      margin-top: 1rem;
+      margin-bottom: -0.5rem;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 0.5rem;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+      margin-top: 0.5rem;
+    }
+    th, td {
+      text-align: left;
+      padding: 0.5rem 0.75rem;
+      border-bottom: 1px solid var(--border);
+    }
+    th { color: var(--heading); font-weight: 600; }
+    td code { color: var(--accent4); }
+    .const-table td:first-child { font-family: monospace; color: var(--accent); }
+  </style>
+  <base target="_blank">
+</head>
+<body>
+
+<h1>🖥️ Node.js <code>os</code> Module Cheat Sheet</h1>
+<p class="subtitle">Operating system utilities — Node.js 18+</p>
+
+<div class="tip">
+  <strong>💡 Golden Rule:</strong> The <code>os</code> module provides platform-independent system information. Always use <code>os</code> methods instead of platform-specific commands or parsing <code>process</code> output. Import with <code>node:os</code> prefix.
+</div>
+
+<div class="grid">
+
+  <div class="section-title">💻 System Information</div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-sys">System</span>
+      <h2>os.hostname / os.type / os.platform</h2>
+    </div>
+    <div class="method">os.hostname() / os.type() / os.platform()</div>
+    <p class="desc">Get system hostname, OS name, and platform identifier.</p>
+    <pre><code><span class="keyword">import</span> <span class="var">os</span> <span class="keyword">from</span> <span class="string">'node:os'</span>;
+
+<span class="var">os</span>.<span class="func">hostname</span>();  <span class="comment">// 'my-server'</span>
+<span class="var">os</span>.<span class="func">type</span>();       <span class="comment">// 'Linux' | 'Darwin' | 'Windows_NT'</span>
+<span class="var">os</span>.<span class="func">platform</span>();   <span class="comment">// 'linux' | 'darwin' | 'win32'</span>
+
+<span class="comment">// Detect OS</span>
+<span class="keyword">if</span> (<span class="var">os</span>.<span class="func">platform</span>() === <span class="string">'win32'</span>) {
+  <span class="var">console</span>.<span class="func">log</span>(<span class="string">'Running on Windows'</span>);
+} <span class="keyword">else</span> <span class="keyword">if</span> (<span class="var">os</span>.<span class="func">platform</span>() === <span class="string">'darwin'</span>) {
+  <span class="var">console</span>.<span class="func">log</span>(<span class="string">'Running on macOS'</span>);
+} <span class="keyword">else</span> {
+  <span class="var">console</span>.<span class="func">log</span>(<span class="string">'Running on Linux/Unix'</span>);
+}</code></pre>
+    <div class="note">✅ Use <code>os.platform()</code> for conditional logic based on OS.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-sys">System</span>
+      <h2>os.release / os.version / os.uptime</h2>
+    </div>
+    <div class="method">os.release() / os.version() / os.uptime()</div>
+    <p class="desc">Get OS version, kernel release, and system uptime in seconds.</p>
+    <pre><code><span class="keyword">import</span> <span class="var">os</span> <span class="keyword">from</span> <span class="string">'node:os'</span>;
+
+<span class="var">os</span>.<span class="func">release</span>();   <span class="comment">// '5.15.0-91-generic' (Linux kernel)</span>
+<span class="var">os</span>.<span class="func">version</span>();   <span class="comment">// '#73-Ubuntu SMP...' or 'Windows 10 Pro'</span>
+<span class="var">os</span>.<span class="func">uptime</span>();    <span class="comment">// 1234567 (seconds since boot)</span>
+
+<span class="comment">// Human-readable uptime</span>
+<span class="keyword">function</span> <span class="func">formatUptime</span>(<span class="var">seconds</span>) {
+  <span class="keyword">const</span> <span class="var">days</span> = <span class="var">Math</span>.<span class="func">floor</span>(<span class="var">seconds</span> / <span class="number">86400</span>);
+  <span class="keyword">const</span> <span class="var">hours</span> = <span class="var">Math</span>.<span class="func">floor</span>((<span class="var">seconds</span> % <span class="number">86400</span>) / <span class="number">3600</span>);
+  <span class="keyword">return</span> <span class="string">`${days}d ${hours}h`</span>;
+}
+<span class="func">formatUptime</span>(<span class="var">os</span>.<span class="func">uptime</span>());</code></pre>
+    <div class="note">ℹ️ <code>os.uptime()</code> returns seconds. Divide by 60 for minutes, 3600 for hours.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-sys">System</span>
+      <h2>os.endianness / os.arch / os.machine</h2>
+    </div>
+    <div class="method">os.endianness() / os.arch() / os.machine()</div>
+    <p class="desc">Get CPU architecture, endianness, and machine type.</p>
+    <pre><code><span class="keyword">import</span> <span class="var">os</span> <span class="keyword">from</span> <span class="string">'node:os'</span>;
+
+<span class="var">os</span>.<span class="func">endianness</span>();  <span class="comment">// 'LE' (Little Endian) or 'BE' (Big Endian)</span>
+<span class="var">os</span>.<span class="func">arch</span>();        <span class="comment">// 'x64' | 'arm64' | 'ia32' | 'ppc' | etc.</span>
+<span class="var">os</span>.<span class="func">machine</span>();     <span class="comment">// 'x86_64' | 'aarch64' (more detailed)</span>
+
+<span class="comment">// Check architecture</span>
+<span class="keyword">if</span> (<span class="var">os</span>.<span class="func">arch</span>() === <span class="string">'arm64'</span>) {
+  <span class="var">console</span>.<span class="func">log</span>(<span class="string">'Running on Apple Silicon / ARM64'</span>);
+}</code></pre>
+    <div class="note">✅ Use <code>os.arch()</code> for conditional code paths based on architecture.</div>
+  </div>
+
+  <div class="section-title">🧠 Memory & CPU</div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-mem">Memory</span>
+      <h2>os.totalmem / os.freemem</h2>
+    </div>
+    <div class="method">os.totalmem() / os.freemem()</div>
+    <p class="desc">Get total and free system memory in bytes.</p>
+    <pre><code><span class="keyword">import</span> <span class="var">os</span> <span class="keyword">from</span> <span class="string">'node:os'</span>;
+
+<span class="keyword">const</span> <span class="var">total</span> = <span class="var">os</span>.<span class="func">totalmem</span>();  <span class="comment">// bytes</span>
+<span class="keyword">const</span> <span class="var">free</span> = <span class="var">os</span>.<span class="func">freemem</span>();    <span class="comment">// bytes</span>
+<span class="keyword">const</span> <span class="var">used</span> = <span class="var">total</span> - <span class="var">free</span>;
+
+<span class="comment">// Convert to GB</span>
+<span class="keyword">const</span> <span class="var">totalGB</span> = (<span class="var">total</span> / <span class="number">1024</span> ** <span class="number">3</span>).<span class="func">toFixed</span>(<span class="number">2</span>);
+<span class="keyword">const</span> <span class="var">freeGB</span> = (<span class="var">free</span> / <span class="number">1024</span> ** <span class="number">3</span>).<span class="func">toFixed</span>(<span class="number">2</span>);
+
+<span class="var">console</span>.<span class="func">log</span>(<span class="string">`Total: ${totalGB} GB, Free: ${freeGB} GB`</span>);
+<span class="comment">// → Total: 16.00 GB, Free: 8.42 GB</span></code></pre>
+    <div class="note">⚠️ Values are in bytes. Divide by <code>1024 ** 3</code> for GB, <code>1024 ** 2</code> for MB.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-cpu">CPU</span>
+      <h2>os.cpus</h2>
+    </div>
+    <div class="method">os.cpus()</div>
+    <p class="desc">Get information about each CPU/core: model, speed, and times (idle, user, sys).</p>
+    <pre><code><span class="keyword">import</span> <span class="var">os</span> <span class="keyword">from</span> <span class="string">'node:os'</span>;
+
+<span class="keyword">const</span> <span class="var">cpus</span> = <span class="var">os</span>.<span class="func">cpus</span>();
+<span class="var">cpus</span>.<span class="var">length</span>;  <span class="comment">// Number of CPU cores</span>
+
+<span class="comment">// Each CPU object:</span>
+<span class="var">cpus</span>[<span class="number">0</span>] <span class="comment">// → {</span>
+  <span class="comment">//   model: 'Intel(R) Core(TM) i7-8700K',</span>
+  <span class="comment">//   speed: 3700, // MHz</span>
+  <span class="comment">//   times: { user: 123456, nice: 0, sys: 78901, idle: 987654, irq: 0 }</span>
+  <span class="comment">// }</span>
+
+<span class="comment">// Get total CPU time</span>
+<span class="keyword">const</span> <span class="var">totalTime</span> = <span class="var">cpus</span>.<span class="func">reduce</span>((<span class="var">sum</span>, <span class="var">cpu</span>) => {
+  <span class="keyword">return</span> <span class="var">sum</span> + <span class="var">cpu</span>.<span class="var">times</span>.<span class="var">user</span> + <span class="var">cpu</span>.<span class="var">times</span>.<span class="var">sys</span> + <span class="var">cpu</span>.<span class="var">times</span>.<span class="var">idle</span>;
+}, <span class="number">0</span>);
+
+<span class="comment">// Calculate CPU usage percentage</span>
+<span class="keyword">function</span> <span class="func">getCPUUsage</span>() {
+  <span class="keyword">const</span> <span class="var">start</span> = <span class="func">getCPUInfo</span>();
+  <span class="keyword">const</span> <span class="var">startIdle</span> = <span class="var">start</span>.<span class="var">idle</span>;
+  <span class="keyword">const</span> <span class="var">startTotal</span> = <span class="var">start</span>.<span class="var">total</span>;
+  
+  <span class="comment">// Wait a bit (or use setInterval)</span>
+  <span class="keyword">const</span> <span class="var">end</span> = <span class="func">getCPUInfo</span>();
+  <span class="keyword">const</span> <span class="var">idleDiff</span> = <span class="var">end</span>.<span class="var">idle</span> - <span class="var">startIdle</span>;
+  <span class="keyword">const</span> <span class="var">totalDiff</span> = <span class="var">end</span>.<span class="var">total</span> - <span class="var">startTotal</span>;
+  
+  <span class="keyword">return</span> <span class="number">100</span> - (<span class="var">idleDiff</span> / <span class="var">totalDiff</span>) * <span class="number">100</span>;
+}</code></pre>
+    <div class="note">✅ Use <code>os.cpus().length</code> to get number of CPU cores for parallelism.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-cpu">CPU</span>
+      <h2>os.loadavg</h2>
+    </div>
+    <div class="method">os.loadavg()</div>
+    <p class="desc">Get system load averages for 1, 5, and 15 minutes. (UNIX-only; on Windows returns [0,0,0])</p>
+    <pre><code><span class="keyword">import</span> <span class="var">os</span> <span class="keyword">from</span> <span class="string">'node:os'</span>;
+
+<span class="keyword">const</span> [<span class="var">oneMin</span>, <span class="var">fiveMin</span>, <span class="var">fifteenMin</span>] = <span class="var">os</span>.<span class="func">loadavg</span>();
+<span class="comment">// → [1.23, 1.45, 1.67]</span>
+
+<span class="keyword">const</span> <span class="var">cores</span> = <span class="var">os</span>.<span class="func">cpus</span>().<span class="var">length</span>;
+<span class="keyword">const</span> <span class="var">usage</span> = (<span class="var">oneMin</span> / <span class="var">cores</span>) * <span class="number">100</span>;
+<span class="var">console</span>.<span class="func">log</span>(<span class="string">`CPU usage: ${usage.toFixed(2)}%`</span>);
+
+<span class="comment">// Check if system is overloaded</span>
+<span class="keyword">if</span> (<span class="var">oneMin</span> > <span class="var">cores</span> * <span class="number">0.8</span>) {
+  <span class="var">console</span>.<span class="func">warn</span>(<span class="string">'System is under high load!'</span>);
+}</code></pre>
+    <div class="note">⚠️ Load average is UNIX-specific. On Windows, it always returns <code>[0,0,0]</code>.</div>
+  </div>
+
+  <div class="section-title">🌐 Network</div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-net">Network</span>
+      <h2>os.networkInterfaces</h2>
+    </div>
+    <div class="method">os.networkInterfaces()</div>
+    <p class="desc">Get network interfaces with IP addresses, MAC, family, and more.</p>
+    <pre><code><span class="keyword">import</span> <span class="var">os</span> <span class="keyword">from</span> <span class="string">'node:os'</span>;
+
+<span class="keyword">const</span> <span class="var">interfaces</span> = <span class="var">os</span>.<span class="func">networkInterfaces</span>();
+<span class="comment">// → {</span>
+<span class="comment">//   eth0: [</span>
+<span class="comment">//     { address: '192.168.1.100', netmask: '255.255.255.0', family: 'IPv4', mac: '00:11:22:33:44:55', internal: false, cidr: '192.168.1.100/24' },</span>
+<span class="comment">//     { address: 'fe80::211:22ff:fe33:4455', netmask: 'ffff:ffff:ffff:ffff::', family: 'IPv6', mac: '00:11:22:33:44:55', internal: false, cidr: 'fe80::211:22ff:fe33:4455/64' }</span>
+<span class="comment">//   ],</span>
+<span class="comment">//   lo0: [ ... ]</span>
+<span class="comment">// }</span>
+
+<span class="comment">// Get local IP addresses (non-internal)</span>
+<span class="keyword">const</span> <span class="var">ips</span> = <span class="var">Object</span>.<span class="func">values</span>(<span class="var">interfaces</span>)
+  .<span class="func">flat</span>()
+  .<span class="func">filter</span>(<span class="var">iface</span> => !<span class="var">iface</span>.<span class="var">internal</span> && <span class="var">iface</span>.<span class="var">family</span> === <span class="string">'IPv4'</span>)
+  .<span class="func">map</span>(<span class="var">iface</span> => <span class="var">iface</span>.<span class="var">address</span>);
+
+<span class="comment">// Get first non-internal IPv4 address</span>
+<span class="keyword">const</span> <span class="var">localIP</span> = <span class="var">ips</span>[<span class="number">0</span>] || <span class="string">'127.0.0.1'</span>;</code></pre>
+    <div class="note">✅ Use for: getting server IP addresses, network diagnostics.</div>
+  </div>
+
+  <div class="section-title">👤 User & System Paths</div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-util">User</span>
+      <h2>os.userInfo / os.homedir / os.tmpdir</h2>
+    </div>
+    <div class="method">os.userInfo() / os.homedir() / os.tmpdir()</div>
+    <p class="desc">Get current user information, home directory, and temp directory path.</p>
+    <pre><code><span class="keyword">import</span> <span class="var">os</span> <span class="keyword">from</span> <span class="string">'node:os'</span>;
+
+<span class="comment">// User info</span>
+<span class="keyword">const</span> <span class="var">user</span> = <span class="var">os</span>.<span class="func">userInfo</span>();
+<span class="comment">// → {</span>
+<span class="comment">//   username: 'john',</span>
+<span class="comment">//   uid: 1000,</span>
+<span class="comment">//   gid: 1000,</span>
+<span class="comment">//   shell: '/bin/bash',</span>
+<span class="comment">//   homedir: '/home/john',</span>
+<span class="comment">//   dir: '/home/john'</span>
+<span class="comment">// }</span>
+
+<span class="var">os</span>.<span class="func">homedir</span>();  <span class="comment">// '/home/john' or 'C:\Users\john'</span>
+<span class="var">os</span>.<span class="func">tmpdir</span>();   <span class="comment">// '/tmp' or 'C:\Users\john\AppData\Local\Temp'</span>
+
+<span class="comment">// Safe temp file path</span>
+<span class="keyword">import</span> <span class="var">path</span> <span class="keyword">from</span> <span class="string">'node:path'</span>;
+<span class="keyword">const</span> <span class="var">tempFile</span> = <span class="var">path</span>.<span class="func">join</span>(<span class="var">os</span>.<span class="func">tmpdir</span>(), <span class="string">'my-temp-file.txt'</span>);</code></pre>
+    <div class="note">✅ Always use <code>os.tmpdir()</code> for temporary files (cross-platform).</div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-util">Constants</span>
+      <h2>os.EOL / os.constants</h2>
+    </div>
+    <div class="method">os.EOL / os.constants</div>
+    <p class="desc">End-of-line character (<code>\n</code> on POSIX, <code>\r\n</code> on Windows) and error signal constants.</p>
+    <pre><code><span class="keyword">import</span> <span class="var">os</span> <span class="keyword">from</span> <span class="string">'node:os'</span>;
+
+<span class="comment">// End-of-line character</span>
+<span class="var">os</span>.<span class="var">EOL</span>;  <span class="comment">// '\n' or '\r\n' (platform-specific)</span>
+
+<span class="comment">// Write OS-specific newlines</span>
+<span class="var">fs</span>.<span class="func">writeFileSync</span>(<span class="string">'log.txt'</span>, <span class="string">`Line 1${os.EOL}Line 2`</span>);
+
+<span class="comment">// Constants (error codes, signals, etc.)</span>
+<span class="var">os</span>.<span class="var">constants</span>.<span class="var">signals</span>.<span class="var">SIGKILL</span>;  <span class="comment">// 'SIGKILL'</span>
+<span class="var">os</span>.<span class="var">constants</span>.<span class="var">errno</span>.<span class="var">EACCES</span>;  <span class="comment">// 'EACCES' (permission denied)</span>
+
+<span class="comment">// Check if a specific constant exists</span>
+<span class="keyword">if</span> (<span class="var">os</span>.<span class="var">constants</span>.<span class="var">errno</span>.<span class="var">ENOENT</span>) {
+  <span class="comment">// ENOENT exists on this platform</span>
+}</code></pre>
+    <div class="note">✅ Use <code>os.EOL</code> for cross-platform newline handling.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-util">Util</span>
+      <h2>os.setPriority / os.getPriority</h2>
+    </div>
+    <div class="method">os.getPriority(pid?) / os.setPriority(pid?, priority)</div>
+    <p class="desc">Get or set process scheduling priority. Higher priority = more CPU time.</p>
+    <pre><code><span class="keyword">import</span> <span class="var">os</span> <span class="keyword">from</span> <span class="string">'node:os'</span>;
+
+<span class="comment">// Get current process priority</span>
+<span class="keyword">const</span> <span class="var">current</span> = <span class="var">os</span>.<span class="func">getPriority</span>();  <span class="comment">// -20 to 19 (higher = more priority)</span>
+
+<span class="comment">// Set priority for current process</span>
+<span class="var">os</span>.<span class="func">setPriority</span>(<span class="number">10</span>);  <span class="comment">// lower priority (nice)</span>
+
+<span class="comment">// Set priority for another process</span>
+<span class="var">os</span>.<span class="func">setPriority</span>(<span class="number">12345</span>, <span class="number">5</span>);  <span class="comment">// pid, priority</span>
+
+<span class="comment">// Constants for priority</span>
+<span class="keyword">const</span> { <span class="var">PRIORITY_LOW</span>, <span class="var">PRIORITY_HIGH</span> } = <span class="var">os</span>.<span class="var">constants</span>.<span class="var">priority</span>;
+<span class="var">os</span>.<span class="func">setPriority</span>(<span class="var">PRIORITY_LOW</span>);</code></pre>
+    <div class="note">⚠️ Setting priority may require elevated permissions. Not available on all platforms.</div>
+  </div>
+
+</div>
+
+<div class="tip">
+  <strong>🚀 Pro Pattern — System Health Monitor:</strong>
+  <pre style="margin-top:0.5rem; background:rgba(0,0,0,0.2); border:none;"><code><span class="keyword">import</span> <span class="var">os</span> <span class="keyword">from</span> <span class="string">'node:os'</span>;
+
+<span class="keyword">function</span> <span class="func">getSystemHealth</span>() {
+  <span class="keyword">const</span> <span class="var">totalMem</span> = <span class="var">os</span>.<span class="func">totalmem</span>();
+  <span class="keyword">const</span> <span class="var">freeMem</span> = <span class="var">os</span>.<span class="func">freemem</span>();
+  <span class="keyword">const</span> <span class="var">usedMem</span> = <span class="var">totalMem</span> - <span class="var">freeMem</span>;
+  <span class="keyword">const</span> <span class="var">memPercent</span> = (<span class="var">usedMem</span> / <span class="var">totalMem</span>) * <span class="number">100</span>;
+
+  <span class="keyword">const</span> <span class="var">cores</span> = <span class="var">os</span>.<span class="func">cpus</span>().<span class="var">length</span>;
+  <span class="keyword">const</span> [<span class="var">load1</span>, <span class="var">load5</span>, <span class="var">load15</span>] = <span class="var">os</span>.<span class="func">loadavg</span>();
+  <span class="keyword">const</span> <span class="var">cpuPercent</span> = (<span class="var">load1</span> / <span class="var">cores</span>) * <span class="number">100</span>;
+
+  <span class="keyword">return</span> {
+    <span class="var">platform</span>: <span class="var">os</span>.<span class="func">platform</span>(),
+    <span class="var">hostname</span>: <span class="var">os</span>.<span class="func">hostname</span>(),
+    <span class="var">uptime</span>: <span class="var">os</span>.<span class="func">uptime</span>(),
+    <span class="var">memory</span>: {
+      <span class="var">total</span>: (<span class="var">totalMem</span> / <span class="number">1024</span> ** <span class="number">3</span>).<span class="func">toFixed</span>(<span class="number">2</span>) + <span class="string">' GB'</span>,
+      <span class="var">used</span>: (<span class="var">usedMem</span> / <span class="number">1024</span> ** <span class="number">3</span>).<span class="func">toFixed</span>(<span class="number">2</span>) + <span class="string">' GB'</span>,
+      <span class="var">percent</span>: <span class="var">memPercent</span>.<span class="func">toFixed</span>(<span class="number">1</span>) + <span class="string">'%'</span>
+    },
+    <span class="var">cpu</span>: {
+      <span class="var">cores</span>: <span class="var">cores</span>,
+      <span class="var">load1</span>: <span class="var">load1</span>.<span class="func">toFixed</span>(<span class="number">2</span>),
+      <span class="var">load5</span>: <span class="var">load5</span>.<span class="func">toFixed</span>(<span class="number">2</span>),
+      <span class="var">percent</span>: <span class="var">cpuPercent</span>.<span class="func">toFixed</span>(<span class="number">1</span>) + <span class="string">'%'</span>
+    }
+  };
+}
+
+<span class="comment">// Log health every 30 seconds</span>
+<span class="func">setInterval</span>(() => {
+  <span class="var">console</span>.<span class="func">log</span>(<span class="func">getSystemHealth</span>());
+}, <span class="number">30000</span>);</code></pre>
+</div>
+
+<h2 style="margin-top:2rem; color:var(--heading); border-bottom:1px solid var(--border); padding-bottom:0.5rem;">📋 Quick Reference</h2>
+<table>
+  <tr><th>Method</th><th>Returns</th><th>Description</th></tr>
+  <tr><td><code>os.hostname()</code></td><td>string</td><td>System hostname</td></tr>
+  <tr><td><code>os.type()</code></td><td>string</td><td>OS name (Linux, Darwin, Windows_NT)</td></tr>
+  <tr><td><code>os.platform()</code></td><td>string</td><td>Platform identifier (linux, darwin, win32)</td></tr>
+  <tr><td><code>os.release()</code></td><td>string</td><td>OS release version / kernel</td></tr>
+  <tr><td><code>os.version()</code></td><td>string</td><td>OS version string</td></tr>
+  <tr><td><code>os.uptime()</code></td><td>number</td><td>System uptime (seconds)</td></tr>
+  <tr><td><code>os.totalmem()</code></td><td>number</td><td>Total memory (bytes)</td></tr>
+  <tr><td><code>os.freemem()</code></td><td>number</td><td>Free memory (bytes)</td></tr>
+  <tr><td><code>os.cpus()</code></td><td>array</td><td>CPU core information</td></tr>
+  <tr><td><code>os.loadavg()</code></td><td>array</td><td>[1min, 5min, 15min] load averages</td></tr>
+  <tr><td><code>os.arch()</code></td><td>string</td><td>CPU architecture</td></tr>
+  <tr><td><code>os.endianness()</code></td><td>string</td><td>'LE' or 'BE'</td></tr>
+  <tr><td><code>os.networkInterfaces()</code></td><td>object</td><td>Network interfaces</td></tr>
+  <tr><td><code>os.homedir()</code></td><td>string</td><td>User home directory</td></tr>
+  <tr><td><code>os.tmpdir()</code></td><td>string</td><td>Temporary directory</td></tr>
+  <tr><td><code>os.userInfo()</code></td><td>object</td><td>Current user information</td></tr>
+  <tr><td><code>os.EOL</code></td><td>string</td><td>End-of-line character (<code>\n</code> or <code>\r\n</code>)</td></tr>
+  <tr><td><code>os.constants</code></td><td>object</td><td>System constants (signals, errno, priority)</td></tr>
+</table>
+
+<h2 style="margin-top:2rem; color:var(--heading); border-bottom:1px solid var(--border); padding-bottom:0.5rem;">⚠️ Common Pitfalls</h2>
+<table>
+  <tr><th>Mistake</th><th>Why It's Wrong</th><th>Fix</th></tr>
+  <tr><td><code>os.platform() === 'windows'</code></td><td>Platform returns <code>'win32'</code>, not <code>'windows'</code></td><td><code>os.platform() === 'win32'</code></td></tr>
+  <tr><td><code>os.loadavg()</code> on Windows</td><td>Always returns <code>[0,0,0]</code> on Windows</td><td>Check <code>os.platform()</code> before using</td></tr>
+  <tr><td>Hardcoding <code>'/tmp'</code></td><td>Breaks on Windows</td><td>Use <code>os.tmpdir()</code></td></tr>
+  <tr><td>Hardcoding <code>\n</code></td><td>Windows uses <code>\r\n</code></td><td>Use <code>os.EOL</code></td></tr>
+  <tr><td>Memory values in bytes</td><td>Large numbers are hard to read</td><td>Convert to MB or GB with <code>/ 1024 ** 2</code> or <code>/ 1024 ** 3</code></td></tr>
+  <tr><td>Using <code>os.cpus().length</code> for parallel tasks</td><td>May not match available threads</td><td>Use <code>os.cpus().length</code> as a starting point, but test performance</td></tr>
+</table>
+
+<div class="footer">
+  Node.js os Module Cheat Sheet &mdash; Save this file and open in any browser for quick reference.<br>
+  Based on Node.js 18+ with <code>node:os</code> API.
+</div>
+
+</body>
+</html>

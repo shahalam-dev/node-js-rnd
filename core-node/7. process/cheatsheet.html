@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Node.js process Module Cheat Sheet</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --card: #161b22;
+    --border: #30363d;
+    --text: #c9d1d9;
+    --heading: #f0f6fc;
+    --code-bg: #1f2937;
+    --code-text: #e6edf3;
+    --accent: #58a6ff;
+    --accent2: #3fb950;
+    --accent3: #d29922;
+    --accent4: #f85149;
+    --accent5: #bc8cff;
+    --accent6: #56d4dd;
+    --accent7: #ff9bce;
+    --accent8: #f778ba;
+    --accent9: #ffa657;
+    --muted: #8b949e;
+    --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    line-height: 1.6;
+    padding: 2rem 1rem;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+  h1 {
+    color: var(--heading);
+    font-size: 2.2rem;
+    margin-bottom: 0.5rem;
+    border-bottom: 2px solid var(--accent9);
+    padding-bottom: 0.5rem;
+  }
+  .subtitle {
+    color: var(--muted);
+    font-size: 0.95rem;
+    margin-bottom: 2rem;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 1.5rem;
+  }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.25rem;
+    transition: border-color 0.2s;
+  }
+  .card:hover { border-color: var(--accent9); }
+  .card-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+  }
+  .badge {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    padding: 2px 8px;
+    border-radius: 4px;
+    letter-spacing: 0.5px;
+  }
+  .badge-env { background: rgba(255,166,87,0.15); color: var(--accent9); }
+  .badge-io { background: rgba(88,166,255,0.15); color: var(--accent); }
+  .badge-lifecycle { background: rgba(63,185,80,0.15); color: var(--accent2); }
+  .badge-info { background: rgba(188,140,255,0.15); color: var(--accent5); }
+  .badge-perf { background: rgba(210,153,34,0.15); color: var(--accent3); }
+  .badge-exit { background: rgba(248,81,73,0.15); color: var(--accent4); }
+  h2 {
+    color: var(--heading);
+    font-size: 1.1rem;
+    font-weight: 600;
+  }
+  .method {
+    font-family: "SFMono-Regular", Consolas, monospace;
+    font-size: 0.85rem;
+    color: var(--accent9);
+    background: rgba(255,166,87,0.08);
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-bottom: 0.4rem;
+    display: inline-block;
+  }
+  p.desc {
+    font-size: 0.85rem;
+    color: var(--muted);
+    margin-bottom: 0.6rem;
+  }
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    overflow-x: auto;
+    font-size: 0.8rem;
+    line-height: 1.5;
+  }
+  code {
+    font-family: "SFMono-Regular", Consolas, monospace;
+    color: var(--code-text);
+  }
+  .comment { color: #8b949e; }
+  .keyword { color: #ff7b72; }
+  .string { color: #a5d6ff; }
+  .func { color: #d2a8ff; }
+  .var { color: #79c0ff; }
+  .output { color: #7ee787; }
+  .note {
+    font-size: 0.8rem;
+    color: var(--accent3);
+    margin-top: 0.5rem;
+    padding-left: 0.5rem;
+    border-left: 2px solid var(--accent3);
+  }
+  .tip {
+    background: rgba(63,185,80,0.08);
+    border: 1px solid rgba(63,185,80,0.3);
+    border-radius: 8px;
+    padding: 1rem;
+    margin: 2rem 0;
+    font-size: 0.9rem;
+  }
+  .tip strong { color: var(--accent2); }
+  .warning {
+    background: rgba(248,81,73,0.08);
+    border: 1px solid rgba(248,81,73,0.3);
+    border-radius: 8px;
+    padding: 1rem;
+    margin: 2rem 0;
+    font-size: 0.9rem;
+  }
+  .warning strong { color: var(--accent4); }
+  .footer {
+    text-align: center;
+    margin-top: 3rem;
+    color: var(--muted);
+    font-size: 0.8rem;
+  }
+  .section-title {
+    grid-column: 1 / -1;
+    color: var(--heading);
+    font-size: 1.3rem;
+    margin-top: 1rem;
+    margin-bottom: -0.5rem;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 0.5rem;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+    margin-top: 0.5rem;
+  }
+  th, td {
+    text-align: left;
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid var(--border);
+  }
+  th { color: var(--heading); font-weight: 600; }
+  td code { color: var(--accent9); }
+  .full-width { grid-column: 1 / -1; }
+</style>
+<base target="_blank">
+</head>
+<body>
+
+<h1>⚙️ Node.js <code>process</code> Module Cheat Sheet</h1>
+<p class="subtitle">Process control, environment, and runtime introspection — Node.js 18+</p>
+
+<div class="tip">
+  <strong>💡 Golden Rule:</strong> <code>process</code> is a global object — no <code>require/import</code> needed. It gives you access to the runtime environment, CLI arguments, streams, and lifecycle events. Handle its events carefully: unhandled errors and signals can crash or hang your app.
+</div>
+
+<div class="grid">
+
+  <div class="section-title">🌍 Environment & Arguments</div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-env">Env</span>
+      <h2>process.env</h2>
+    </div>
+    <div class="method">process.env</div>
+    <p class="desc">An object containing all environment variables. Read and write (writes only affect current process, not the shell).</p>
+    <pre><code><span class="comment">// Read</span>
+<span class="keyword">const</span> <span class="var">port</span> = <span class="var">process</span>.<span class="var">env</span>.<span class="var">PORT</span> || 3000;
+<span class="keyword">const</span> <span class="var">nodeEnv</span> = <span class="var">process</span>.<span class="var">env</span>.<span class="var">NODE_ENV</span> || <span class="string">'development'</span>;
+
+<span class="comment">// Write (only for current process & children)</span>
+<span class="var">process</span>.<span class="var">env</span>.<span class="var">MY_VAR</span> = <span class="string">'hello'</span>;
+
+<span class="comment">// Delete</span>
+<span class="keyword">delete</span> <span class="var">process</span>.<span class="var">env</span>.<span class="var">MY_VAR</span>;
+
+<span class="comment">// All keys</span>
+<span class="var">Object</span>.<span class="func">keys</span>(<span class="var">process</span>.<span class="var">env</span>);</code></pre>
+    <div class="note">✅ Use <code>dotenv</code> package to load <code>.env</code> files into <code>process.env</code> at startup.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-env">Env</span>
+      <h2>process.argv</h2>
+    </div>
+    <div class="method">process.argv</div>
+    <p class="desc">Array of command-line arguments. Index 0 is the Node.js executable, index 1 is the script path, rest are user arguments.</p>
+    <pre><code><span class="comment">// node app.js --port 8080 --verbose</span>
+<span class="var">process</span>.<span class="var">argv</span>;
+<span class="comment">// [</span>
+<span class="comment">//   '/usr/local/bin/node',</span>
+<span class="comment">//   '/project/app.js',</span>
+<span class="comment">//   '--port',</span>
+<span class="comment">//   '8080',</span>
+<span class="comment">//   '--verbose'</span>
+<span class="comment">// ]</span>
+
+<span class="comment">// Slice user args only</span>
+<span class="keyword">const</span> <span class="var">args</span> = <span class="var">process</span>.<span class="var">argv</span>.<span class="func">slice</span>(2);
+
+<span class="comment">// Or use util.parseArgs (Node 18+)</span>
+<span class="keyword">import</span> { <span class="func">parseArgs</span> } <span class="keyword">from</span> <span class="string">'node:util'</span>;
+<span class="keyword">const</span> { <span class="var">values</span> } = <span class="func">parseArgs</span>({ <span class="var">options</span>: { <span class="var">port</span>: { <span class="var">type</span>: <span class="string">'string'</span> } } });</code></pre>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-env">Env</span>
+      <h2>process.execPath / execArgv</h2>
+    </div>
+    <div class="method">process.execPath / process.execArgv</div>
+    <p class="desc">Path to the Node.js executable and flags passed to Node.js itself (not your script).</p>
+    <pre><code><span class="var">process</span>.<span class="var">execPath</span>;
+<span class="comment">// → '/usr/local/bin/node'</span>
+
+<span class="comment">// node --max-old-space-size=4096 app.js</span>
+<span class="var">process</span>.<span class="var">execArgv</span>;
+<span class="comment">// → ['--max-old-space-size=4096']</span>
+
+<span class="var">process</span>.<span class="var">argv</span>[0] === <span class="var">process</span>.<span class="var">execPath</span>;  <span class="comment">// true</span></code></pre>
+  </div>
+
+  <div class="section-title">📡 Standard I/O Streams</div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-io">I/O</span>
+      <h2>process.stdin / stdout / stderr</h2>
+    </div>
+    <div class="method">process.stdin / process.stdout / process.stderr</div>
+    <p class="desc">Standard input, output, and error streams. They are streams, so you can pipe, read, and write to them.</p>
+    <pre><code><span class="comment">// stdin is a Readable stream</span>
+<span class="var">process</span>.<span class="var">stdin</span>.<span class="func">on</span>(<span class="string">'data'</span>, (<span class="var">data</span>) => {
+  <span class="var">console</span>.<span class="func">log</span>(<span class="string">'You typed:'</span>, <span class="var">data</span>.<span class="func">toString</span>().<span class="func">trim</span>());
+});
+
+<span class="comment">// stdout is a Writable stream</span>
+<span class="var">process</span>.<span class="var">stdout</span>.<span class="func">write</span>(<span class="string">'Hello\n'</span>);  <span class="comment">// no newline auto-added</span>
+
+<span class="comment">// stderr for errors</span>
+<span class="var">process</span>.<span class="var">stderr</span>.<span class="func">write</span>(<span class="string">'Error occurred\n'</span>);
+
+<span class="comment">// Check if stdin is a TTY (interactive terminal)</span>
+<span class="var">process</span>.<span class="var">stdin</span>.<span class="var">isTTY</span>;   <span class="comment">// true or undefined</span>
+<span class="var">process</span>.<span class="var">stdout</span>.<span class="var">isTTY</span>;  <span class="comment">// true if outputting to terminal</span>
+
+<span class="comment">// Pipe file to stdout</span>
+<span class="keyword">import</span> <span class="var">fs</span> <span class="keyword">from</span> <span class="string">'node:fs'</span>;
+<span class="var">fs</span>.<span class="func">createReadStream</span>(<span class="string">'file.txt'</span>).<span class="func">pipe</span>(<span class="var">process</span>.<span class="var">stdout</span>);</code></pre>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-io">I/O</span>
+      <h2>process.stdin.setRawMode</h2>
+    </div>
+    <div class="method">process.stdin.setRawMode(mode)</div>
+    <p class="desc">Enable raw mode for reading individual keypresses (no buffering, no echo). Useful for CLI tools.</p>
+    <pre><code><span class="keyword">import</span> <span class="var">readline</span> <span class="keyword">from</span> <span class="string">'node:readline'</span>;
+
+<span class="var">readline</span>.<span class="func">emitKeypressEvents</span>(<span class="var">process</span>.<span class="var">stdin</span>);
+<span class="var">process</span>.<span class="var">stdin</span>.<span class="func">setRawMode</span>(<span class="keyword">true</span>);
+
+<span class="var">process</span>.<span class="var">stdin</span>.<span class="func">on</span>(<span class="string">'keypress'</span>, (<span class="var">str</span>, <span class="var">key</span>) => {
+  <span class="keyword">if</span> (<span class="var">key</span>.<span class="var">name</span> === <span class="string">'c'</span> && <span class="var">key</span>.<span class="var">ctrl</span>) {
+    <span class="var">process</span>.<span class="func">exit</span>();  <span class="comment">// Ctrl+C</span>
+  }
+  <span class="var">console</span>.<span class="func">log</span>(<span class="string">'Key:'</span>, <span class="var">str</span>);
+});</code></pre>
+    <div class="note">⚠️ Only works when <code>stdin.isTTY === true</code>. Will throw in non-TTY environments.</div>
+  </div>
+
+  <div class="section-title">🔄 Lifecycle & Events</div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-lifecycle">Lifecycle</span>
+      <h2>process.on('exit')</h2>
+    </div>
+    <div class="method">process.on('exit', callback)</div>
+    <p class="desc">Fired when the process is about to exit. Synchronous only — no async operations allowed.</p>
+    <pre><code><span class="var">process</span>.<span class="func">on</span>(<span class="string">'exit'</span>, (<span class="var">code</span>) => {
+  <span class="var">console</span>.<span class="func">log</span>(<span class="string">`About to exit with code ${code}`</span>);
+  <span class="comment">// Synchronous cleanup only!</span>
+  <span class="var">fs</span>.<span class="func">writeFileSync</span>(<span class="string">'/tmp/cleanup.txt'</span>, <span class="string">'done'</span>);
+
+  <span class="comment">// THIS WILL NOT RUN:</span>
+  <span class="comment">// setTimeout(() => {}, 0);</span>
+  <span class="comment">// await anything</span>
+});</code></pre>
+    <div class="note">⚠️ Async code in 'exit' handlers is ignored. Use 'beforeExit' for async cleanup.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-lifecycle">Lifecycle</span>
+      <h2>process.on('beforeExit')</h2>
+    </div>
+    <div class="method">process.on('beforeExit', callback)</div>
+    <p class="desc">Fired when the event loop is empty and Node.js is about to exit. Allows async work to keep the process alive.</p>
+    <pre><code><span class="var">process</span>.<span class="func">on</span>(<span class="string">'beforeExit'</span>, <span class="keyword">async</span> () => {
+  <span class="var">console</span>.<span class="func">log</span>(<span class="string">'Cleaning up...'</span>);
+  <span class="keyword">await</span> <span class="func">closeDatabaseConnection</span>();
+  <span class="var">console</span>.<span class="func">log</span>(<span class="string">'Cleanup done'</span>);
+});
+
+<span class="comment">// If you add new async work in beforeExit, it can delay exit</span>
+<span class="comment">// But if process.exit() is called, this event does NOT fire</span></code></pre>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-lifecycle">Lifecycle</span>
+      <h2>process.on('uncaughtException')</h2>
+    </div>
+    <div class="method">process.on('uncaughtException', callback)</div>
+    <p class="desc">Catch synchronous errors that bubble up unhandled. Last resort — log and exit gracefully.</p>
+    <pre><code><span class="var">process</span>.<span class="func">on</span>(<span class="string">'uncaughtException'</span>, (<span class="var">err</span>, <span class="var">origin</span>) => {
+  <span class="var">console</span>.<span class="func">error</span>(<span class="string">'Uncaught Exception:'</span>, <span class="var">err</span>);
+  <span class="var">console</span>.<span class="func">error</span>(<span class="string">'Origin:'</span>, <span class="var">origin</span>);  <span class="comment">// 'uncaughtException' or 'unhandledRejection'</span>
+
+  <span class="comment">// MUST exit after handling — the process is in an unknown state</span>
+  <span class="var">process</span>.<span class="func">exit</span>(1);
+});
+
+<span class="comment">// Without this handler, the process crashes immediately</span>
+<span class="func">throwNewError</span>();  <span class="comment">// Would crash without the handler</span></code></pre>
+    <div class="warning"><strong>🔴 Critical:</strong> After <code>uncaughtException</code>, the process is in an undefined state. Always log and exit. Never continue running.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-lifecycle">Lifecycle</span>
+      <h2>process.on('unhandledRejection')</h2>
+    </div>
+    <div class="method">process.on('unhandledRejection', callback)</div>
+    <p class="desc">Catch Promise rejections that were not handled with <code>.catch()</code>. Future Node.js versions will throw these as uncaught exceptions.</p>
+    <pre><code><span class="var">process</span>.<span class="func">on</span>(<span class="string">'unhandledRejection'</span>, (<span class="var">reason</span>, <span class="var">promise</span>) => {
+  <span class="var">console</span>.<span class="func">error</span>(<span class="string">'Unhandled Rejection at:'</span>, <span class="var">promise</span>);
+  <span class="var">console</span>.<span class="func">error</span>(<span class="string">'Reason:'</span>, <span class="var">reason</span>);
+
+  <span class="comment">// Application logic: decide whether to crash or recover</span>
+  <span class="var">process</span>.<span class="func">exit</span>(1);
+});
+
+<span class="comment">// This would trigger the handler:</span>
+<span class="keyword">const</span> <span class="var">p</span> = <span class="var">Promise</span>.<span class="func">reject</span>(<span class="keyword">new</span> <span class="var">Error</span>(<span class="string">'oops'</span>));
+<span class="comment">// No .catch() attached!</span></code></pre>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-lifecycle">Lifecycle</span>
+      <h2>Signal Events (SIGINT, SIGTERM)</h2>
+    </div>
+    <div class="method">process.on('SIGINT', callback)</div>
+    <p class="desc">Handle OS signals for graceful shutdown. SIGINT = Ctrl+C. SIGTERM = process manager kill (Docker, systemd, Kubernetes).</p>
+    <pre><code><span class="keyword">function</span> <span class="func">gracefulShutdown</span>(<span class="var">signal</span>) {
+  <span class="var">console</span>.<span class="func">log</span>(<span class="string">`Received ${signal}. Shutting down...`</span>);
+  <span class="var">server</span>.<span class="func">close</span>(() => {
+    <span class="var">console</span>.<span class="func">log</span>(<span class="string">'HTTP server closed'</span>);
+    <span class="var">db</span>.<span class="func">disconnect</span>().<span class="func">then</span>(() => {
+      <span class="var">console</span>.<span class="func">log</span>(<span class="string">'Database disconnected'</span>);
+      <span class="var">process</span>.<span class="func">exit</span>(0);
+    });
+  });
+}
+
+<span class="var">process</span>.<span class="func">on</span>(<span class="string">'SIGINT'</span>, () => <span class="func">gracefulShutdown</span>(<span class="string">'SIGINT'</span>));
+<span class="var">process</span>.<span class="func">on</span>(<span class="string">'SIGTERM'</span>, () => <span class="func">gracefulShutdown</span>(<span class="string">'SIGTERM'</span>));
+
+<span class="comment">// Windows doesn't support signals well — use this for cross-platform:</span>
+<span class="keyword">if</span> (<span class="var">process</span>.<span class="var">platform</span> === <span class="string">'win32'</span>) {
+  <span class="var">process</span>.<span class="func">on</span>(<span class="string">'SIGINT'</span>, () => <span class="var">process</span>.<span class="func">exit</span>(0));
+}</code></pre>
+    <div class="note">✅ Always handle SIGTERM in production (Docker, Kubernetes). Default behavior is immediate exit, which drops active connections.</div>
+  </div>
+
+  <div class="section-title">🚪 Exiting & Control</div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-exit">Exit</span>
+      <h2>process.exit</h2>
+    </div>
+    <div class="method">process.exit(code?)</div>
+    <p class="desc">Forcefully terminate the process with an exit code. Skips remaining event loop work and <code>beforeExit</code> event.</p>
+    <pre><code><span class="var">process</span>.<span class="func">exit</span>();      <span class="comment">// exit code 0 (success)</span>
+<span class="var">process</span>.<span class="func">exit</span>(0);     <span class="comment">// success</span>
+<span class="var">process</span>.<span class="func">exit</span>(1);     <span class="comment">// general error</span>
+
+<span class="comment">// Common exit codes</span>
+<span class="comment">// 0   = success</span>
+<span class="comment">// 1   = uncaught fatal exception</span>
+<span class="comment">// 3   = internal JavaScript parse error</span>
+<span class="comment">// 4   = internal JavaScript evaluation failure</span>
+<span class="comment">// 5   = fatal error</span>
+<span class="comment">// 6   = non-function internal exception handler</span>
+<span class="comment">// 7   = internal exception handler run-time failure</span>
+<span class="comment">// 8   = uncaught exception</span>
+<span class="comment">// 9   = invalid argument</span>
+<span class="comment">// 10  = internal JavaScript run-time failure</span>
+<span class="comment">// 12  = invalid debug argument</span>
+<span class="comment">// 128 + N = fatal signal (e.g., 130 = SIGINT, 137 = SIGKILL)</span></code></pre>
+    <div class="warning"><strong>⚠️ Warning:</strong> <code>process.exit()</code> immediately terminates I/O operations. Close servers and databases first in a graceful shutdown handler.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-exit">Exit</span>
+      <h2>process.exitCode</h2>
+    </div>
+    <div class="method">process.exitCode = number</div>
+    <p class="desc">Set the exit code without immediately exiting. The process will exit with this code when the event loop is empty.</p>
+    <pre><code><span class="var">process</span>.<span class="var">exitCode</span> = 1;
+
+<span class="comment">// Process continues running, will exit with code 1</span>
+<span class="comment">// when event loop is empty (or on next natural exit)</span>
+
+<span class="comment">// Useful for setting error state while finishing work</span>
+<span class="keyword">if</span> (<span class="var">errors</span>.<span class="var">length</span> > 0) {
+  <span class="var">process</span>.<span class="var">exitCode</span> = 1;
+}</code></pre>
+    <div class="note">✅ Prefer setting <code>process.exitCode</code> over calling <code>process.exit()</code> when you want to finish pending work.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-exit">Exit</span>
+      <h2>process.abort / process.kill</h2>
+    </div>
+    <div class="method">process.abort() / process.kill(pid, signal?)</div>
+    <p class="desc">Hard abort (generates core dump) or send signals to processes.</p>
+    <pre><code><span class="comment">// Immediate abort — generates core dump, no cleanup</span>
+<span class="var">process</span>.<span class="func">abort</span>();
+
+<span class="comment">// Send signal to current process</span>
+<span class="var">process</span>.<span class="func">kill</span>(<span class="var">process</span>.<span class="var">pid</span>, <span class="string">'SIGTERM'</span>);
+
+<span class="comment">// Send signal to another process</span>
+<span class="var">process</span>.<span class="func">kill</span>(<span class="var">otherPid</span>, <span class="string">'SIGINT'</span>);
+
+<span class="comment">// Check if process exists (signal 0 is a no-op check)</span>
+<span class="keyword">try</span> {
+  <span class="var">process</span>.<span class="func">kill</span>(<span class="var">pid</span>, 0);
+  <span class="var">console</span>.<span class="func">log</span>(<span class="string">'Process exists'</span>);
+} <span class="keyword">catch</span> (<span class="var">e</span>) {
+  <span class="var">console</span>.<span class="func">log</span>(<span class="string">'Process does not exist'</span>);
+}</code></pre>
+  </div>
+
+  <div class="section-title">ℹ️ Process Info</div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-info">Info</span>
+      <h2>process.pid / ppid / title</h2>
+    </div>
+    <div class="method">process.pid / process.ppid / process.title</div>
+    <p class="desc">Process ID, parent process ID, and the process name shown in process managers.</p>
+    <pre><code><span class="var">process</span>.<span class="var">pid</span>;     <span class="comment">// 12345 (current process ID)</span>
+<span class="var">process</span>.<span class="var">ppid</span>;    <span class="comment">// 12344 (parent process ID)</span>
+
+<span class="comment">// Set process title (shown in ps, top, Activity Monitor)</span>
+<span class="var">process</span>.<span class="var">title</span> = <span class="string">'my-api-server'</span>;
+
+<span class="comment">// Current working directory</span>
+<span class="var">process</span>.<span class="func">cwd</span>();   <span class="comment">// → '/home/user/project'</span>
+
+<span class="comment">// Change working directory</span>
+<span class="var">process</span>.<span class="func">chdir</span>(<span class="string">'/tmp'</span>);
+<span class="var">process</span>.<span class="func">cwd</span>();   <span class="comment">// → '/tmp'</span></code></pre>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-info">Info</span>
+      <h2>process.platform / arch / version</h2>
+    </div>
+    <div class="method">process.platform / process.arch / process.version</div>
+    <p class="desc">Runtime and platform information for conditional logic.</p>
+    <pre><code><span class="var">process</span>.<span class="var">platform</span>;   <span class="comment">// 'darwin' | 'linux' | 'win32' | 'freebsd' | ...</span>
+<span class="var">process</span>.<span class="var">arch</span>;         <span class="comment">// 'x64' | 'arm64' | 'arm' | 'ia32' | ...</span>
+<span class="var">process</span>.<span class="var">version</span>;      <span class="comment">// 'v20.11.0' (Node.js version)</span>
+<span class="var">process</span>.<span class="var">versions</span>;     <span class="comment">// detailed versions object</span>
+
+<span class="var">process</span>.<span class="var">versions</span>.<span class="var">node</span>;     <span class="comment">// '20.11.0'</span>
+<span class="var">process</span>.<span class="var">versions</span>.<span class="var">v8</span>;       <span class="comment">// V8 engine version</span>
+<span class="var">process</span>.<span class="var">versions</span>.<span class="var">openssl</span>;  <span class="comment">// OpenSSL version</span>
+<span class="var">process</span>.<span class="var">versions</span>.<span class="var">zlib</span>;     <span class="comment">// zlib version</span>
+
+<span class="comment">// Platform-specific logic</span>
+<span class="keyword">if</span> (<span class="var">process</span>.<span class="var">platform</span> === <span class="string">'win32'</span>) {
+  <span class="comment">// Windows-specific path handling</span>
+}</code></pre>
+  </div>
+
+  <div class="section-title">⚡ Performance & Timing</div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-perf">Perf</span>
+      <h2>process.uptime / hrtime</h2>
+    </div>
+    <div class="method">process.uptime() / process.hrtime() / process.hrtime.bigint()</div>
+    <p class="desc">High-resolution timing for benchmarking and measuring intervals.</p>
+    <pre><code><span class="comment">// Seconds since process started</span>
+<span class="var">process</span>.<span class="func">uptime</span>();  <span class="comment">// 3600.123 (seconds)</span>
+
+<span class="comment">// High-resolution time (nanoseconds, relative, not wall-clock)</span>
+<span class="keyword">const</span> <span class="var">start</span> = <span class="var">process</span>.<span class="func">hrtime</span>();
+<span class="comment">// ... do work ...</span>
+<span class="keyword">const</span> [<span class="var">seconds</span>, <span class="var">nanoseconds</span>] = <span class="var">process</span>.<span class="func">hrtime</span>(<span class="var">start</span>);
+<span class="var">console</span>.<span class="func">log</span>(<span class="string">`Took ${seconds}s ${nanoseconds}ns`</span>);
+
+<span class="comment">// BigInt version (easier arithmetic)</span>
+<span class="keyword">const</span> <span class="var">start2</span> = <span class="var">process</span>.<span class="var">hrtime</span>.<span class="func">bigint</span>();
+<span class="comment">// ... do work ...</span>
+<span class="keyword">const</span> <span class="var">end2</span> = <span class="var">process</span>.<span class="var">hrtime</span>.<span class="func">bigint</span>();
+<span class="var">console</span>.<span class="func">log</span>(<span class="string">`Took ${Number(end2 - start2) / 1e6}ms`</span>);</code></pre>
+    <div class="note">✅ Use <code>hrtime</code> for precise benchmarking. It's monotonic (not affected by system clock changes).</div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-perf">Perf</span>
+      <h2>process.memoryUsage / cpuUsage</h2>
+    </div>
+    <div class="method">process.memoryUsage() / process.cpuUsage(previousValue?)</div>
+    <p class="desc">Monitor resource consumption of the current process.</p>
+    <pre><code><span class="comment">// Memory usage (bytes)</span>
+<span class="keyword">const</span> <span class="var">mem</span> = <span class="var">process</span>.<span class="func">memoryUsage</span>();
+<span class="var">mem</span>.<span class="var">rss</span>        <span class="comment">// Resident Set Size (total memory allocated)</span>
+<span class="var">mem</span>.<span class="var">heapTotal</span>  <span class="comment">// V8 heap total size</span>
+<span class="var">mem</span>.<span class="var">heapUsed</span>   <span class="comment">// V8 heap used</span>
+<span class="var">mem</span>.<span class="var">external</span>   <span class="comment">// Memory used by C++ objects bound to JS</span>
+<span class="var">mem</span>.<span class="var">arrayBuffers</span> <span class="comment">// Memory used by ArrayBuffers and SharedArrayBuffers</span>
+
+<span class="comment">// CPU usage (microseconds)</span>
+<span class="keyword">const</span> <span class="var">startCPU</span> = <span class="var">process</span>.<span class="func">cpuUsage</span>();
+<span class="comment">// ... do work ...</span>
+<span class="keyword">const</span> <span class="var">cpu</span> = <span class="var">process</span>.<span class="func">cpuUsage</span>(<span class="var">startCPU</span>);
+<span class="var">cpu</span>.<span class="var">user</span>     <span class="comment">// CPU time in user mode (microseconds)</span>
+<span class="var">cpu</span>.<span class="var">system</span>   <span class="comment">// CPU time in kernel mode (microseconds)</span></code></pre>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-perf">Perf</span>
+      <h2>process.nextTick</h2>
+    </div>
+    <div class="method">process.nextTick(callback, ...args)</div>
+    <p class="desc">Schedule a callback to run immediately after the current operation, before any I/O or timers.</p>
+    <pre><code><span class="var">console</span>.<span class="func">log</span>(<span class="string">'1'</span>);
+<span class="var">process</span>.<span class="func">nextTick</span>(() => <span class="var">console</span>.<span class="func">log</span>(<span class="string">'3'</span>));
+<span class="var">Promise</span>.<span class="func">resolve</span>().<span class="func">then</span>(() => <span class="var">console</span>.<span class="func">log</span>(<span class="string">'4'</span>));
+<span class="var">setTimeout</span>(() => <span class="var">console</span>.<span class="func">log</span>(<span class="string">'5'</span>), 0);
+<span class="var">console</span>.<span class="func">log</span>(<span class="string">'2'</span>);
+
+<span class="comment">// Output: 1, 2, 3, 4, 5</span>
+<span class="comment">// Order: sync → nextTick → microtasks (Promise) → timers → I/O → check</span></code></pre>
+    <div class="note">⚠️ Recursive <code>nextTick</code> calls can starve the event loop. Use <code>setImmediate</code> for yielding to I/O.</div>
+  </div>
+
+  <div class="section-title">📡 IPC (Inter-Process Communication)</div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-io">IPC</span>
+      <h2>process.send / process.on('message')</h2>
+    </div>
+    <div class="method">process.send(message, sendHandle?, options?, callback?)</div>
+    <p class="desc">Send messages between parent and child processes when using <code>child_process.fork()</code> or <code>cluster</code>.</p>
+    <pre><code><span class="comment">// In child process (child.js)</span>
+<span class="var">process</span>.<span class="func">on</span>(<span class="string">'message'</span>, (<span class="var">msg</span>) => {
+  <span class="var">console</span>.<span class="func">log</span>(<span class="string">'From parent:'</span>, <span class="var">msg</span>);
+  <span class="var">process</span>.<span class="func">send</span>({ <span class="var">status</span>: <span class="string">'done'</span>, <span class="var">result</span>: 42 });
+});
+
+<span class="comment">// In parent</span>
+<span class="keyword">import</span> { <span class="func">fork</span> } <span class="keyword">from</span> <span class="string">'node:child_process'</span>;
+<span class="keyword">const</span> <span class="var">child</span> = <span class="func">fork</span>(<span class="string">'./child.js'</span>);
+<span class="var">child</span>.<span class="func">send</span>({ <span class="var">task</span>: <span class="string">'heavy-computation'</span> });
+<span class="var">child</span>.<span class="func">on</span>(<span class="string">'message'</span>, (<span class="var">msg</span>) => {
+  <span class="var">console</span>.<span class="func">log</span>(<span class="string">'From child:'</span>, <span class="var">msg</span>);
+});</code></pre>
+    <div class="note">ℹ️ Only available if the process was spawned with an IPC channel (e.g., <code>fork()</code>).</div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-io">IPC</span>
+      <h2>process.disconnect / connected</h2>
+    </div>
+    <div class="method">process.disconnect() / process.connected</div>
+    <p class="desc">Close the IPC channel and check connection status.</p>
+    <pre><code><span class="var">process</span>.<span class="var">connected</span>;   <span class="comment">// true if IPC channel is open</span>
+
+<span class="var">process</span>.<span class="func">disconnect</span>();  <span class="comment">// Close IPC channel</span>
+
+<span class="var">process</span>.<span class="func">on</span>(<span class="string">'disconnect'</span>, () => {
+  <span class="var">console</span>.<span class="func">log</span>(<span class="string">'IPC channel closed'</span>);
+});</code></pre>
+  </div>
+
+</div>
+
+<div class="tip">
+  <strong>🚀 Pro Pattern — Graceful Shutdown Boilerplate:</strong>
+  <pre style="margin-top:0.5rem; background:rgba(0,0,0,0.2); border:none;"><code><span class="keyword">import</span> <span class="var">http</span> <span class="keyword">from</span> <span class="string">'node:http'</span>;
+
+<span class="keyword">const</span> <span class="var">server</span> = <span class="var">http</span>.<span class="func">createServer</span>((<span class="var">req</span>, <span class="var">res</span>) => {
+  <span class="var">res</span>.<span class="func">end</span>(<span class="string">'OK'</span>);
+}).<span class="func">listen</span>(<span class="var">process</span>.<span class="var">env</span>.<span class="var">PORT</span> || 3000);
+
+<span class="keyword">function</span> <span class="func">shutdown</span>(<span class="var">signal</span>) {
+  <span class="var">console</span>.<span class="func">log</span>(<span class="string">`${signal} received. Starting graceful shutdown...`</span>);
+
+  <span class="var">server</span>.<span class="func">close</span>(<span class="keyword">async</span> () => {
+    <span class="var">console</span>.<span class="func">log</span>(<span class="string">'HTTP server closed'</span>);
+    <span class="comment">// await db.disconnect();</span>
+    <span class="var">process</span>.<span class="func">exit</span>(0);
+  });
+
+  <span class="comment">// Force exit after 10s if graceful shutdown hangs</span>
+  <span class="func">setTimeout</span>(() => {
+    <span class="var">console</span>.<span class="func">error</span>(<span class="string">'Forced shutdown after timeout'</span>);
+    <span class="var">process</span>.<span class="func">exit</span>(1);
+  }, 10000);
+}
+
+<span class="var">process</span>.<span class="func">on</span>(<span class="string">'SIGTERM'</span>, () => <span class="func">shutdown</span>(<span class="string">'SIGTERM'</span>));
+<span class="var">process</span>.<span class="func">on</span>(<span class="string">'SIGINT'</span>, () => <span class="func">shutdown</span>(<span class="string">'SIGINT'</span>));
+
+<span class="var">process</span>.<span class="func">on</span>(<span class="string">'uncaughtException'</span>, (<span class="var">err</span>) => {
+  <span class="var">console</span>.<span class="func">error</span>(<span class="string">'Uncaught Exception:'</span>, <span class="var">err</span>);
+  <span class="func">shutdown</span>(<span class="string">'uncaughtException'</span>);
+});
+
+<span class="var">process</span>.<span class="func">on</span>(<span class="string">'unhandledRejection'</span>, (<span class="var">reason</span>) => {
+  <span class="var">console</span>.<span class="func">error</span>(<span class="string">'Unhandled Rejection:'</span>, <span class="var">reason</span>);
+  <span class="func">shutdown</span>(<span class="string">'unhandledRejection'</span>);
+});</code></pre>
+</div>
+
+<h2 style="margin-top:2rem; color:var(--heading); border-bottom:1px solid var(--border); padding-bottom:0.5rem;">📋 Quick Decision Guide</h2>
+<table>
+  <tr><th>Goal</th><th>Use</th></tr>
+  <tr><td>Read environment variable</td><td><code>process.env.VAR_NAME</code></td></tr>
+  <tr><td>Read CLI arguments</td><td><code>process.argv.slice(2)</code> or <code>util.parseArgs()</code></td></tr>
+  <tr><td>Graceful shutdown on Ctrl+C</td><td><code>process.on('SIGINT', handler)</code></td></tr>
+  <tr><td>Graceful shutdown from Docker/K8s</td><td><code>process.on('SIGTERM', handler)</code></td></tr>
+  <tr><td>Catch unhandled synchronous errors</td><td><code>process.on('uncaughtException', handler)</code></td></tr>
+  <tr><td>Catch unhandled Promise rejections</td><td><code>process.on('unhandledRejection', handler)</code></td></tr>
+  <tr><td>Exit immediately</td><td><code>process.exit(code)</code></td></tr>
+  <tr><td>Set exit code, finish work first</td><td><code>process.exitCode = code</code></td></tr>
+  <tr><td>Run callback before I/O/timers</td><td><code>process.nextTick(callback)</code></td></tr>
+  <tr><td>High-res benchmark timing</td><td><code>process.hrtime.bigint()</code></td></tr>
+  <tr><td>Check memory usage</td><td><code>process.memoryUsage()</code></td></tr>
+  <tr><td>Get process ID</td><td><code>process.pid</code></td></tr>
+  <tr><td>Check platform</td><td><code>process.platform</code></td></tr>
+  <tr><td>Send message to parent process</td><td><code>process.send(msg)</code> (fork only)</td></tr>
+</table>
+
+<h2 style="margin-top:2rem; color:var(--heading); border-bottom:1px solid var(--border); padding-bottom:0.5rem;">⚠️ Common Pitfalls</h2>
+<table>
+  <tr><th>Mistake</th><th>Why It's Wrong</th><th>Fix</th></tr>
+  <tr><td>Calling <code>process.exit()</code> without cleanup</td><td>Drops active connections, corrupts data</td><td>Close servers/DBs first, then exit</td></tr>
+  <tr><td>Async code in <code>'exit'</code> event handler</td><td>Never executes — event loop is drained</td><td>Use <code>'beforeExit'</code> or cleanup before calling exit</td></tr>
+  <tr><td>Not handling <code>SIGTERM</code> in containers</td><td>Docker kills with SIGKILL after timeout, hard crash</td><td>Always handle SIGTERM for graceful shutdown</td></tr>
+  <tr><td>Continuing after <code>uncaughtException</code></td><td>Process is in undefined state, may corrupt data</td><td>Log and <code>process.exit(1)</code></td></tr>
+  <tr><td>Recursive <code>process.nextTick()</code></code></td><td>Starves I/O, blocks event loop</td><td>Use <code>setImmediate()</code> to yield</td></tr>
+  <tr><td>Modifying <code>process.env</code> and expecting shell to see it</td><td>Only affects current process & children</td><td>Use shell export or <code>.env</code> files</td></tr>
+</table>
+
+<div class="footer">
+  Node.js process Module Cheat Sheet &mdash; Save this file and open in any browser for quick reference.<br>
+  Based on Node.js 18+ <code>process</code> global object.
+</div>
+
+</body>
+</html>

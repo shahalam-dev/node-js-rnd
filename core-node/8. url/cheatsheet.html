@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Node.js url Module Cheat Sheet</title>
+  <style>
+    :root {
+      --bg: #0d1117;
+      --card: #161b22;
+      --border: #30363d;
+      --text: #c9d1d9;
+      --heading: #f0f6fc;
+      --code-bg: #1f2937;
+      --code-text: #e6edf3;
+      --accent: #58a6ff;
+      --accent2: #3fb950;
+      --accent3: #d29922;
+      --accent4: #f85149;
+      --muted: #8b949e;
+      --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      line-height: 1.6;
+      padding: 2rem 1rem;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+    h1 {
+      color: var(--heading);
+      font-size: 2.2rem;
+      margin-bottom: 0.5rem;
+      border-bottom: 2px solid var(--accent);
+      padding-bottom: 0.5rem;
+    }
+    .subtitle {
+      color: var(--muted);
+      font-size: 0.95rem;
+      margin-bottom: 2rem;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 1.5rem;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem;
+      transition: border-color 0.2s;
+    }
+    .card:hover { border-color: var(--accent); }
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.75rem;
+    }
+    .badge {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      padding: 2px 8px;
+      border-radius: 4px;
+      letter-spacing: 0.5px;
+    }
+    .badge-parse { background: rgba(88,166,255,0.15); color: var(--accent); }
+    .badge-format { background: rgba(63,185,80,0.15); color: var(--accent2); }
+    .badge-resolve { background: rgba(210,153,34,0.15); color: var(--accent3); }
+    .badge-util { background: rgba(248,81,73,0.15); color: var(--accent4); }
+    h2 {
+      color: var(--heading);
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
+    .method {
+      font-family: "SFMono-Regular", Consolas, monospace;
+      font-size: 0.85rem;
+      color: var(--accent);
+      background: rgba(88,166,255,0.08);
+      padding: 2px 6px;
+      border-radius: 4px;
+      margin-bottom: 0.4rem;
+      display: inline-block;
+    }
+    p.desc {
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-bottom: 0.6rem;
+    }
+    pre {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      overflow-x: auto;
+      font-size: 0.8rem;
+      line-height: 1.5;
+    }
+    code {
+      font-family: "SFMono-Regular", Consolas, monospace;
+      color: var(--code-text);
+    }
+    .comment { color: #8b949e; }
+    .keyword { color: #ff7b72; }
+    .string { color: #a5d6ff; }
+    .func { color: #d2a8ff; }
+    .var { color: #79c0ff; }
+    .output { color: #7ee787; }
+    .note {
+      font-size: 0.8rem;
+      color: var(--accent3);
+      margin-top: 0.5rem;
+      padding-left: 0.5rem;
+      border-left: 2px solid var(--accent3);
+    }
+    .tip {
+      background: rgba(88,166,255,0.08);
+      border: 1px solid rgba(88,166,255,0.3);
+      border-radius: 8px;
+      padding: 1rem;
+      margin: 2rem 0;
+      font-size: 0.9rem;
+    }
+    .tip strong { color: var(--accent); }
+    .footer {
+      text-align: center;
+      margin-top: 3rem;
+      color: var(--muted);
+      font-size: 0.8rem;
+    }
+    .section-title {
+      grid-column: 1 / -1;
+      color: var(--heading);
+      font-size: 1.3rem;
+      margin-top: 1rem;
+      margin-bottom: -0.5rem;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 0.5rem;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+      margin-top: 0.5rem;
+    }
+    th, td {
+      text-align: left;
+      padding: 0.5rem 0.75rem;
+      border-bottom: 1px solid var(--border);
+    }
+    th { color: var(--heading); font-weight: 600; }
+    td code { color: var(--accent); }
+    .const-table td:first-child { font-family: monospace; color: var(--accent); }
+  </style>
+  <base target="_blank">
+</head>
+<body>
+
+<h1>🌐 Node.js <code>url</code> Module Cheat Sheet</h1>
+<p class="subtitle">URL parsing, formatting, and resolution — Node.js 18+ (WHATWG & Legacy)</p>
+
+<div class="tip">
+  <strong>💡 Golden Rule:</strong> Prefer the <strong>WHATWG URL API</strong> (<code>new URL()</code>) over legacy methods. It's more robust and handles all modern URL features. Import with <code>node:url</code> prefix.
+</div>
+
+<div class="grid">
+
+  <div class="section-title">📦 WHATWG URL API (Recommended)</div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-parse">Parse</span>
+      <h2>new URL()</h2>
+    </div>
+    <div class="method">new URL(input, base?)</div>
+    <p class="desc">Create a URL object. Parses and validates. Throws on invalid URLs.</p>
+    <pre><code><span class="keyword">import</span> { <span class="var">URL</span> } <span class="keyword">from</span> <span class="string">'node:url'</span>;
+
+<span class="keyword">const</span> <span class="var">url</span> = <span class="keyword">new</span> <span class="func">URL</span>(<span class="string">'https://user:pass@example.com:8080/path?query=1#hash'</span>);
+
+<span class="comment">// Access properties</span>
+<span class="var">url</span>.<span class="var">protocol</span>    <span class="comment">// 'https:'</span>
+<span class="var">url</span>.<span class="var">username</span>    <span class="comment">// 'user'</span>
+<span class="var">url</span>.<span class="var">password</span>    <span class="comment">// 'pass'</span>
+<span class="var">url</span>.<span class="var">hostname</span>    <span class="comment">// 'example.com'</span>
+<span class="var">url</span>.<span class="var">port</span>        <span class="comment">// '8080'</span>
+<span class="var">url</span>.<span class="var">pathname</span>    <span class="comment">// '/path'</span>
+<span class="var">url</span>.<span class="var">search</span>      <span class="comment">// '?query=1'</span>
+<span class="var">url</span>.<span class="var">hash</span>        <span class="comment">// '#hash'</span>
+<span class="var">url</span>.<span class="var">origin</span>      <span class="comment">// 'https://example.com:8080'</span>
+
+<span class="comment">// Resolve relative</span>
+<span class="keyword">const</span> <span class="var">base</span> = <span class="keyword">new</span> <span class="func">URL</span>(<span class="string">'https://example.com/dir/'</span>);
+<span class="keyword">const</span> <span class="var">rel</span> = <span class="keyword">new</span> <span class="func">URL</span>(<span class="string">'../file.js'</span>, <span class="var">base</span>);
+<span class="comment">// → 'https://example.com/file.js'</span></code></pre>
+    <div class="note">✅ Use for: parsing, validation, and building URLs.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-format">Format</span>
+      <h2>url.href / url.toString()</h2>
+    </div>
+    <div class="method">url.href / url.toString()</div>
+    <p class="desc">Get the full URL string. <code>href</code> and <code>toString()</code> are identical.</p>
+    <pre><code><span class="keyword">const</span> <span class="var">url</span> = <span class="keyword">new</span> <span class="func">URL</span>(<span class="string">'https://example.com'</span>);
+<span class="var">url</span>.<span class="var">href</span>           <span class="comment">// 'https://example.com/'</span>
+<span class="var">url</span>.<span class="func">toString</span>()      <span class="comment">// 'https://example.com/'</span>
+
+<span class="comment">// Mutate and re-serialize</span>
+<span class="var">url</span>.<span class="var">pathname</span> = <span class="string">'/api/v2'</span>;
+<span class="var">url</span>.<span class="var">search</span> = <span class="string">'?key=value'</span>;
+<span class="var">url</span>.<span class="var">href</span>           <span class="comment">// 'https://example.com/api/v2?key=value'</span></code></pre>
+    <div class="note">ℹ️ <code>href</code> is the canonical string representation.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-parse">Parse</span>
+      <h2>URLSearchParams</h2>
+    </div>
+    <div class="method">url.searchParams</div>
+    <p class="desc">Iterable interface for query parameters. Similar to Map/URLSearchParams.</p>
+    <pre><code><span class="keyword">const</span> <span class="var">url</span> = <span class="keyword">new</span> <span class="func">URL</span>(<span class="string">'https://example.com?foo=1&bar=2&foo=3'</span>);
+
+<span class="comment">// Get first value</span>
+<span class="var">url</span>.<span class="var">searchParams</span>.<span class="func">get</span>(<span class="string">'foo'</span>);   <span class="comment">// '1'</span>
+
+<span class="comment">// Get all values</span>
+<span class="var">url</span>.<span class="var">searchParams</span>.<span class="func">getAll</span>(<span class="string">'foo'</span>); <span class="comment">// ['1', '3']</span>
+
+<span class="comment">// Iterate</span>
+<span class="keyword">for</span> (<span class="keyword">const</span> [<span class="var">key</span>, <span class="var">val</span>] <span class="keyword">of</span> <span class="var">url</span>.<span class="var">searchParams</span>) {
+  <span class="var">console</span>.<span class="func">log</span>(<span class="var">key</span>, <span class="var">val</span>);
+}
+
+<span class="comment">// Modify</span>
+<span class="var">url</span>.<span class="var">searchParams</span>.<span class="func">set</span>(<span class="string">'foo'</span>, <span class="string">'42'</span>);
+<span class="var">url</span>.<span class="var">searchParams</span>.<span class="func">append</span>(<span class="string">'bar'</span>, <span class="string">'new'</span>);
+<span class="var">url</span>.<span class="var">searchParams</span>.<span class="func">delete</span>(<span class="string">'baz'</span>);
+<span class="var">url</span>.<span class="var">href</span> <span class="comment">// reflects changes</span></code></pre>
+    <div class="note">✅ Use for: reading, modifying, or building query strings.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-util">Util</span>
+      <h2>url.domainToASCII / domainToUnicode</h2>
+    </div>
+    <div class="method">url.domainToASCII(domain) / url.domainToUnicode(domain)</div>
+    <p class="desc">Convert between Unicode domain names (IDN) and ASCII Punycode.</p>
+    <pre><code><span class="keyword">import</span> { <span class="var">domainToASCII</span>, <span class="var">domainToUnicode</span> } <span class="keyword">from</span> <span class="string">'node:url'</span>;
+
+<span class="var">domainToASCII</span>(<span class="string">'español.com'</span>);    <span class="comment">// 'xn--espaol-zwa.com'</span>
+<span class="var">domainToUnicode</span>(<span class="string">'xn--espaol-zwa.com'</span>); <span class="comment">// 'español.com'</span>
+
+<span class="comment">// Used internally by URL class</span>
+<span class="keyword">const</span> <span class="var">url</span> = <span class="keyword">new</span> <span class="func">URL</span>(<span class="string">'https://español.com'</span>);
+<span class="var">url</span>.<span class="var">hostname</span> <span class="comment">// 'xn--espaol-zwa.com' (ASCII)</span></code></pre>
+  </div>
+
+  <div class="section-title">📜 Legacy URL API (Node.js specific)</div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-parse">Parse</span>
+      <h2>url.parse()</h2>
+    </div>
+    <div class="method">url.parse(urlString, parseQueryString?, slashesDenoteHost?)</div>
+    <p class="desc">Parse URL into an object. Returns <code>Url</code> object. Legacy – prefer <code>new URL()</code>.</p>
+    <pre><code><span class="keyword">import</span> <span class="var">url</span> <span class="keyword">from</span> <span class="string">'node:url'</span>;
+
+<span class="keyword">const</span> <span class="var">parsed</span> = <span class="var">url</span>.<span class="func">parse</span>(<span class="string">'https://user:pass@host:8080/path?query=1#hash'</span>);
+<span class="comment">// → {</span>
+<span class="comment">//   protocol: 'https:',</span>
+<span class="comment">//   slashes: true,</span>
+<span class="comment">//   auth: 'user:pass',</span>
+<span class="comment">//   host: 'host:8080',</span>
+<span class="comment">//   port: '8080',</span>
+<span class="comment">//   hostname: 'host',</span>
+<span class="comment">//   hash: '#hash',</span>
+<span class="comment">//   search: '?query=1',</span>
+<span class="comment">//   query: 'query=1',</span>
+<span class="comment">//   pathname: '/path',</span>
+<span class="comment">//   path: '/path?query=1',</span>
+<span class="comment">//   href: 'https://user:pass@host:8080/path?query=1#hash'</span>
+<span class="comment">// }</span>
+
+<span class="comment">// Parse query into object</span>
+<span class="keyword">const</span> <span class="var">withQuery</span> = <span class="var">url</span>.<span class="func">parse</span>(<span class="string">'/?foo=1&bar=2'</span>, <span class="keyword">true</span>);
+<span class="comment">// → query: { foo: '1', bar: '2' }</span></code></pre>
+    <div class="note">⚠️ Legacy: <code>url.parse()</code> is not as strict as <code>new URL()</code>. Use <code>new URL()</code> for new code.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-format">Format</span>
+      <h2>url.format()</h2>
+    </div>
+    <div class="method">url.format(urlObject)</div>
+    <p class="desc">Build a URL string from a URL object. Works with both legacy and WHATWG objects.</p>
+    <pre><code><span class="keyword">const</span> <span class="var">url</span> = <span class="keyword">require</span>(<span class="string">'node:url'</span>);
+
+<span class="comment">// From legacy object</span>
+<span class="var">url</span>.<span class="func">format</span>({
+  <span class="var">protocol</span>: <span class="string">'https'</span>,
+  <span class="var">hostname</span>: <span class="string">'example.com'</span>,
+  <span class="var">pathname</span>: <span class="string">'/path'</span>,
+  <span class="var">query</span>: { <span class="var">foo</span>: <span class="string">'bar'</span> }
+});
+<span class="comment">// → 'https://example.com/path?foo=bar'</span>
+
+<span class="comment">// From WHATWG URL</span>
+<span class="keyword">const</span> <span class="var">whatwg</span> = <span class="keyword">new</span> <span class="func">URL</span>(<span class="string">'https://example.com'</span>);
+<span class="var">url</span>.<span class="func">format</span>(<span class="var">whatwg</span>); <span class="comment">// 'https://example.com/'</span></code></pre>
+    <div class="note">ℹ️ <code>url.format()</code> is useful when you need to serialize a legacy URL object.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-resolve">Resolve</span>
+      <h2>url.resolve()</h2>
+    </div>
+    <div class="method">url.resolve(from, to)</div>
+    <p class="desc">Resolve a target URL relative to a base URL. Legacy – use <code>new URL(to, from)</code> instead.</p>
+    <pre><code><span class="keyword">import</span> <span class="var">url</span> <span class="keyword">from</span> <span class="string">'node:url'</span>;
+
+<span class="var">url</span>.<span class="func">resolve</span>(<span class="string">'https://example.com/dir/'</span>, <span class="string">'../file.js'</span>);
+<span class="comment">// → 'https://example.com/file.js'</span>
+
+<span class="var">url</span>.<span class="func">resolve</span>(<span class="string">'https://example.com/'</span>, <span class="string">'/absolute'</span>);
+<span class="comment">// → 'https://example.com/absolute'</span>
+
+<span class="comment">// Modern equivalent</span>
+<span class="keyword">new</span> <span class="func">URL</span>(<span class="string">'../file.js'</span>, <span class="string">'https://example.com/dir/'</span>).<span class="var">href</span>;
+<span class="comment">// → 'https://example.com/file.js'</span></code></pre>
+    <div class="note">⚠️ Legacy: <code>url.resolve()</code> is deprecated. Use <code>new URL()</code> for resolution.</div>
+  </div>
+
+  <div class="section-title">🔄 File URL & Utility</div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-util">Util</span>
+      <h2>fileURLToPath / pathToFileURL</h2>
+    </div>
+    <div class="method">fileURLToPath(url) / pathToFileURL(path)</div>
+    <p class="desc">Convert between file:// URLs and filesystem paths. Critical for ESM and cross-platform.</p>
+    <pre><code><span class="keyword">import</span> { <span class="var">fileURLToPath</span>, <span class="var">pathToFileURL</span> } <span class="keyword">from</span> <span class="string">'node:url'</span>;
+
+<span class="comment">// File URL → filesystem path</span>
+<span class="keyword">const</span> <span class="var">url</span> = <span class="keyword">new</span> <span class="func">URL</span>(<span class="string">'file:///C:/Users/foo/file.txt'</span>);
+<span class="var">fileURLToPath</span>(<span class="var">url</span>); <span class="comment">// 'C:\\Users\\foo\\file.txt' (Windows)</span>
+<span class="var">fileURLToPath</span>(<span class="string">'file:///home/user/file.txt'</span>); <span class="comment">// '/home/user/file.txt'</span>
+
+<span class="comment">// Path → file:// URL</span>
+<span class="var">pathToFileURL</span>(<span class="string">'/home/user/file.txt'</span>).<span class="var">href</span>;
+<span class="comment">// 'file:///home/user/file.txt'</span>
+
+<span class="comment">// __dirname in ESM</span>
+<span class="keyword">const</span> <span class="var">__filename</span> = <span class="func">fileURLToPath</span>(<span class="keyword">import</span>.<span class="var">meta</span>.<span class="var">url</span>);</code></pre>
+    <div class="note">✅ Use for: converting between <code>file://</code> URLs and filesystem paths.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-util">Util</span>
+      <h2>url.urlToHttpOptions</h2>
+    </div>
+    <div class="method">url.urlToHttpOptions(url)</div>
+    <p class="desc">Convert a WHATWG URL to an options object for <code>http.request()</code> or <code>https.request()</code>.</p>
+    <pre><code><span class="keyword">import</span> { <span class="var">urlToHttpOptions</span> } <span class="keyword">from</span> <span class="string">'node:url'</span>;
+<span class="keyword">import</span> <span class="var">https</span> <span class="keyword">from</span> <span class="string">'node:https'</span>;
+
+<span class="keyword">const</span> <span class="var">url</span> = <span class="keyword">new</span> <span class="func">URL</span>(<span class="string">'https://api.example.com/data?q=1'</span>);
+<span class="keyword">const</span> <span class="var">options</span> = <span class="func">urlToHttpOptions</span>(<span class="var">url</span>);
+<span class="comment">// → { protocol: 'https:', hostname: 'api.example.com', ... }</span>
+
+<span class="var">https</span>.<span class="func">request</span>(<span class="var">options</span>, <span class="var">res</span> => { <span class="comment">/* ... */</span> });</code></pre>
+    <div class="note">ℹ️ Useful for Node.js HTTP clients that expect legacy options objects.</div>
+  </div>
+
+</div>
+
+<div class="tip">
+  <strong>🚀 Pro Pattern — Safe URL Construction:</strong>
+  <pre style="margin-top:0.5rem; background:rgba(0,0,0,0.2); border:none;"><code><span class="keyword">import</span> { <span class="var">URL</span> } <span class="keyword">from</span> <span class="string">'node:url'</span>;
+
+<span class="comment">// Build URL with dynamic segments (safe & auto-encoded)</span>
+<span class="keyword">function</span> <span class="func">buildUrl</span>(<span class="var">base</span>, <span class="var">pathSegments</span>, <span class="var">query</span>) {
+  <span class="keyword">const</span> <span class="var">url</span> = <span class="keyword">new</span> <span class="func">URL</span>(<span class="var">base</span>);
+  <span class="var">url</span>.<span class="var">pathname</span> = <span class="var">path</span>.<span class="func">join</span>(<span class="var">url</span>.<span class="var">pathname</span>, ...<span class="var">pathSegments</span>);
+  <span class="keyword">for</span> (<span class="keyword">const</span> [<span class="var">k</span>, <span class="var">v</span>] <span class="keyword">of</span> <span class="var">Object</span>.<span class="func">entries</span>(<span class="var">query</span>)) {
+    <span class="var">url</span>.<span class="var">searchParams</span>.<span class="func">set</span>(<span class="var">k</span>, <span class="var">v</span>);
+  }
+  <span class="keyword">return</span> <span class="var">url</span>;
+}
+
+<span class="comment">// Use it</span>
+<span class="keyword">const</span> <span class="var">apiUrl</span> = <span class="func">buildUrl</span>(<span class="string">'https://api.com/v1'</span>, [<span class="string">'users'</span>, <span class="string">'123'</span>], { <span class="var">fields</span>: <span class="string">'name,email'</span> });
+<span class="comment">// → 'https://api.com/v1/users/123?fields=name%2Cemail'</span></code></pre>
+</div>
+
+<h2 style="margin-top:2rem; color:var(--heading); border-bottom:1px solid var(--border); padding-bottom:0.5rem;">📋 Quick Decision Guide</h2>
+<table>
+  <tr><th>Goal</th><th>Recommended</th></tr>
+  <tr><td>Parse & validate URL</td><td><code>new URL()</code></td></tr>
+  <tr><td>Read query parameters</td><td><code>url.searchParams.get()</code></td></tr>
+  <tr><td>Modify query parameters</td><td><code>url.searchParams.set()</code> etc.</td></tr>
+  <tr><td>Resolve relative URL</td><td><code>new URL(relative, base)</code></td></tr>
+  <tr><td>Get URL string</td><td><code>url.href</code> or <code>url.toString()</code></td></tr>
+  <tr><td>Build URL from parts</td><td><code>new URL()</code> with pathname/searchParams</td></tr>
+  <tr><td>File URL ⇄ filesystem path</td><td><code>fileURLToPath</code> / <code>pathToFileURL</code></td></tr>
+  <tr><td>HTTP request options</td><td><code>urlToHttpOptions()</code></td></tr>
+  <tr><td>IDN domain conversion</td><td><code>domainToASCII</code> / <code>domainToUnicode</code></td></tr>
+</table>
+
+<h2 style="margin-top:2rem; color:var(--heading); border-bottom:1px solid var(--border); padding-bottom:0.5rem;">⚠️ Common Pitfalls</h2>
+<table>
+  <tr><th>Mistake</th><th>Why It's Wrong</th><th>Fix</th></tr>
+  <tr><td><code>url.parse()</code> for new code</td><td>Less strict, legacy API</td><td><code>new URL()</code></td></tr>
+  <tr><td><code>url.resolve()</code></td><td>Deprecated, quirky behavior</td><td><code>new URL(to, from)</code></td></tr>
+  <tr><td>Manually concatenating URL strings</td><td>Prone to double slashes, encoding issues</td><td>Use <code>new URL()</code> and <code>pathname</code>/<code>searchParams</code></td></tr>
+  <tr><td>Forgetting to encode query values</td><td>Special characters break URL</td><td><code>searchParams.set()</code> auto-encodes</td></tr>
+  <tr><td>Using <code>url.href</code> after mutation</td><td>Works, but <code>toString()</code> is explicit</td><td><code>url.toString()</code> or <code>String(url)</code></td></tr>
+</table>
+
+<div class="footer">
+  Node.js url Module Cheat Sheet &mdash; Save this file and open in any browser for quick reference.<br>
+  Based on Node.js 18+ with <code>node:url</code> API. Prefer WHATWG <code>new URL()</code> for modern code.
+</div>
+
+</body>
+</html>

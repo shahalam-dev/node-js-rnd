@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Node.js util Module Cheat Sheet</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --card: #161b22;
+    --border: #30363d;
+    --text: #c9d1d9;
+    --heading: #f0f6fc;
+    --code-bg: #1f2937;
+    --code-text: #e6edf3;
+    --accent: #58a6ff;
+    --accent2: #3fb950;
+    --accent3: #d29922;
+    --accent4: #f85149;
+    --accent5: #bc8cff;
+    --accent6: #56d4dd;
+    --accent7: #ff9bce;
+    --accent8: #f778ba;
+    --muted: #8b949e;
+    --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    line-height: 1.6;
+    padding: 2rem 1rem;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+  h1 {
+    color: var(--heading);
+    font-size: 2.2rem;
+    margin-bottom: 0.5rem;
+    border-bottom: 2px solid var(--accent8);
+    padding-bottom: 0.5rem;
+  }
+  .subtitle {
+    color: var(--muted);
+    font-size: 0.95rem;
+    margin-bottom: 2rem;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 1.5rem;
+  }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.25rem;
+    transition: border-color 0.2s;
+  }
+  .card:hover { border-color: var(--accent8); }
+  .card-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+  }
+  .badge {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    padding: 2px 8px;
+    border-radius: 4px;
+    letter-spacing: 0.5px;
+  }
+  .badge-async { background: rgba(247,120,186,0.15); color: var(--accent8); }
+  .badge-debug { background: rgba(88,166,255,0.15); color: var(--accent); }
+  .badge-type { background: rgba(63,185,80,0.15); color: var(--accent2); }
+  .badge-deprecate { background: rgba(210,153,34,0.15); color: var(--accent3); }
+  .badge-misc { background: rgba(188,140,255,0.15); color: var(--accent5); }
+  h2 {
+    color: var(--heading);
+    font-size: 1.1rem;
+    font-weight: 600;
+  }
+  .method {
+    font-family: "SFMono-Regular", Consolas, monospace;
+    font-size: 0.85rem;
+    color: var(--accent8);
+    background: rgba(247,120,186,0.08);
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-bottom: 0.4rem;
+    display: inline-block;
+  }
+  p.desc {
+    font-size: 0.85rem;
+    color: var(--muted);
+    margin-bottom: 0.6rem;
+  }
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    overflow-x: auto;
+    font-size: 0.8rem;
+    line-height: 1.5;
+  }
+  code {
+    font-family: "SFMono-Regular", Consolas, monospace;
+    color: var(--code-text);
+  }
+  .comment { color: #8b949e; }
+  .keyword { color: #ff7b72; }
+  .string { color: #a5d6ff; }
+  .func { color: #d2a8ff; }
+  .var { color: #79c0ff; }
+  .output { color: #7ee787; }
+  .note {
+    font-size: 0.8rem;
+    color: var(--accent3);
+    margin-top: 0.5rem;
+    padding-left: 0.5rem;
+    border-left: 2px solid var(--accent3);
+  }
+  .tip {
+    background: rgba(63,185,80,0.08);
+    border: 1px solid rgba(63,185,80,0.3);
+    border-radius: 8px;
+    padding: 1rem;
+    margin: 2rem 0;
+    font-size: 0.9rem;
+  }
+  .tip strong { color: var(--accent2); }
+  .warning {
+    background: rgba(248,81,73,0.08);
+    border: 1px solid rgba(248,81,73,0.3);
+    border-radius: 8px;
+    padding: 1rem;
+    margin: 2rem 0;
+    font-size: 0.9rem;
+  }
+  .warning strong { color: var(--accent4); }
+  .footer {
+    text-align: center;
+    margin-top: 3rem;
+    color: var(--muted);
+    font-size: 0.8rem;
+  }
+  .section-title {
+    grid-column: 1 / -1;
+    color: var(--heading);
+    font-size: 1.3rem;
+    margin-top: 1rem;
+    margin-bottom: -0.5rem;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 0.5rem;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+    margin-top: 0.5rem;
+  }
+  th, td {
+    text-align: left;
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid var(--border);
+  }
+  th { color: var(--heading); font-weight: 600; }
+  td code { color: var(--accent8); }
+  .full-width { grid-column: 1 / -1; }
+  .deprecated {
+    text-decoration: line-through;
+    opacity: 0.6;
+  }
+</style>
+<base target="_blank">
+</head>
+<body>
+
+<h1>🛠️ Node.js <code>util</code> Module Cheat Sheet</h1>
+<p class="subtitle">Utility functions for everyday Node.js tasks — Node.js 18+</p>
+
+<div class="tip">
+  <strong>💡 Golden Rule:</strong> The <code>util</code> module bridges callback-style APIs with modern Promises, provides deep inspection for debugging, and offers handy formatting utilities. Most of it is for development and interoperability — not production hot paths.
+</div>
+
+<div class="grid">
+
+  <div class="section-title">⏳ Async Utilities</div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-async">Async</span>
+      <h2>util.promisify</h2>
+    </div>
+    <div class="method">util.promisify(original)</div>
+    <p class="desc">Convert a callback-based function into a Promise-returning function. The most important util function for modernizing legacy code.</p>
+    <pre><code><span class="keyword">import</span> { <span class="func">promisify</span> } <span class="keyword">from</span> <span class="string">'node:util'</span>;
+<span class="keyword">import</span> <span class="var">fs</span> <span class="keyword">from</span> <span class="string">'node:fs'</span>;
+
+<span class="comment">// Convert fs.readFile (callback) to Promise</span>
+<span class="keyword">const</span> <span class="var">readFileAsync</span> = <span class="func">promisify</span>(<span class="var">fs</span>.<span class="var">readFile</span>);
+
+<span class="keyword">const</span> <span class="var">data</span> = <span class="keyword">await</span> <span class="var">readFileAsync</span>(<span class="string">'./file.txt'</span>, <span class="string">'utf-8'</span>);
+
+<span class="comment">// Works with any callback-last, (err, result) function</span>
+<span class="keyword">const</span> <span class="var">execAsync</span> = <span class="func">promisify</span>(<span class="var">require</span>(<span class="string">'node:child_process'</span>).<span class="var">exec</span>);
+<span class="keyword">const</span> { <span class="var">stdout</span> } = <span class="keyword">await</span> <span class="var">execAsync</span>(<span class="string">'ls -la'</span>);</code></pre>
+    <div class="note">✅ Most core modules now have <code>/promises</code> exports (e.g., <code>node:fs/promises</code>). Use those instead of promisify when available.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-async">Async</span>
+      <h2>util.callbackify</h2>
+    </div>
+    <div class="method">util.callbackify(original)</div>
+    <p class="desc">The reverse of promisify. Convert an async/Promise function into a callback-style function.</p>
+    <pre><code><span class="keyword">import</span> { <span class="func">callbackify</span> } <span class="keyword">from</span> <span class="string">'node:util'</span>;
+
+<span class="keyword">async function</span> <span class="func">fetchData</span>(<span class="var">url</span>) {
+  <span class="keyword">const</span> <span class="var">res</span> = <span class="keyword">await</span> <span class="func">fetch</span>(<span class="var">url</span>);
+  <span class="keyword">return</span> <span class="keyword">await</span> <span class="var">res</span>.<span class="func">json</span>();
+}
+
+<span class="comment">// Convert to callback style for legacy compatibility</span>
+<span class="keyword">const</span> <span class="var">fetchDataCb</span> = <span class="func">callbackify</span>(<span class="func">fetchData</span>);
+
+<span class="func">fetchDataCb</span>(<span class="string">'https://api.example.com'</span>, (<span class="var">err</span>, <span class="var">data</span>) => {
+  <span class="keyword">if</span> (<span class="var">err</span>) <span class="var">console</span>.<span class="func">error</span>(<span class="var">err</span>);
+  <span class="keyword">else</span> <span class="var">console</span>.<span class="func">log</span>(<span class="var">data</span>);
+});</code></pre>
+    <div class="note">ℹ️ Rarely needed today. Useful when integrating with older callback-based libraries.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-async">Async</span>
+      <h2>util.parseArgs</h2>
+    </div>
+    <div class="method">util.parseArgs(config)</div>
+    <p class="desc">Parse command-line arguments. Built-in replacement for <code>minimist</code> and <code>yargs-parser</code> for simple cases.</p>
+    <pre><code><span class="keyword">import</span> { <span class="func">parseArgs</span> } <span class="keyword">from</span> <span class="string">'node:util'</span>;
+
+<span class="keyword">const</span> { <span class="var">values</span> } = <span class="func">parseArgs</span>({
+  <span class="var">options</span>: {
+    <span class="var">port</span>: { <span class="var">type</span>: <span class="string">'string'</span>, <span class="var">short</span>: <span class="string">'p'</span>, <span class="var">default</span>: <span class="string">'3000'</span> },
+    <span class="var">verbose</span>: { <span class="var">type</span>: <span class="string">'boolean'</span>, <span class="var">short</span>: <span class="string">'v'</span> },
+    <span class="var">env</span>: { <span class="var">type</span>: <span class="string">'string'</span>, <span class="var">multiple</span>: <span class="keyword">true</span> }
+  },
+  <span class="var">allowPositionals</span>: <span class="keyword">true</span>
+});
+
+<span class="comment">// node app.js --port 8080 -v production</span>
+<span class="var">values</span>.<span class="var">port</span>      <span class="comment">// '8080'</span>
+<span class="var">values</span>.<span class="var">verbose</span>   <span class="comment">// true</span>
+<span class="var">values</span>.<span class="var">env</span>       <span class="comment">// ['production']</span></code></pre>
+    <div class="note">✅ Added in Node.js 18.3. No external dependency needed for CLI argument parsing.</div>
+  </div>
+
+  <div class="section-title">🔍 Debugging & Inspection</div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-debug">Debug</span>
+      <h2>util.inspect</h2>
+    </div>
+    <div class="method">util.inspect(object, options?)</div>
+    <p class="desc">Deep, human-readable string representation of any JavaScript value. The engine behind <code>console.log</code> for objects.</p>
+    <pre><code><span class="keyword">import</span> { <span class="func">inspect</span> } <span class="keyword">from</span> <span class="string">'node:util'</span>;
+
+<span class="keyword">const</span> <span class="var">obj</span> = { <span class="var">a</span>: 1, <span class="var">b</span>: { <span class="var">c</span>: [<span class="string">'x'</span>, <span class="string">'y'</span>] }, <span class="var">fn</span>: () => {} };
+
+<span class="func">inspect</span>(<span class="var">obj</span>);
+<span class="comment">// → "{ a: 1, b: { c: [ 'x', 'y' ] }, fn: [Function: fn] }"</span>
+
+<span class="comment">// With options</span>
+<span class="func">inspect</span>(<span class="var">obj</span>, {
+  <span class="var">depth</span>: <span class="keyword">null</span>,        <span class="comment">// unlimited depth</span>
+  <span class="var">colors</span>: <span class="keyword">true</span>,       <span class="comment">// ANSI colors</span>
+  <span class="var">showHidden</span>: <span class="keyword">true</span>,   <span class="comment">// non-enumerable props</span>
+  <span class="var">maxArrayLength</span>: 10,
+  <span class="var">breakLength</span>: 80
+});
+
+<span class="comment">// Custom inspect via Symbol</span>
+<span class="keyword">class</span> <span class="var">User</span> {
+  [<span class="var">Symbol</span>.<span class="var">for</span>(<span class="string">'nodejs.util.inspect.custom'</span>)](<span class="var">depth</span>, <span class="var">options</span>) {
+    <span class="keyword">return</span> <span class="string">`User: ${this.name}`</span>;
+  }
+}</code></pre>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-debug">Debug</span>
+      <h2>util.format</h2>
+    </div>
+    <div class="method">util.format(format, ...args)</div>
+    <p class="desc">String formatting with printf-style placeholders. The engine behind <code>console.log</code> formatting.</p>
+    <pre><code><span class="keyword">import</span> { <span class="func">format</span> } <span class="keyword">from</span> <span class="string">'node:util'</span>;
+
+<span class="func">format</span>(<span class="string">'Hello %s, you have %d messages'</span>, <span class="string">'Alice'</span>, 5);
+<span class="comment">// → 'Hello Alice, you have 5 messages'</span>
+
+<span class="func">format</span>(<span class="string">'%o'</span>, { <span class="var">a</span>: 1 });      <span class="comment">// Object (inspect)</span>
+<span class="func">format</span>(<span class="string">'%O'</span>, { <span class="var">a</span>: 1 });      <span class="comment">// Object (no colors)</span>
+<span class="func">format</span>(<span class="string">'%j'</span>, { <span class="var">a</span>: 1 });      <span class="comment">// JSON string</span>
+<span class="func">format</span>(<span class="string">'%d'</span>, 42);            <span class="comment">// Number (integer)</span>
+<span class="func">format</span>(<span class="string">'%f'</span>, 3.14);           <span class="comment">// Number (float)</span>
+<span class="func">format</span>(<span class="string">'%s'</span>, <span class="string">'text'</span>);        <span class="comment">// String</span>
+<span class="func">format</span>(<span class="string">'%%'</span>);                 <span class="comment">// Literal '%'</span>
+
+<span class="comment">// Extra args are inspect()-ed and concatenated</span>
+<span class="func">format</span>(<span class="string">'User:'</span>, { <span class="var">name</span>: <span class="string">'Bob'</span> });
+<span class="comment">// → "User: { name: 'Bob' }"</span></code></pre>
+    <div class="note">ℹ️ <code>console.log</code> uses <code>util.format</code> internally. You rarely need to call it directly.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-debug">Debug</span>
+      <h2>util.debuglog / util.debug</h2>
+    </div>
+    <div class="method">util.debuglog(section)</div>
+    <p class="desc">Conditional debug logging controlled by the <code>NODE_DEBUG</code> environment variable.</p>
+    <pre><code><span class="keyword">import</span> { <span class="func">debuglog</span> } <span class="keyword">from</span> <span class="string">'node:util'</span>;
+
+<span class="keyword">const</span> <span class="var">debug</span> = <span class="func">debuglog</span>(<span class="string">'http'</span>);
+
+<span class="var">debug</span>(<span class="string">'Processing request %o'</span>, { <span class="var">url</span>: <span class="string">'/api'</span> });
+
+<span class="comment">// Only prints when: NODE_DEBUG=http node app.js</span>
+<span class="comment">// Output: HTTP 3245: Processing request { url: '/api' }</span>
+
+<span class="comment">// Multiple sections</span>
+<span class="keyword">const</span> <span class="var">dbDebug</span> = <span class="func">debuglog</span>(<span class="string">'db'</span>);
+<span class="comment">// NODE_DEBUG=http,db  (comma-separated)</span></code></pre>
+    <div class="note">✅ Use for library debug output. Users opt-in via <code>NODE_DEBUG=yoursection</code>.</div>
+  </div>
+
+  <div class="section-title">📋 Type Checking</div>
+
+  <div class="card full-width">
+    <div class="card-header">
+      <span class="badge badge-type">Type</span>
+      <h2>util.types — Fast Native Type Checks</h2>
+    </div>
+    <p class="desc">Reliable type checking that works across realms and frames, unlike <code>instanceof</code>.</p>
+    <pre><code><span class="keyword">import</span> { <span class="var">types</span> } <span class="keyword">from</span> <span class="string">'node:util'</span>;
+
+<span class="var">types</span>.<span class="func">isPromise</span>(<span class="keyword">new</span> <span class="var">Promise</span>(() => {}));     <span class="comment">// true</span>
+<span class="var">types</span>.<span class="func">isAsyncFunction</span>(<span class="keyword">async</span> () => {});      <span class="comment">// true</span>
+<span class="var">types</span>.<span class="func">isDate</span>(<span class="keyword">new</span> <span class="var">Date</span>());                   <span class="comment">// true</span>
+<span class="var">types</span>.<span class="func">isRegExp</span>(<span class="string">/abc/</span>);                         <span class="comment">// true</span>
+<span class="var">types</span>.<span class="func">isMap</span>(<span class="keyword">new</span> <span class="var">Map</span>());                       <span class="comment">// true</span>
+<span class="var">types</span>.<span class="func">isSet</span>(<span class="keyword">new</span> <span class="var">Set</span>());                       <span class="comment">// true</span>
+<span class="var">types</span>.<span class="func">isArrayBuffer</span>(<span class="keyword">new</span> <span class="var">ArrayBuffer</span>(8));     <span class="comment">// true</span>
+<span class="var">types</span>.<span class="func">isSharedArrayBuffer</span>(<span class="var">sab</span>);               <span class="comment">// true</span>
+<span class="var">types</span>.<span class="func">isTypedArray</span>(<span class="keyword">new</span> <span class="var">Uint8Array</span>(4));      <span class="comment">// true</span>
+<span class="var">types</span>.<span class="func">isDataView</span>(<span class="keyword">new</span> <span class="var">DataView</span>(<span class="var">buffer</span>));      <span class="comment">// true</span>
+<span class="var">types</span>.<span class="func">isProxy</span>(<span class="keyword">new</span> <span class="var">Proxy</span>({}, {}));             <span class="comment">// true</span>
+<span class="var">types</span>.<span class="func">isWeakMap</span>(<span class="keyword">new</span> <span class="var">WeakMap</span>());               <span class="comment">// true</span>
+<span class="var">types</span>.<span class="func">isWeakSet</span>(<span class="keyword">new</span> <span class="var">WeakSet</span>());               <span class="comment">// true</span>
+<span class="var">types</span>.<span class="func">isGeneratorObject</span>((<span class="keyword">function*</span>() {})()); <span class="comment">// true</span>
+<span class="var">types</span>.<span class="func">isModuleNamespaceObject</span>(<span class="var">ns</span>);            <span class="comment">// true (import * as ns)</span>
+
+<span class="comment">// Why not instanceof? Fails across iframes/VM contexts</span>
+<span class="var">obj</span> <span class="keyword">instanceof</span> <span class="var">Date</span>   <span class="comment">// false in different realm</span>
+<span class="var">types</span>.<span class="func">isDate</span>(<span class="var">obj</span>)     <span class="comment">// true always</span></code></pre>
+    <div class="note">✅ Prefer <code>util.types</code> over <code>instanceof</code> when checking built-in types. It's faster and works across realms.</div>
+  </div>
+
+  <div class="section-title">⚠️ Deprecation Utilities</div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-deprecate">Deprecate</span>
+      <h2>util.deprecate</h2>
+    </div>
+    <div class="method">util.deprecate(fn, msg, code?)</div>
+    <p class="desc">Wrap a function to emit a deprecation warning on first call. Used by Node.js core for API evolution.</p>
+    <pre><code><span class="keyword">import</span> { <span class="func">deprecate</span> } <span class="keyword">from</span> <span class="string">'node:util'</span>;
+
+<span class="keyword">const</span> <span class="var">oldApi</span> = <span class="func">deprecate</span>(() => {
+  <span class="comment">// old behavior</span>
+}, <span class="string">'oldApi() is deprecated. Use newApi() instead.'</span>, <span class="string">'DEP0001'</span>);
+
+<span class="var">oldApi</span>();
+<span class="comment">// (node:1234) [DEP0001] DeprecationWarning:</span>
+<span class="comment">// oldApi() is deprecated. Use newApi() instead.</span></code></pre>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-deprecate">Deprecate</span>
+      <h2>util.toUSVString</h2>
+    </div>
+    <div class="method">util.toUSVString(string)</div>
+    <p class="desc">Convert a string to a well-formed Unicode string by replacing lone surrogates.</p>
+    <pre><code><span class="keyword">import</span> { <span class="func">toUSVString</span> } <span class="keyword">from</span> <span class="string">'node:util'</span>;
+
+<span class="func">toUSVString</span>(<span class="string">'\uD800'</span>);  <span class="comment">// '\uFFFD' (replacement character)</span>
+<span class="func">toUSVString</span>(<span class="string">'hello'</span>);     <span class="comment">// 'hello' (unchanged)</span></code></pre>
+    <div class="note">ℹ️ Rarely needed directly. Used internally for URL and Web API compliance.</div>
+  </div>
+
+  <div class="section-title">🔧 Miscellaneous</div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-misc">Misc</span>
+      <h2>util.inherits</h2>
+    </div>
+    <div class="method">util.inherits(constructor, superConstructor)</div>
+    <p class="desc">Prototype inheritance setup. <span class="deprecated">Deprecated</span> — use <code>class extends</code> instead.</p>
+    <pre><code><span class="comment">// OLD WAY (don't use)</span>
+<span class="keyword">function</span> <span class="func">MyError</span>(<span class="var">message</span>) {
+  <span class="var">Error</span>.<span class="func">call</span>(<span class="keyword">this</span>, <span class="var">message</span>);
+}
+<span class="func">inherits</span>(<span class="func">MyError</span>, <span class="var">Error</span>);
+
+<span class="comment">// MODERN WAY (use this)</span>
+<span class="keyword">class</span> <span class="var">MyError</span> <span class="keyword">extends</span> <span class="var">Error</span> {
+  <span class="func">constructor</span>(<span class="var">message</span>) {
+    <span class="keyword">super</span>(<span class="var">message</span>);
+    <span class="keyword">this</span>.<span class="var">name</span> = <span class="string">'MyError'</span>;
+  }
+}</code></pre>
+    <div class="note">⚠️ <code>util.inherits</code> is deprecated. Use native <code>class extends</code> syntax.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-misc">Misc</span>
+      <h2>util.TextEncoder / util.TextDecoder</h2>
+    </div>
+    <p class="desc">Encode/decode between strings and TypedArrays. Also available as global Web API objects.</p>
+    <pre><code><span class="keyword">import</span> { <span class="var">TextEncoder</span>, <span class="var">TextDecoder</span> } <span class="keyword">from</span> <span class="string">'node:util'</span>;
+<span class="comment">// Or use global: new TextEncoder()</span>
+
+<span class="keyword">const</span> <span class="var">encoder</span> = <span class="keyword">new</span> <span class="var">TextEncoder</span>();
+<span class="keyword">const</span> <span class="var">decoder</span> = <span class="keyword">new</span> <span class="var">TextDecoder</span>(<span class="string">'utf-8'</span>);
+
+<span class="comment">// String → Uint8Array</span>
+<span class="keyword">const</span> <span class="var">bytes</span> = <span class="var">encoder</span>.<span class="func">encode</span>(<span class="string">'Hello'</span>);
+<span class="comment">// → Uint8Array [72, 101, 108, 108, 111]</span>
+
+<span class="comment">// Uint8Array → String</span>
+<span class="keyword">const</span> <span class="var">str</span> = <span class="var">decoder</span>.<span class="func">decode</span>(<span class="var">bytes</span>);
+<span class="comment">// → 'Hello'</span>
+
+<span class="comment">// Decode stream chunks</span>
+<span class="keyword">const</span> <span class="var">chunk</span> = <span class="keyword">new</span> <span class="var">Uint8Array</span>([<span class="var">0xF0</span>, <span class="var">0x9F</span>, <span class="var">0x98</span>, <span class="var">0x80</span>]);
+<span class="var">decoder</span>.<span class="func">decode</span>(<span class="var">chunk</span>);  <span class="comment">// '😀'</span></code></pre>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-misc">Misc</span>
+      <h2>util.transferableAbortSignal / AbortController</h2>
+    </div>
+    <p class="desc">Utilities for working with AbortController across threads and contexts.</p>
+    <pre><code><span class="keyword">import</span> { <span class="func">transferableAbortSignal</span>, <span class="func">transferableAbortController</span> } <span class="keyword">from</span> <span class="string">'node:util'</span>;
+
+<span class="comment">// Create an AbortController whose signal can be posted to Worker threads</span>
+<span class="keyword">const</span> <span class="var">controller</span> = <span class="func">transferableAbortController</span>();
+<span class="keyword">const</span> <span class="var">signal</span> = <span class="func">transferableAbortSignal</span>(<span class="var">controller</span>.<span class="var">signal</span>);
+
+<span class="var">worker</span>.<span class="func">postMessage</span>({ <span class="var">signal</span> }, [<span class="var">signal</span>]);
+
+<span class="comment">// Cancel from main thread</span>
+<span class="var">controller</span>.<span class="func">abort</span>(<span class="string">'User cancelled'</span>);</code></pre>
+    <div class="note">ℹ️ Advanced use case for Worker threads and cross-context cancellation.</div>
+  </div>
+
+</div>
+
+<div class="tip">
+  <strong>🚀 Pro Pattern — Wrapping a Legacy Callback API:</strong>
+  <pre style="margin-top:0.5rem; background:rgba(0,0,0,0.2); border:none;"><code><span class="keyword">import</span> { <span class="func">promisify</span> } <span class="keyword">from</span> <span class="string">'node:util'</span>;
+<span class="keyword">import</span> { <span class="func">createReadStream</span> } <span class="keyword">from</span> <span class="string">'node:fs'</span>;
+<span class="keyword">import</span> <span class="var">crypto</span> <span class="keyword">from</span> <span class="string">'node:crypto'</span>;
+
+<span class="comment">// Wrap legacy crypto.randomBytes</span>
+<span class="keyword">const</span> <span class="var">randomBytesAsync</span> = <span class="func">promisify</span>(<span class="var">crypto</span>.<span class="var">randomBytes</span>);
+
+<span class="keyword">async function</span> <span class="func">generateToken</span>() {
+  <span class="keyword">const</span> <span class="var">buf</span> = <span class="keyword">await</span> <span class="var">randomBytesAsync</span>(32);
+  <span class="keyword">return</span> <span class="var">buf</span>.<span class="func">toString</span>(<span class="string">'hex'</span>);
+}
+
+<span class="comment">// Custom promisify with custom behavior</span>
+<span class="keyword">const</span> <span class="var">customRead</span> = <span class="func">promisify</span>((<span class="var">path</span>, <span class="var">cb</span>) => {
+  <span class="keyword">const</span> <span class="var">stream</span> = <span class="func">createReadStream</span>(<span class="var">path</span>, <span class="string">'utf-8'</span>);
+  <span class="keyword">let</span> <span class="var">data</span> = <span class="string">''</span>;
+  <span class="var">stream</span>.<span class="func">on</span>(<span class="string">'data'</span>, <span class="var">chunk</span> => <span class="var">data</span> += <span class="var">chunk</span>);
+  <span class="var">stream</span>.<span class="func">on</span>(<span class="string">'end'</span>, () => <span class="func">cb</span>(<span class="keyword">null</span>, <span class="var">data</span>));
+  <span class="var">stream</span>.<span class="func">on</span>(<span class="string">'error'</span>, <span class="var">cb</span>);
+});</code></pre>
+</div>
+
+<h2 style="margin-top:2rem; color:var(--heading); border-bottom:1px solid var(--border); padding-bottom:0.5rem;">📋 Quick Decision Guide</h2>
+<table>
+  <tr><th>Goal</th><th>Use</th></tr>
+  <tr><td>Convert callback API to Promise</td><td><code>util.promisify(fn)</code></td></tr>
+  <tr><td>Convert Promise API to callback</td><td><code>util.callbackify(fn)</code></td></tr>
+  <tr><td>Parse CLI arguments</td><td><code>util.parseArgs(config)</code></td></tr>
+  <tr><td>Deep inspect an object</td><td><code>util.inspect(obj, options)</code></td></tr>
+  <tr><td>Format strings like printf</td><td><code>util.format('Hello %s', name)</code></td></tr>
+  <tr><td>Conditional debug logging</td><td><code>util.debuglog('section')</code></td></tr>
+  <tr><td>Check if value is a Promise</td><td><code>util.types.isPromise(val)</code></td></tr>
+  <tr><td>Check if value is a Date</td><td><code>util.types.isDate(val)</code></td></tr>
+  <tr><td>Check if value is a Proxy</td><td><code>util.types.isProxy(val)</code></td></tr>
+  <tr><td>Mark function as deprecated</td><td><code>util.deprecate(fn, msg)</code></td></tr>
+  <tr><td>Encode string to bytes</td><td><code>new TextEncoder().encode(str)</code></td></tr>
+  <tr><td>Decode bytes to string</td><td><code>new TextDecoder().decode(bytes)</code></td></tr>
+</table>
+
+<h2 style="margin-top:2rem; color:var(--heading); border-bottom:1px solid var(--border); padding-bottom:0.5rem;">⚠️ Common Pitfalls</h2>
+<table>
+  <tr><th>Mistake</th><th>Why It's Wrong</th><th>Fix</th></tr>
+  <tr><td>Using <code>promisify</code> on fs methods</td><td><code>fs/promises</code> already exists</td><td><code>import fs from 'node:fs/promises'</code></td></tr>
+  <tr><td><code>instanceof Date</code> across realms</td><td>Returns false in different contexts</td><td><code>util.types.isDate(val)</code></td></tr>
+  <tr><td>Using <code>util.inherits</code></td><td>Deprecated, legacy pattern</td><td>Use <code>class extends</code> syntax</td></tr>
+  <tr><td>Calling <code>inspect</code> in production logs</td><td>Can leak sensitive data, slow</td><td>Use structured logging (JSON)</td></tr>
+  <tr><td>Not checking <code>promisify</code> fn signature</td><td>Must be callback-last, (err, result)</td><td>Wrap non-standard APIs manually</td></tr>
+</table>
+
+<div class="footer">
+  Node.js util Module Cheat Sheet &mdash; Save this file and open in any browser for quick reference.<br>
+  Based on Node.js 18+ with <code>node:util</code> API.
+</div>
+
+</body>
+</html>
