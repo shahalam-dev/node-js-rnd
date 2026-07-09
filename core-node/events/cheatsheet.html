@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Node.js http/https Module Cheat Sheet</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --card: #161b22;
+    --border: #30363d;
+    --text: #c9d1d9;
+    --heading: #f0f6fc;
+    --code-bg: #1f2937;
+    --code-text: #e6edf3;
+    --accent: #58a6ff;
+    --accent2: #3fb950;
+    --accent3: #d29922;
+    --accent4: #f85149;
+    --accent5: #bc8cff;
+    --muted: #8b949e;
+    --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    line-height: 1.6;
+    padding: 2rem 1rem;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+  h1 {
+    color: var(--heading);
+    font-size: 2.2rem;
+    margin-bottom: 0.5rem;
+    border-bottom: 2px solid var(--accent5);
+    padding-bottom: 0.5rem;
+  }
+  .subtitle {
+    color: var(--muted);
+    font-size: 0.95rem;
+    margin-bottom: 2rem;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 1.5rem;
+  }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.25rem;
+    transition: border-color 0.2s;
+  }
+  .card:hover { border-color: var(--accent5); }
+  .card-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+  }
+  .badge {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    padding: 2px 8px;
+    border-radius: 4px;
+    letter-spacing: 0.5px;
+  }
+  .badge-server { background: rgba(188,140,255,0.15); color: var(--accent5); }
+  .badge-client { background: rgba(88,166,255,0.15); color: var(--accent); }
+  .badge-res { background: rgba(63,185,80,0.15); color: var(--accent2); }
+  .badge-https { background: rgba(210,153,34,0.15); color: var(--accent3); }
+  .badge-util { background: rgba(248,81,73,0.15); color: var(--accent4); }
+  h2 {
+    color: var(--heading);
+    font-size: 1.1rem;
+    font-weight: 600;
+  }
+  .method {
+    font-family: "SFMono-Regular", Consolas, monospace;
+    font-size: 0.85rem;
+    color: var(--accent5);
+    background: rgba(188,140,255,0.08);
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-bottom: 0.4rem;
+    display: inline-block;
+  }
+  p.desc {
+    font-size: 0.85rem;
+    color: var(--muted);
+    margin-bottom: 0.6rem;
+  }
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    overflow-x: auto;
+    font-size: 0.8rem;
+    line-height: 1.5;
+  }
+  code {
+    font-family: "SFMono-Regular", Consolas, monospace;
+    color: var(--code-text);
+  }
+  .comment { color: #8b949e; }
+  .keyword { color: #ff7b72; }
+  .string { color: #a5d6ff; }
+  .func { color: #d2a8ff; }
+  .var { color: #79c0ff; }
+  .output { color: #7ee787; }
+  .note {
+    font-size: 0.8rem;
+    color: var(--accent3);
+    margin-top: 0.5rem;
+    padding-left: 0.5rem;
+    border-left: 2px solid var(--accent3);
+  }
+  .tip {
+    background: rgba(63,185,80,0.08);
+    border: 1px solid rgba(63,185,80,0.3);
+    border-radius: 8px;
+    padding: 1rem;
+    margin: 2rem 0;
+    font-size: 0.9rem;
+  }
+  .tip strong { color: var(--accent2); }
+  .warning {
+    background: rgba(248,81,73,0.08);
+    border: 1px solid rgba(248,81,73,0.3);
+    border-radius: 8px;
+    padding: 1rem;
+    margin: 2rem 0;
+    font-size: 0.9rem;
+  }
+  .warning strong { color: var(--accent4); }
+  .footer {
+    text-align: center;
+    margin-top: 3rem;
+    color: var(--muted);
+    font-size: 0.8rem;
+  }
+  .section-title {
+    grid-column: 1 / -1;
+    color: var(--heading);
+    font-size: 1.3rem;
+    margin-top: 1rem;
+    margin-bottom: -0.5rem;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 0.5rem;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+    margin-top: 0.5rem;
+  }
+  th, td {
+    text-align: left;
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid var(--border);
+  }
+  th { color: var(--heading); font-weight: 600; }
+  td code { color: var(--accent5); }
+  .full-width { grid-column: 1 / -1; }
+</style>
+<base target="_blank">
+</head>
+<body>
+
+<h1>🌐 Node.js <code>http</code> / <code>https</code> Module Cheat Sheet</h1>
+<p class="subtitle">Build servers and make requests — Node.js 18+</p>
+
+<div class="tip">
+  <strong>💡 Golden Rule:</strong> For new code, prefer the built-in <code>fetch()</code> API (Node 18+) for HTTP <strong>requests</strong>. Use <code>http/https</code> modules for <strong>servers</strong>, low-level control, or when you need streaming.
+</div>
+
+<div class="grid">
+
+  <div class="section-title">🖥️ Creating a Server</div>
+
+  <div class="card full-width">
+    <div class="card-header">
+      <span class="badge badge-server">Server</span>
+      <h2>http.createServer</h2>
+    </div>
+    <div class="method">http.createServer(requestListener)</div>
+    <p class="desc">Create an HTTP server. The callback receives (req, res) for every incoming request.</p>
+    <pre><code><span class="keyword">import</span> <span class="var">http</span> <span class="keyword">from</span> <span class="string">'node:http'</span>;
+
+<span class="keyword">const</span> <span class="var">server</span> = <span class="var">http</span>.<span class="func">createServer</span>((<span class="var">req</span>, <span class="var">res</span>) => {
+  <span class="var">console</span>.<span class="func">log</span>(<span class="var">req</span>.<span class="var">method</span>, <span class="var">req</span>.<span class="var">url</span>);  <span class="comment">// GET /users</span>
+
+  <span class="var">res</span>.<span class="func">writeHead</span>(200, { <span class="string">'Content-Type'</span>: <span class="string">'application/json'</span> });
+  <span class="var">res</span>.<span class="func">end</span>(<span class="var">JSON</span>.<span class="func">stringify</span>({ <span class="var">message</span>: <span class="string">'Hello World'</span> }));
+});
+
+<span class="var">server</span>.<span class="func">listen</span>(3000, () => {
+  <span class="var">console</span>.<span class="func">log</span>(<span class="string">'Server running on http://localhost:3000'</span>);
+});</code></pre>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-server">Server</span>
+      <h2>HTTPS Server</h2>
+    </div>
+    <div class="method">https.createServer(options, requestListener)</div>
+    <p class="desc">Create an HTTPS server with SSL/TLS certificate.</p>
+    <pre><code><span class="keyword">import</span> <span class="var">https</span> <span class="keyword">from</span> <span class="string">'node:https'</span>;
+<span class="keyword">import</span> { <span class="func">readFileSync</span> } <span class="keyword">from</span> <span class="string">'node:fs'</span>;
+
+<span class="keyword">const</span> <span class="var">options</span> = {
+  <span class="var">key</span>: <span class="func">readFileSync</span>(<span class="string">'./server-key.pem'</span>),
+  <span class="var">cert</span>: <span class="func">readFileSync</span>(<span class="string">'./server-cert.pem'</span>)
+};
+
+<span class="var">https</span>.<span class="func">createServer</span>(<span class="var">options</span>, (<span class="var">req</span>, <span class="var">res</span>) => {
+  <span class="var">res</span>.<span class="func">end</span>(<span class="string">'Secure connection!'</span>);
+}).<span class="func">listen</span>(443);</code></pre>
+    <div class="note">🔒 Use <code>https</code> for production. For local dev, consider <code>mkcert</code> for self-signed certs.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-server">Server</span>
+      <h2>server.listen</h2>
+    </div>
+    <div class="method">server.listen(port, hostname?, callback?)</div>
+    <p class="desc">Start listening for connections. Multiple signatures supported.</p>
+    <pre><code><span class="comment">// Port only (accepts all interfaces)</span>
+<span class="var">server</span>.<span class="func">listen</span>(3000);
+
+<span class="comment">// Port + callback</span>
+<span class="var">server</span>.<span class="func">listen</span>(3000, () => <span class="var">console</span>.<span class="func">log</span>(<span class="string">'Ready'</span>));
+
+<span class="comment">// Port + hostname + callback</span>
+<span class="var">server</span>.<span class="func">listen</span>(3000, <span class="string">'127.0.0.1'</span>, () => {});
+
+<span class="comment">// Unix socket (faster, same-machine)</span>
+<span class="var">server</span>.<span class="func">listen</span>(<span class="string">'/tmp/app.sock'</span>);</code></pre>
+  </div>
+
+  <div class="section-title">📨 The Request Object (req)</div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-server">Req</span>
+      <h2>req Properties</h2>
+    </div>
+    <p class="desc">IncomingMessage — read-only stream with request metadata.</p>
+    <pre><code><span class="var">req</span>.<span class="var">method</span>        <span class="comment">// 'GET', 'POST', 'PUT', 'DELETE', etc.</span>
+<span class="var">req</span>.<span class="var">url</span>           <span class="comment">// '/users?id=123' (raw URL string)</span>
+<span class="var">req</span>.<span class="var">headers</span>       <span class="comment">// { 'content-type': 'application/json', ... }</span>
+<span class="var">req</span>.<span class="var">httpVersion</span>   <span class="comment">// '1.1' or '2.0'</span>
+
+<span class="comment">// Parse URL</span>
+<span class="keyword">const</span> <span class="var">url</span> = <span class="keyword">new</span> <span class="var">URL</span>(<span class="var">req</span>.<span class="var">url</span>, <span class="string">`http://${req.headers.host}`</span>);
+<span class="var">url</span>.<span class="var">pathname</span>      <span class="comment">// '/users'</span>
+<span class="var">url</span>.<span class="var">searchParams</span>.<span class="func">get</span>(<span class="string">'id'</span>)  <span class="comment">// '123'</span></code></pre>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-server">Req</span>
+      <h2>Reading Request Body</h2>
+    </div>
+    <p class="desc">req is a readable stream. Collect chunks to get the full body.</p>
+    <pre><code><span class="keyword">function</span> <span class="func">getBody</span>(<span class="var">req</span>) {
+  <span class="keyword">return new</span> <span class="var">Promise</span>((<span class="var">resolve</span>, <span class="var">reject</span>) => {
+    <span class="keyword">let</span> <span class="var">body</span> = <span class="string">''</span>;
+    <span class="var">req</span>.<span class="func">on</span>(<span class="string">'data'</span>, <span class="var">chunk</span> => <span class="var">body</span> += <span class="var">chunk</span>);
+    <span class="var">req</span>.<span class="func">on</span>(<span class="string">'end'</span>, () => <span class="func">resolve</span>(<span class="var">body</span>));
+    <span class="var">req</span>.<span class="func">on</span>(<span class="string">'error'</span>, <span class="var">reject</span>);
+  });
+}
+
+<span class="comment">// Usage</span>
+<span class="keyword">const</span> <span class="var">body</span> = <span class="keyword">await</span> <span class="func">getBody</span>(<span class="var">req</span>);
+<span class="keyword">const</span> <span class="var">data</span> = <span class="var">JSON</span>.<span class="func">parse</span>(<span class="var">body</span>);</code></pre>
+    <div class="note">⚠️ For large uploads, use streams or <code>formidable</code>/<code>multer</code> instead of buffering.</div>
+  </div>
+
+  <div class="section-title">📤 The Response Object (res)</div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-res">Res</span>
+      <h2>res.writeHead / res.statusCode</h2>
+    </div>
+    <p class="desc">Set status code and headers. Must be called before <code>res.end()</code> (unless using implicit 200).</p>
+    <pre><code><span class="comment">// Set status + headers</span>
+<span class="var">res</span>.<span class="func">writeHead</span>(200, {
+  <span class="string">'Content-Type'</span>: <span class="string">'application/json'</span>,
+  <span class="string">'Cache-Control'</span>: <span class="string">'no-cache'</span>
+});
+
+<span class="comment">// Or set individually</span>
+<span class="var">res</span>.<span class="var">statusCode</span> = 404;
+<span class="var">res</span>.<span class="func">setHeader</span>(<span class="string">'Content-Type'</span>, <span class="string">'text/plain'</span>);
+
+<span class="comment">// Multiple values for same header</span>
+<span class="var">res</span>.<span class="func">setHeader</span>(<span class="string">'Set-Cookie'</span>, [<span class="string">'a=1'</span>, <span class="string">'b=2'</span>]);</code></pre>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-res">Res</span>
+      <h2>res.write / res.end</h2>
+    </div>
+    <p class="desc">Send response data. <code>end()</code> finishes the response and optionally sends final data.</p>
+    <pre><code><span class="comment">// Send and close</span>
+<span class="var">res</span>.<span class="func">end</span>(<span class="string">'Hello'</span>);
+
+<span class="comment">// Write multiple chunks, then end</span>
+<span class="var">res</span>.<span class="func">write</span>(<span class="string">'Chunk 1'</span>);
+<span class="var">res</span>.<span class="func">write</span>(<span class="string">'Chunk 2'</span>);
+<span class="var">res</span>.<span class="func">end</span>(<span class="string">'Final'</span>);
+
+<span class="comment">// JSON response</span>
+<span class="var">res</span>.<span class="func">writeHead</span>(200, { <span class="string">'Content-Type'</span>: <span class="string">'application/json'</span> });
+<span class="var">res</span>.<span class="func">end</span>(<span class="var">JSON</span>.<span class="func">stringify</span>({ <span class="var">ok</span>: <span class="keyword">true</span> }));
+
+<span class="comment">// Redirect</span>
+<span class="var">res</span>.<span class="func">writeHead</span>(302, { <span class="string">'Location'</span>: <span class="string">'/new-page'</span> });
+<span class="var">res</span>.<span class="func">end</span>();</code></pre>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-res">Res</span>
+      <h2>Streaming Response</h2>
+    </div>
+    <p class="desc">Pipe a readable stream directly to the response for efficient file serving.</p>
+    <pre><code><span class="keyword">import</span> <span class="var">fs</span> <span class="keyword">from</span> <span class="string">'node:fs'</span>;
+<span class="keyword">import</span> <span class="var">path</span> <span class="keyword">from</span> <span class="string">'node:path'</span>;
+
+<span class="var">server</span>.<span class="func">on</span>(<span class="string">'request'</span>, (<span class="var">req</span>, <span class="var">res</span>) => {
+  <span class="keyword">const</span> <span class="var">filePath</span> = <span class="var">path</span>.<span class="func">join</span>(<span class="string">'./public'</span>, <span class="var">req</span>.<span class="var">url</span>);
+  <span class="keyword">const</span> <span class="var">stream</span> = <span class="var">fs</span>.<span class="func">createReadStream</span>(<span class="var">filePath</span>);
+
+  <span class="var">stream</span>.<span class="func">on</span>(<span class="string">'open'</span>, () => {
+    <span class="var">res</span>.<span class="func">writeHead</span>(200, { <span class="string">'Content-Type'</span>: <span class="string">'text/html'</span> });
+  });
+
+  <span class="var">stream</span>.<span class="func">pipe</span>(<span class="var">res</span>);
+
+  <span class="var">stream</span>.<span class="func">on</span>(<span class="string">'error'</span>, () => {
+    <span class="var">res</span>.<span class="func">writeHead</span>(404);
+    <span class="var">res</span>.<span class="func">end</span>(<span class="string">'Not found'</span>);
+  });
+});</code></pre>
+  </div>
+
+  <div class="section-title">📡 Making HTTP Requests</div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-client">Request</span>
+      <h2>http.get / http.request</h2>
+    </div>
+    <div class="method">http.get(url/options, callback)</div>
+    <p class="desc">Make HTTP requests. <code>get</code> is shorthand for GET with auto-end. <code>request</code> supports all methods.</p>
+    <pre><code><span class="keyword">import</span> <span class="var">http</span> <span class="keyword">from</span> <span class="string">'node:http'</span>;
+
+<span class="comment">// Simple GET</span>
+<span class="var">http</span>.<span class="func">get</span>(<span class="string">'http://api.example.com/users'</span>, (<span class="var">res</span>) => {
+  <span class="keyword">let</span> <span class="var">data</span> = <span class="string">''</span>;
+  <span class="var">res</span>.<span class="func">on</span>(<span class="string">'data'</span>, <span class="var">chunk</span> => <span class="var">data</span> += <span class="var">chunk</span>);
+  <span class="var">res</span>.<span class="func">on</span>(<span class="string">'end'</span>, () => <span class="var">console</span>.<span class="func">log</span>(<span class="var">JSON</span>.<span class="func">parse</span>(<span class="var">data</span>)));
+});
+
+<span class="comment">// Full request with POST</span>
+<span class="keyword">const</span> <span class="var">options</span> = {
+  <span class="var">hostname</span>: <span class="string">'api.example.com'</span>,
+  <span class="var">port</span>: 80,
+  <span class="var">path</span>: <span class="string">'/users'</span>,
+  <span class="var">method</span>: <span class="string">'POST'</span>,
+  <span class="var">headers</span>: {
+    <span class="string">'Content-Type'</span>: <span class="string">'application/json'</span>
+  }
+};
+
+<span class="keyword">const</span> <span class="var">req</span> = <span class="var">http</span>.<span class="func">request</span>(<span class="var">options</span>, (<span class="var">res</span>) => {
+  <span class="var">console</span>.<span class="func">log</span>(<span class="string">'Status:'</span>, <span class="var">res</span>.<span class="var">statusCode</span>);
+});
+
+<span class="var">req</span>.<span class="func">write</span>(<span class="var">JSON</span>.<span class="func">stringify</span>({ <span class="var">name</span>: <span class="string">'John'</span> }));
+<span class="var">req</span>.<span class="func">end</span>();</code></pre>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-client">Request</span>
+      <h2>https.request</h2>
+    </div>
+    <div class="method">https.request(options, callback)</div>
+    <p class="desc">Same API as <code>http.request</code> but for HTTPS. Handles TLS automatically.</p>
+    <pre><code><span class="keyword">import</span> <span class="var">https</span> <span class="keyword">from</span> <span class="string">'node:https'</span>;
+
+<span class="var">https</span>.<span class="func">get</span>(<span class="string">'https://api.github.com/users/nodejs'</span>, {
+  <span class="var">headers</span>: { <span class="string">'User-Agent'</span>: <span class="string">'node-app'</span> }
+}, (<span class="var">res</span>) => {
+  <span class="keyword">let</span> <span class="var">data</span> = <span class="string">''</span>;
+  <span class="var">res</span>.<span class="func">on</span>(<span class="string">'data'</span>, <span class="var">chunk</span> => <span class="var">data</span> += <span class="var">chunk</span>);
+  <span class="var">res</span>.<span class="func">on</span>(<span class="string">'end'</span>, () => <span class="var">console</span>.<span class="func">log</span>(<span class="var">data</span>));
+});</code></pre>
+  </div>
+
+  <div class="section-title">🔧 Server Utilities</div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-util">Util</span>
+      <h2>server.close / server.on</h2>
+    </div>
+    <p class="desc">Graceful shutdown and event handling.</p>
+    <pre><code><span class="comment">// Graceful shutdown</span>
+<span class="var">server</span>.<span class="func">close</span>(() => {
+  <span class="var">console</span>.<span class="func">log</span>(<span class="string">'Server closed'</span>);
+});
+
+<span class="comment">// Event listeners</span>
+<span class="var">server</span>.<span class="func">on</span>(<span class="string">'connection'</span>, (<span class="var">socket</span>) => {
+  <span class="var">console</span>.<span class="func">log</span>(<span class="string">'New connection from'</span>, <span class="var">socket</span>.<span class="var">remoteAddress</span>);
+});
+
+<span class="var">server</span>.<span class="func">on</span>(<span class="string">'error'</span>, (<span class="var">err</span>) => {
+  <span class="keyword">if</span> (<span class="var">err</span>.<span class="var">code</span> === <span class="string">'EADDRINUSE'</span>) {
+    <span class="var">console</span>.<span class="func">error</span>(<span class="string">'Port already in use'</span>);
+  }
+});
+
+<span class="comment">// Get server address</span>
+<span class="keyword">const</span> <span class="var">addr</span> = <span class="var">server</span>.<span class="func">address</span>();
+<span class="comment">// → { port: 3000, family: 'IPv4', address: '127.0.0.1' }</span></code></pre>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-util">Util</span>
+      <h2>URL Class (Modern Parsing)</h2>
+    </div>
+    <p class="desc">The built-in <code>URL</code> class is the modern way to parse URLs in Node.js.</p>
+    <pre><code><span class="keyword">const</span> <span class="var">url</span> = <span class="keyword">new</span> <span class="var">URL</span>(<span class="string">'https://user:pass@api.example.com:8080/users?id=123#section'</span>);
+
+<span class="var">url</span>.<span class="var">protocol</span>     <span class="comment">// 'https:'</span>
+<span class="var">url</span>.<span class="var">hostname</span>     <span class="comment">// 'api.example.com'</span>
+<span class="var">url</span>.<span class="var">port</span>         <span class="comment">// '8080'</span>
+<span class="var">url</span>.<span class="var">pathname</span>     <span class="comment">// '/users'</span>
+<span class="var">url</span>.<span class="var">search</span>       <span class="comment">// '?id=123'</span>
+<span class="var">url</span>.<span class="var">hash</span>         <span class="comment">// '#section'</span>
+<span class="var">url</span>.<span class="var">username</span>     <span class="comment">// 'user'</span>
+<span class="var">url</span>.<span class="var">password</span>     <span class="comment">// 'pass'</span>
+
+<span class="comment">// Query params</span>
+<span class="var">url</span>.<span class="var">searchParams</span>.<span class="func">get</span>(<span class="string">'id'</span>)     <span class="comment">// '123'</span>
+<span class="var">url</span>.<span class="var">searchParams</span>.<span class="func">has</span>(<span class="string">'id'</span>)     <span class="comment">// true</span>
+<span class="var">url</span>.<span class="var">searchParams</span>.<span class="func">append</span>(<span class="string">'page'</span>, <span class="string">'2'</span>);
+
+<span class="comment">// With req.url (relative)</span>
+<span class="keyword">const</span> <span class="var">parsed</span> = <span class="keyword">new</span> <span class="var">URL</span>(<span class="var">req</span>.<span class="var">url</span>, <span class="string">`http://${req.headers.host}`</span>);</code></pre>
+  </div>
+
+</div>
+
+<div class="warning">
+  <strong>⚠️ Important:</strong> For production APIs, always validate and sanitize <code>req.url</code> to prevent path traversal attacks. Never serve files based directly on user-provided paths without checking against an allowlist.
+</div>
+
+<div class="tip">
+  <strong>🚀 Pro Pattern — Minimal Router:</strong>
+  <pre style="margin-top:0.5rem; background:rgba(0,0,0,0.2); border:none;"><code><span class="keyword">import</span> <span class="var">http</span> <span class="keyword">from</span> <span class="string">'node:http'</span>;
+
+<span class="keyword">const</span> <span class="var">routes</span> = {
+  <span class="string">'GET /users'</span>: <span class="keyword">async</span> (<span class="var">req</span>, <span class="var">res</span>) => {
+    <span class="var">res</span>.<span class="func">writeHead</span>(200, { <span class="string">'Content-Type'</span>: <span class="string">'application/json'</span> });
+    <span class="var">res</span>.<span class="func">end</span>(<span class="var">JSON</span>.<span class="func">stringify</span>([{ <span class="var">id</span>: 1, <span class="var">name</span>: <span class="string">'Alice'</span> }]));
+  },
+  <span class="string">'POST /users'</span>: <span class="keyword">async</span> (<span class="var">req</span>, <span class="var">res</span>) => {
+    <span class="keyword">const</span> <span class="var">body</span> = <span class="keyword">await</span> <span class="func">getBody</span>(<span class="var">req</span>);
+    <span class="keyword">const</span> <span class="var">user</span> = <span class="var">JSON</span>.<span class="func">parse</span>(<span class="var">body</span>);
+    <span class="var">res</span>.<span class="func">writeHead</span>(201);
+    <span class="var">res</span>.<span class="func">end</span>(<span class="var">JSON</span>.<span class="func">stringify</span>({ <span class="var">id</span>: 2, ...<span class="var">user</span> }));
+  }
+};
+
+<span class="var">http</span>.<span class="func">createServer</span>((<span class="var">req</span>, <span class="var">res</span>) => {
+  <span class="keyword">const</span> <span class="var">url</span> = <span class="keyword">new</span> <span class="var">URL</span>(<span class="var">req</span>.<span class="var">url</span>, <span class="string">`http://${req.headers.host}`</span>);
+  <span class="keyword">const</span> <span class="var">handler</span> = <span class="var">routes</span>[<span class="string">`${req.method} ${url.pathname}`</span>];
+
+  <span class="keyword">if</span> (<span class="var">handler</span>) {
+    <span class="func">handler</span>(<span class="var">req</span>, <span class="var">res</span>).<span class="func">catch</span>(<span class="var">err</span> => {
+      <span class="var">res</span>.<span class="func">writeHead</span>(500);
+      <span class="var">res</span>.<span class="func">end</span>(<span class="var">err</span>.<span class="var">message</span>);
+    });
+  } <span class="keyword">else</span> {
+    <span class="var">res</span>.<span class="func">writeHead</span>(404);
+    <span class="var">res</span>.<span class="func">end</span>(<span class="string">'Not Found'</span>);
+  }
+}).<span class="func">listen</span>(3000);</code></pre>
+</div>
+
+<h2 style="margin-top:2rem; color:var(--heading); border-bottom:1px solid var(--border); padding-bottom:0.5rem;">📋 Quick Decision Guide</h2>
+<table>
+  <tr><th>Goal</th><th>Use</th></tr>
+  <tr><td>Create HTTP server</td><td><code>http.createServer()</code></td></tr>
+  <tr><td>Create HTTPS server</td><td><code>https.createServer(options)</code></td></tr>
+  <tr><td>Send JSON response</td><td><code>res.writeHead(200, {'Content-Type':'application/json'})</code> + <code>res.end(JSON.stringify(data))</code></td></tr>
+  <tr><td>Read request body</td><td>Collect <code>req.on('data')</code> chunks</td></tr>
+  <tr><td>Parse URL query params</td><td><code>new URL(req.url, base)</code> + <code>url.searchParams</code></td></tr>
+  <tr><td>Make GET request</td><td><code>http.get()</code> or <code>fetch()</code></td></tr>
+  <tr><td>Make POST request</td><td><code>http.request()</code> with <code>method: 'POST'</code></td></tr>
+  <tr><td>Stream file to client</td><td><code>fs.createReadStream().pipe(res)</code></td></tr>
+  <tr><td>Redirect client</td><td><code>res.writeHead(302, {'Location': '/new'})</code></td></tr>
+</table>
+
+<h2 style="margin-top:2rem; color:var(--heading); border-bottom:1px solid var(--border); padding-bottom:0.5rem;">🚩 Common Error Codes</h2>
+<table>
+  <tr><th>Code</th><th>Meaning</th><th>Fix</th></tr>
+  <tr><td><code>EADDRINUSE</code></td><td>Port already in use</td><td>Change port or kill existing process</td></tr>
+  <tr><td><code>ECONNREFUSED</code></td><td>Connection refused</td><td>Server not running or wrong port</td></tr>
+  <tr><td><code>ENOTFOUND</code></td><td>DNS lookup failed</td><td>Check hostname, internet connection</td></tr>
+  <tr><td><code>ETIMEDOUT</code></td><td>Request timed out</td><td>Check network, increase timeout</td></tr>
+  <tr><td><code>ECONNRESET</code></td><td>Connection reset by peer</td><td>Server closed connection unexpectedly</td></tr>
+</table>
+
+<div class="footer">
+  Node.js http/https Module Cheat Sheet &mdash; Save this file and open in any browser for quick reference.<br>
+  Based on Node.js 18+ with <code>node:http</code> / <code>node:https</code> API.
+</div>
+
+</body>
+</html>

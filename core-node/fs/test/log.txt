@@ -1,0 +1,44 @@
+2026-07-08 10:23:15 INFO [main] com.example.Application - Application starting up...
+2026-07-08 10:23:15 INFO [main] com.example.Application - Loading configuration from /etc/app/config.yml
+2026-07-08 10:23:16 DEBUG [main] com.example.config.ConfigLoader - Database connection string: jdbc:mysql://localhost:3306/appdb
+2026-07-08 10:23:16 INFO [main] com.example.database.DatabasePool - Initializing connection pool with 10 connections
+2026-07-08 10:23:17 INFO [main] com.example.Application - Application started successfully on port 8080
+2026-07-08 10:24:01 INFO [http-nio-8080-exec-1] com.example.controller.UserController - GET /api/users - Request received from IP: 192.168.1.100
+2026-07-08 10:24:01 DEBUG [http-nio-8080-exec-1] com.example.service.UserService - Fetching all users from database
+2026-07-08 10:24:01 INFO [http-nio-8080-exec-1] com.example.controller.UserController - GET /api/users - Response: 200 OK (45 users returned)
+2026-07-08 10:24:15 INFO [http-nio-8080-exec-2] com.example.controller.AuthController - POST /api/auth/login - Login attempt for user: johndoe@example.com
+2026-07-08 10:24:15 DEBUG [http-nio-8080-exec-2] com.example.service.AuthService - Password validation successful for user: johndoe@example.com
+2026-07-08 10:24:15 INFO [http-nio-8080-exec-2] com.example.controller.AuthController - POST /api/auth/login - User johndoe@example.com logged in successfully (session: 7a8f9e2d)
+2026-07-08 10:24:30 WARN [http-nio-8080-exec-3] com.example.service.PaymentService - Payment gateway timeout after 5 seconds
+2026-07-08 10:24:30 ERROR [http-nio-8080-exec-3] com.example.controller.PaymentController - POST /api/payments - Payment failed for order #ORD-12345: GatewayTimeoutException
+2026-07-08 10:24:30 INFO [http-nio-8080-exec-3] com.example.controller.PaymentController - POST /api/payments - Response: 503 Service Unavailable
+2026-07-08 10:25:02 INFO [http-nio-8080-exec-4] com.example.controller.ProductController - GET /api/products/456 - Request received
+2026-07-08 10:25:02 DEBUG [http-nio-8080-exec-4] com.example.service.ProductService - Fetching product with ID: 456
+2026-07-08 10:25:02 WARN [http-nio-8080-exec-4] com.example.service.ProductService - Product 456 has low stock (3 units remaining)
+2026-07-08 10:25:02 INFO [http-nio-8080-exec-4] com.example.controller.ProductController - GET /api/products/456 - Response: 200 OK
+2026-07-08 10:25:45 ERROR [http-nio-8080-exec-5] com.example.middleware.ErrorHandler - Unhandled exception in request /api/cart/checkout
+java.lang.NullPointerException: Shopping cart is null
+    at com.example.service.CartService.calculateTotal(CartService.java:42)
+    at com.example.controller.CartController.checkout(CartController.java:78)
+    at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+2026-07-08 10:25:45 INFO [http-nio-8080-exec-5] com.example.controller.CartController - POST /api/cart/checkout - Response: 500 Internal Server Error
+2026-07-08 10:26:12 INFO [http-nio-8080-exec-6] com.example.controller.AuthController - POST /api/auth/logout - User johndoe@example.com logged out
+2026-07-08 10:26:30 INFO [scheduled-tasks] com.example.service.HealthCheck - Performing health check...
+2026-07-08 10:26:30 INFO [scheduled-tasks] com.example.service.HealthCheck - Database: UP (response time: 12ms)
+2026-07-08 10:26:30 INFO [scheduled-tasks] com.example.service.HealthCheck - External API: UP (response time: 45ms)
+2026-07-08 10:26:30 INFO [scheduled-tasks] com.example.service.HealthCheck - Cache: UP (hit ratio: 78.3%)
+2026-07-08 10:27:05 INFO [http-nio-8080-exec-7] com.example.controller.UserController - PUT /api/users/789 - Updating user ID: 789
+2026-07-08 10:27:05 DEBUG [http-nio-8080-exec-7] com.example.service.UserService - Validating user data for ID: 789
+2026-07-08 10:27:05 INFO [http-nio-8080-exec-7] com.example.service.UserService - User 789 updated successfully
+2026-07-08 10:27:05 INFO [http-nio-8080-exec-7] com.example.controller.UserController - PUT /api/users/789 - Response: 200 OK
+2026-07-08 10:28:22 WARN [http-nio-8080-exec-8] com.example.security.SecurityFilter - Suspicious request pattern detected from IP: 203.0.113.45
+2026-07-08 10:28:22 WARN [http-nio-8080-exec-8] com.example.security.SecurityFilter - Request contains SQL injection attempt: /api/users?id=1 OR 1=1
+2026-07-08 10:28:22 INFO [http-nio-8080-exec-8] com.example.controller.UserController - GET /api/users - Response: 403 Forbidden (Security violation)
+2026-07-08 10:29:10 INFO [http-nio-8080-exec-9] com.example.controller.ReportController - GET /api/reports/sales - Generating monthly sales report
+2026-07-08 10:29:11 DEBUG [http-nio-8080-exec-9] com.example.service.ReportService - Query executed: SELECT * FROM sales WHERE month = '2026-06'
+2026-07-08 10:29:12 INFO [http-nio-8080-exec-9] com.example.service.ReportService - Sales report generated successfully (1,245 records)
+2026-07-08 10:29:12 INFO [http-nio-8080-exec-9] com.example.controller.ReportController - GET /api/reports/sales - Response: 200 OK (file: sales_report_2026-06.pdf)
+2026-07-08 10:30:00 INFO [main] com.example.Application - Shutdown signal received (SIGTERM)
+2026-07-08 10:30:00 INFO [main] com.example.database.DatabasePool - Closing database connections...
+2026-07-08 10:30:00 INFO [main] com.example.database.DatabasePool - All connections closed successfully
+2026-07-08 10:30:00 INFO [main] com.example.Application - Application shutdown complete

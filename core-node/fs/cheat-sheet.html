@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Node.js fs Module Cheat Sheet</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --card: #161b22;
+    --border: #30363d;
+    --text: #c9d1d9;
+    --heading: #f0f6fc;
+    --code-bg: #1f2937;
+    --code-text: #e6edf3;
+    --accent: #58a6ff;
+    --accent2: #3fb950;
+    --accent3: #d29922;
+    --accent4: #f85149;
+    --muted: #8b949e;
+    --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    line-height: 1.6;
+    padding: 2rem 1rem;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+  h1 {
+    color: var(--heading);
+    font-size: 2.2rem;
+    margin-bottom: 0.5rem;
+    border-bottom: 2px solid var(--accent);
+    padding-bottom: 0.5rem;
+  }
+  .subtitle {
+    color: var(--muted);
+    font-size: 0.95rem;
+    margin-bottom: 2rem;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 1.5rem;
+  }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.25rem;
+    transition: border-color 0.2s;
+  }
+  .card:hover { border-color: var(--accent); }
+  .card-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+  }
+  .badge {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    padding: 2px 8px;
+    border-radius: 4px;
+    letter-spacing: 0.5px;
+  }
+  .badge-read { background: rgba(88,166,255,0.15); color: var(--accent); }
+  .badge-write { background: rgba(63,185,80,0.15); color: var(--accent2); }
+  .badge-dir { background: rgba(210,153,34,0.15); color: var(--accent3); }
+  .badge-meta { background: rgba(248,81,73,0.15); color: var(--accent4); }
+  .badge-stream { background: rgba(139,148,158,0.15); color: var(--muted); }
+  h2 {
+    color: var(--heading);
+    font-size: 1.1rem;
+    font-weight: 600;
+  }
+  .method {
+    font-family: "SFMono-Regular", Consolas, monospace;
+    font-size: 0.85rem;
+    color: var(--accent);
+    background: rgba(88,166,255,0.08);
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-bottom: 0.4rem;
+    display: inline-block;
+  }
+  .sync-tag {
+    font-size: 0.65rem;
+    color: var(--accent3);
+    border: 1px solid var(--accent3);
+    padding: 0 4px;
+    border-radius: 3px;
+    margin-left: 4px;
+    vertical-align: middle;
+  }
+  p.desc {
+    font-size: 0.85rem;
+    color: var(--muted);
+    margin-bottom: 0.6rem;
+  }
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    overflow-x: auto;
+    font-size: 0.8rem;
+    line-height: 1.5;
+  }
+  code {
+    font-family: "SFMono-Regular", Consolas, monospace;
+    color: var(--code-text);
+  }
+  .comment { color: #8b949e; }
+  .keyword { color: #ff7b72; }
+  .string { color: #a5d6ff; }
+  .func { color: #d2a8ff; }
+  .var { color: #79c0ff; }
+  .note {
+    font-size: 0.8rem;
+    color: var(--accent3);
+    margin-top: 0.5rem;
+    padding-left: 0.5rem;
+    border-left: 2px solid var(--accent3);
+  }
+  .tip {
+    background: rgba(63,185,80,0.08);
+    border: 1px solid rgba(63,185,80,0.3);
+    border-radius: 8px;
+    padding: 1rem;
+    margin: 2rem 0;
+    font-size: 0.9rem;
+  }
+  .tip strong { color: var(--accent2); }
+  .footer {
+    text-align: center;
+    margin-top: 3rem;
+    color: var(--muted);
+    font-size: 0.8rem;
+  }
+  .section-title {
+    grid-column: 1 / -1;
+    color: var(--heading);
+    font-size: 1.3rem;
+    margin-top: 1rem;
+    margin-bottom: -0.5rem;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 0.5rem;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+    margin-top: 0.5rem;
+  }
+  th, td {
+    text-align: left;
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid var(--border);
+  }
+  th { color: var(--heading); font-weight: 600; }
+  td code { color: var(--accent); }
+</style>
+<base target="_blank">
+</head>
+<body>
+
+<h1>📁 Node.js <code>fs</code> Module Cheat Sheet</h1>
+<p class="subtitle">Modern async/await style (fs/promises) — Node.js 18+</p>
+
+<div class="tip">
+  <strong>💡 Golden Rule:</strong> Always import from <code>node:fs/promises</code> for modern code. Use <code>Sync</code> methods only during server startup. Use <code>node:</code> prefix to avoid npm package name collisions.
+</div>
+
+<div class="grid">
+
+  <div class="section-title">📖 Reading Files</div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-read">Read</span>
+      <h2>readFile</h2>
+    </div>
+    <div class="method">fs.readFile(path, encoding?)<span class="sync-tag">SYNC</span></div>
+    <p class="desc">Read entire file into memory. Returns string if encoding provided, otherwise Buffer.</p>
+    <pre><code><span class="keyword">const</span> <span class="var">fs</span> = <span class="keyword">require</span>(<span class="string">'node:fs/promises'</span>);
+
+<span class="comment">// As string</span>
+<span class="keyword">const</span> <span class="var">text</span> = <span class="keyword">await</span> <span class="var">fs</span>.<span class="func">readFile</span>(<span class="string">'./file.txt'</span>, <span class="string">'utf-8'</span>);
+
+<span class="comment">// As Buffer (binary)</span>
+<span class="keyword">const</span> <span class="var">buf</span> = <span class="keyword">await</span> <span class="var">fs</span>.<span class="func">readFile</span>(<span class="string">'./image.png'</span>);</code></pre>
+    <div class="note">⚠️ Don't use on files > few MB — use streams instead.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-read">Read</span>
+      <h2>createReadStream</h2>
+    </div>
+    <div class="method">fs.createReadStream(path, options)</div>
+    <p class="desc">Stream file data chunk-by-chunk. Memory-efficient for large files.</p>
+    <pre><code><span class="keyword">const</span> <span class="var">fs</span> = <span class="keyword">require</span>(<span class="string">'node:fs'</span>);
+
+<span class="keyword">const</span> <span class="var">stream</span> = <span class="var">fs</span>.<span class="func">createReadStream</span>(<span class="string">'./huge.log'</span>, <span class="string">'utf-8'</span>);
+<span class="var">stream</span>.<span class="func">on</span>(<span class="string">'data'</span>, <span class="var">chunk</span> => <span class="var">console</span>.<span class="func">log</span>(<span class="var">chunk</span>));
+<span class="var">stream</span>.<span class="func">on</span>(<span class="string">'end'</span>, () => <span class="var">console</span>.<span class="func">log</span>(<span class="string">'Done'</span>));</code></pre>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-read">Read</span>
+      <h2>readdir</h2>
+    </div>
+    <div class="method">fs.readdir(path, options?)<span class="sync-tag">SYNC</span></div>
+    <p class="desc">List directory contents. Returns array of strings or Dirent objects.</p>
+    <pre><code><span class="comment">// Simple list</span>
+<span class="keyword">const</span> <span class="var">files</span> = <span class="keyword">await</span> <span class="var">fs</span>.<span class="func">readdir</span>(<span class="string">'./uploads'</span>);
+
+<span class="comment">// With file type info</span>
+<span class="keyword">const</span> <span class="var">entries</span> = <span class="keyword">await</span> <span class="var">fs</span>.<span class="func">readdir</span>(<span class="string">'./uploads'</span>, { <span class="var">withFileTypes</span>: <span class="keyword">true</span> });
+<span class="keyword">for</span> (<span class="keyword">const</span> <span class="var">e</span> <span class="keyword">of</span> <span class="var">entries</span>) {
+  <span class="var">console</span>.<span class="func">log</span>(<span class="var">e</span>.<span class="var">name</span>, <span class="var">e</span>.<span class="func">isDirectory</span>() ? <span class="string">'DIR'</span> : <span class="string">'FILE'</span>);
+}</code></pre>
+  </div>
+
+  <div class="section-title">✏️ Writing Files</div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-write">Write</span>
+      <h2>writeFile</h2>
+    </div>
+    <div class="method">fs.writeFile(path, data, options?)<span class="sync-tag">SYNC</span></div>
+    <p class="desc">Write data to file. Creates file if missing, overwrites if exists.</p>
+    <pre><code><span class="keyword">await</span> <span class="var">fs</span>.<span class="func">writeFile</span>(<span class="string">'./out.txt'</span>, <span class="string">'Hello World'</span>, <span class="string">'utf-8'</span>);
+
+<span class="comment">// With options</span>
+<span class="keyword">await</span> <span class="var">fs</span>.<span class="func">writeFile</span>(<span class="string">'./out.txt'</span>, <span class="var">data</span>, {
+  <span class="var">encoding</span>: <span class="string">'utf-8'</span>,
+  <span class="var">flag</span>: <span class="string">'wx'</span>   <span class="comment">// fail if file exists</span>
+});</code></pre>
+    <div class="note">⚠️ Parent directory must exist or throws ENOENT.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-write">Write</span>
+      <h2>appendFile</h2>
+    </div>
+    <div class="method">fs.appendFile(path, data, options?)<span class="sync-tag">SYNC</span></div>
+    <p class="desc">Append data to end of file. Creates file if it doesn't exist.</p>
+    <pre><code><span class="keyword">await</span> <span class="var">fs</span>.<span class="func">appendFile</span>(<span class="string">'./log.txt'</span>,
+  <span class="string">`${new Date().toISOString()} - Event\n`</span>);</code></pre>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-write">Write</span>
+      <h2>createWriteStream</h2>
+    </div>
+    <div class="method">fs.createWriteStream(path, options)</div>
+    <p class="desc">Writable stream for file output. Great for piping or incremental writes.</p>
+    <pre><code><span class="keyword">const</span> <span class="var">ws</span> = <span class="var">fs</span>.<span class="func">createWriteStream</span>(<span class="string">'./big.txt'</span>);
+<span class="var">ws</span>.<span class="func">write</span>(<span class="string">'chunk 1'</span>);
+<span class="var">ws</span>.<span class="func">write</span>(<span class="string">'chunk 2'</span>);
+<span class="var">ws</span>.<span class="func">end</span>(<span class="string">'final chunk'</span>);</code></pre>
+  </div>
+
+  <div class="section-title">📂 Directories</div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-dir">Dir</span>
+      <h2>mkdir</h2>
+    </div>
+    <div class="method">fs.mkdir(path, options?)<span class="sync-tag">SYNC</span></div>
+    <p class="desc">Create directory. Use <code>recursive: true</code> to create nested paths.</p>
+    <pre><code><span class="comment">// Create nested dirs (mkdir -p)</span>
+<span class="keyword">await</span> <span class="var">fs</span>.<span class="func">mkdir</span>(<span class="string">'./data/2026/july'</span>, { <span class="var">recursive</span>: <span class="keyword">true</span> });
+
+<span class="comment">// Returns first created dir path (if recursive)</span>
+<span class="keyword">const</span> <span class="var">created</span> = <span class="keyword">await</span> <span class="var">fs</span>.<span class="func">mkdir</span>(<span class="string">'./a/b/c'</span>, { <span class="var">recursive</span>: <span class="keyword">true</span> });
+<span class="comment">// created === '/project/a' (first created)</span></code></pre>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-dir">Dir</span>
+      <h2>rm / rmdir</h2>
+    </div>
+    <div class="method">fs.rm(path, options?)<span class="sync-tag">SYNC</span></div>
+    <p class="desc">Remove files and directories. <code>rm</code> is the modern universal delete.</p>
+    <pre><code><span class="comment">// Delete file</span>
+<span class="keyword">await</span> <span class="var">fs</span>.<span class="func">rm</span>(<span class="string">'./old.txt'</span>);
+
+<span class="comment">// Delete directory + everything inside</span>
+<span class="keyword">await</span> <span class="var">fs</span>.<span class="func">rm</span>(<span class="string">'./temp'</span>, { <span class="var">recursive</span>: <span class="keyword">true</span>, <span class="var">force</span>: <span class="keyword">true</span> });
+
+<span class="comment">// rmdir only removes EMPTY directories</span>
+<span class="keyword">await</span> <span class="var">fs</span>.<span class="func">rmdir</span>(<span class="string">'./empty-folder'</span>);</code></pre>
+    <div class="note">🔥 Prefer <code>fs.rm()</code> over <code>rmdir()</code> for recursive deletes.</div>
+  </div>
+
+  <div class="section-title">ℹ️ Metadata & Checks</div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-meta">Meta</span>
+      <h2>stat / lstat</h2>
+    </div>
+    <div class="method">fs.stat(path)<span class="sync-tag">SYNC</span></div>
+    <p class="desc">Get file/directory metadata. <code>lstat</code> doesn't follow symlinks.</p>
+    <pre><code><span class="keyword">const</span> <span class="var">s</span> = <span class="keyword">await</span> <span class="var">fs</span>.<span class="func">stat</span>(<span class="string">'./file.txt'</span>);
+
+<span class="var">s</span>.<span class="var">size</span>              <span class="comment">// file size in bytes</span>
+<span class="var">s</span>.<span class="func">isFile</span>()          <span class="comment">// true if file</span>
+<span class="var">s</span>.<span class="func">isDirectory</span>()   <span class="comment">// true if directory</span>
+<span class="var">s</span>.<span class="func">isSymbolicLink</span>() <span class="comment">// true if symlink</span>
+<span class="var">s</span>.<span class="var">mtime</span>             <span class="comment">// last modified (Date)</span>
+<span class="var">s</span>.<span class="var">birthtime</span>         <span class="comment">// created (Date)</span></code></pre>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-meta">Meta</span>
+      <h2>access</h2>
+    </div>
+    <div class="method">fs.access(path, mode?)<span class="sync-tag">SYNC</span></div>
+    <p class="desc">Check if file exists and/or has permissions. Use instead of deprecated <code>exists</code>.</p>
+    <pre><code><span class="keyword">import</span> { <span class="var">constants</span> } <span class="keyword">from</span> <span class="string">'node:fs'</span>;
+
+<span class="keyword">try</span> {
+  <span class="keyword">await</span> <span class="var">fs</span>.<span class="func">access</span>(<span class="string">'./file.txt'</span>);
+  <span class="comment">// file exists</span>
+} <span class="keyword">catch</span> { <span class="comment">/* doesn't exist */</span> }
+
+<span class="comment">// Check specific permission</span>
+<span class="keyword">await</span> <span class="var">fs</span>.<span class="func">access</span>(<span class="string">'./file.txt'</span>, <span class="var">constants</span>.<span class="var">R_OK</span> | <span class="var">constants</span>.<span class="var">W_OK</span>);</code></pre>
+  </div>
+
+  <div class="section-title">🔄 Copy, Move, Rename</div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-write">Write</span>
+      <h2>copyFile</h2>
+    </div>
+    <div class="method">fs.copyFile(src, dest, mode?)<span class="sync-tag">SYNC</span></div>
+    <p class="desc">Copy file from src to dest. Optionally control overwrite behavior.</p>
+    <pre><code><span class="keyword">await</span> <span class="var">fs</span>.<span class="func">copyFile</span>(<span class="string">'./a.txt'</span>, <span class="string">'./backup/a.txt'</span>);
+
+<span class="comment">// COPYFILE_EXCL: fail if dest exists</span>
+<span class="keyword">await</span> <span class="var">fs</span>.<span class="func">copyFile</span>(<span class="string">'./a.txt'</span>, <span class="string">'./b.txt'</span>, <span class="var">fs</span>.<span class="var">constants</span>.<span class="var">COPYFILE_EXCL</span>);</code></pre>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-write">Write</span>
+      <h2>rename</h2>
+    </div>
+    <div class="method">fs.rename(oldPath, newPath)<span class="sync-tag">SYNC</span></div>
+    <p class="desc">Rename or move file/directory. Can move across directories.</p>
+    <pre><code><span class="comment">// Rename</span>
+<span class="keyword">await</span> <span class="var">fs</span>.<span class="func">rename</span>(<span class="string">'./old.txt'</span>, <span class="string">'./new.txt'</span>);
+
+<span class="comment">// Move to different directory</span>
+<span class="keyword">await</span> <span class="var">fs</span>.<span class="func">rename</span>(<span class="string">'./temp/file.txt'</span>, <span class="string">'./archive/file.txt'</span>);</code></pre>
+    <div class="note">⚠️ Destination directory must exist or throws ENOENT.</div>
+  </div>
+
+  <div class="section-title">👁️ Watching</div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-read">Watch</span>
+      <h2>watch / watchFile</h2>
+    </div>
+    <div class="method">fs.watch(path, options?, listener)</div>
+    <p class="desc">Watch file or directory for changes. Returns FSWatcher object.</p>
+    <pre><code><span class="keyword">const</span> <span class="var">watcher</span> = <span class="var">fs</span>.<span class="func">watch</span>(<span class="string">'./config.json'</span>, (event, filename) => {
+  <span class="var">console</span>.<span class="func">log</span>(<span class="var">event</span>, <span class="var">filename</span>);  <span class="comment">// 'change' | 'rename'</span>
+});
+
+<span class="comment">// Watch entire directory recursively</span>
+<span class="keyword">const</span> <span class="var">dir</span> = <span class="var">fs</span>.<span class="func">watch</span>(<span class="string">'./src'</span>, { <span class="var">recursive</span>: <span class="keyword">true</span> }, (event, file) => {
+  <span class="var">console</span>.<span class="func">log</span>(<span class="var">file</span>, <span class="var">event</span>);
+});
+
+<span class="comment">// Stop watching</span>
+<span class="var">watcher</span>.<span class="func">close</span>();</code></pre>
+    <div class="note">⚠️ fs.watch is fast but platform-dependent. For production, use <code>chokidar</code> npm package.</div>
+  </div>
+
+  <div class="section-title">🔗 Symlinks & Advanced</div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-meta">Link</span>
+      <h2>symlink / readlink / realpath</h2>
+    </div>
+    <div class="method">fs.symlink(target, path)<span class="sync-tag">SYNC</span></div>
+    <p class="desc">Create symlinks, read symlink targets, resolve to absolute real paths.</p>
+    <pre><code><span class="comment">// Create symlink</span>
+<span class="keyword">await</span> <span class="var">fs</span>.<span class="func">symlink</span>(<span class="string">'./real.txt'</span>, <span class="string">'./link.txt'</span>);
+
+<span class="comment">// Read where symlink points</span>
+<span class="keyword">const</span> <span class="var">target</span> = <span class="keyword">await</span> <span class="var">fs</span>.<span class="func">readlink</span>(<span class="string">'./link.txt'</span>);
+
+<span class="comment">// Resolve to absolute real path (follows symlinks)</span>
+<span class="keyword">const</span> <span class="var">real</span> = <span class="keyword">await</span> <span class="var">fs</span>.<span class="func">realpath</span>(<span class="string">'./link.txt'</span>);</code></pre>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-meta">Adv</span>
+      <h2>chmod / chown / utimes</h2>
+    </div>
+    <div class="method">fs.chmod(path, mode)<span class="sync-tag">SYNC</span></div>
+    <p class="desc">Change file permissions, ownership, and timestamps.</p>
+    <pre><code><span class="keyword">import</span> { <span class="var">constants</span> } <span class="keyword">from</span> <span class="string">'node:fs'</span>;
+
+<span class="comment">// chmod 644 (rw-r--r--)</span>
+<span class="keyword">await</span> <span class="var">fs</span>.<span class="func">chmod</span>(<span class="string">'./file.txt'</span>, <span class="var">constants</span>.<span class="var">S_IRUSR</span> | <span class="var">constants</span>.<span class="var">S_IWUSR</span> |
+  <span class="var">constants</span>.<span class="var">S_IRGRP</span> | <span class="var">constants</span>.<span class="var">S_IROTH</span>);
+
+<span class="comment">// Or use octal</span>
+<span class="keyword">await</span> <span class="var">fs</span>.<span class="func">chmod</span>(<span class="string">'./file.txt'</span>, <span class="string">0o644</span>);
+
+<span class="comment">// Touch timestamps</span>
+<span class="keyword">await</span> <span class="var">fs</span>.<span class="func">utimes</span>(<span class="string">'./file.txt'</span>, <span class="var">Date</span>.<span class="func">now</span>()/1000, <span class="var">Date</span>.<span class="func">now</span>()/1000);</code></pre>
+  </div>
+
+</div>
+
+<div class="tip">
+  <strong>🚀 Pro Pattern — Safe Write with Auto-Directory:</strong>
+  <pre style="margin-top:0.5rem; background:rgba(0,0,0,0.2); border:none;"><code><span class="keyword">import</span> <span class="var">fs</span> <span class="keyword">from</span> <span class="string">'node:fs/promises'</span>;
+<span class="keyword">import</span> <span class="var">path</span> <span class="keyword">from</span> <span class="string">'node:path'</span>;
+
+<span class="keyword">async function</span> <span class="func">safeWrite</span>(<span class="var">filePath</span>, <span class="var">data</span>) {
+  <span class="keyword">await</span> <span class="var">fs</span>.<span class="func">mkdir</span>(<span class="var">path</span>.<span class="func">dirname</span>(<span class="var">filePath</span>), { <span class="var">recursive</span>: <span class="keyword">true</span> });
+  <span class="keyword">await</span> <span class="var">fs</span>.<span class="func">writeFile</span>(<span class="var">filePath</span>, <span class="var">data</span>);
+}</code></pre>
+</div>
+
+<h2 style="margin-top:2rem; color:var(--heading); border-bottom:1px solid var(--border); padding-bottom:0.5rem;">🚩 Common Error Codes</h2>
+<table>
+  <tr><th>Code</th><th>Meaning</th><th>Fix</th></tr>
+  <tr><td><code>ENOENT</code></td><td>File/directory not found</td><td>Check path, create parent dirs first</td></tr>
+  <tr><td><code>EACCES</code></td><td>Permission denied</td><td>Check file permissions / user</td></tr>
+  <tr><td><code>EISDIR</code></td><td>Expected file, got directory</td><td>Validate path type</td></tr>
+  <tr><td><code>EEXIST</code></td><td>File already exists</td><td>Use <code>force</code> or check first</td></tr>
+  <tr><td><code>ENOTEMPTY</code></td><td>Directory not empty</td><td>Use <code>fs.rm({recursive:true})</code></td></tr>
+  <tr><td><code>EMFILE</code></td><td>Too many open files</td><td>Use streams, limit concurrency</td></tr>
+</table>
+
+<h2 style="margin-top:2rem; color:var(--heading); border-bottom:1px solid var(--border); padding-bottom:0.5rem;">📝 Flag Quick Reference</h2>
+<table>
+  <tr><th>Flag</th><th>Description</th></tr>
+  <tr><td><code>'r'</code></td><td>Read (default). Fails if not exists.</td></tr>
+  <tr><td><code>'r+'</code></td><td>Read & write. Fails if not exists.</td></tr>
+  <tr><td><code>'w'</code></td><td>Write. Creates or truncates.</td></tr>
+  <tr><td><code>'w+'</code></td><td>Read & write. Creates or truncates.</td></tr>
+  <tr><td><code>'a'</code></td><td>Append. Creates if missing.</td></tr>
+  <tr><td><code>'a+'</code></td><td>Read & append. Creates if missing.</td></tr>
+  <tr><td><code>'wx'</code></td><td>Write, fails if exists.</td></tr>
+  <tr><td><code>'ax'</code></td><td>Append, fails if exists.</td></tr>
+</table>
+
+<div class="footer">
+  Node.js fs Module Cheat Sheet &mdash; Save this file and open in any browser for quick reference.<br>
+  Based on Node.js 18+ with <code>node:fs/promises</code> API.
+</div>
+
+</body>
+</html>

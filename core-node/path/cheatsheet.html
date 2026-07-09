@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Node.js path Module Cheat Sheet</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --card: #161b22;
+    --border: #30363d;
+    --text: #c9d1d9;
+    --heading: #f0f6fc;
+    --code-bg: #1f2937;
+    --code-text: #e6edf3;
+    --accent: #58a6ff;
+    --accent2: #3fb950;
+    --accent3: #d29922;
+    --accent4: #f85149;
+    --muted: #8b949e;
+    --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    line-height: 1.6;
+    padding: 2rem 1rem;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+  h1 {
+    color: var(--heading);
+    font-size: 2.2rem;
+    margin-bottom: 0.5rem;
+    border-bottom: 2px solid var(--accent2);
+    padding-bottom: 0.5rem;
+  }
+  .subtitle {
+    color: var(--muted);
+    font-size: 0.95rem;
+    margin-bottom: 2rem;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 1.5rem;
+  }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.25rem;
+    transition: border-color 0.2s;
+  }
+  .card:hover { border-color: var(--accent2); }
+  .card-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+  }
+  .badge {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    padding: 2px 8px;
+    border-radius: 4px;
+    letter-spacing: 0.5px;
+  }
+  .badge-build { background: rgba(88,166,255,0.15); color: var(--accent); }
+  .badge-parse { background: rgba(63,185,80,0.15); color: var(--accent2); }
+  .badge-check { background: rgba(210,153,34,0.15); color: var(--accent3); }
+  .badge-util { background: rgba(248,81,73,0.15); color: var(--accent4); }
+  h2 {
+    color: var(--heading);
+    font-size: 1.1rem;
+    font-weight: 600;
+  }
+  .method {
+    font-family: "SFMono-Regular", Consolas, monospace;
+    font-size: 0.85rem;
+    color: var(--accent2);
+    background: rgba(63,185,80,0.08);
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-bottom: 0.4rem;
+    display: inline-block;
+  }
+  p.desc {
+    font-size: 0.85rem;
+    color: var(--muted);
+    margin-bottom: 0.6rem;
+  }
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    overflow-x: auto;
+    font-size: 0.8rem;
+    line-height: 1.5;
+  }
+  code {
+    font-family: "SFMono-Regular", Consolas, monospace;
+    color: var(--code-text);
+  }
+  .comment { color: #8b949e; }
+  .keyword { color: #ff7b72; }
+  .string { color: #a5d6ff; }
+  .func { color: #d2a8ff; }
+  .var { color: #79c0ff; }
+  .output { color: #7ee787; }
+  .note {
+    font-size: 0.8rem;
+    color: var(--accent3);
+    margin-top: 0.5rem;
+    padding-left: 0.5rem;
+    border-left: 2px solid var(--accent3);
+  }
+  .tip {
+    background: rgba(63,185,80,0.08);
+    border: 1px solid rgba(63,185,80,0.3);
+    border-radius: 8px;
+    padding: 1rem;
+    margin: 2rem 0;
+    font-size: 0.9rem;
+  }
+  .tip strong { color: var(--accent2); }
+  .footer {
+    text-align: center;
+    margin-top: 3rem;
+    color: var(--muted);
+    font-size: 0.8rem;
+  }
+  .section-title {
+    grid-column: 1 / -1;
+    color: var(--heading);
+    font-size: 1.3rem;
+    margin-top: 1rem;
+    margin-bottom: -0.5rem;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 0.5rem;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+    margin-top: 0.5rem;
+  }
+  th, td {
+    text-align: left;
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid var(--border);
+  }
+  th { color: var(--heading); font-weight: 600; }
+  td code { color: var(--accent2); }
+  .const-table td:first-child { font-family: monospace; color: var(--accent); }
+</style>
+<base target="_blank">
+</head>
+<body>
+
+<h1>🔗 Node.js <code>path</code> Module Cheat Sheet</h1>
+<p class="subtitle">Cross-platform path manipulation — Node.js 18+</p>
+
+<div class="tip">
+  <strong>💡 Golden Rule:</strong> Always use <code>path.join()</code> or <code>path.resolve()</code> instead of string concatenation. Never hardcode <code>'/'</code> or <code>'\'</code> separators. Import with <code>node:path</code> prefix.
+</div>
+
+<div class="grid">
+
+  <div class="section-title">🏗️ Building Paths</div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-build">Build</span>
+      <h2>path.join</h2>
+    </div>
+    <div class="method">path.join(...paths)</div>
+    <p class="desc">Join path segments using the platform-specific separator. Normalizes the result.</p>
+    <pre><code><span class="keyword">import</span> <span class="var">path</span> <span class="keyword">from</span> <span class="string">'node:path'</span>;
+
+<span class="var">path</span>.<span class="func">join</span>(<span class="string">'/foo'</span>, <span class="string">'bar'</span>, <span class="string">'baz/asdf'</span>, <span class="string">'quux'</span>, <span class="string">'..'</span>);
+<span class="comment">// → '/foo/bar/baz/asdf'</span>
+
+<span class="var">path</span>.<span class="func">join</span>(<span class="string">'foo'</span>, <span class="string">'bar'</span>);
+<span class="comment">// → 'foo/bar' (Linux/Mac) or 'foo\bar' (Windows)</span>
+
+<span class="comment">// Safe: handles extra slashes automatically</span>
+<span class="var">path</span>.<span class="func">join</span>(<span class="string">'src/'</span>, <span class="string">'/components'</span>, <span class="string">'Button.js'</span>);
+<span class="comment">// → 'src/components/Button.js'</span></code></pre>
+    <div class="note">✅ Use for: combining relative path segments, building file paths.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-build">Build</span>
+      <h2>path.resolve</h2>
+    </div>
+    <div class="method">path.resolve(...paths)</div>
+    <p class="desc">Resolve to an absolute path. Starts from current working directory and navigates through segments. Think of it as a series of <code>cd</code> commands.</p>
+    <pre><code><span class="var">path</span>.<span class="func">resolve</span>(<span class="string">'foo/bar'</span>);
+<span class="comment">// → '/current/working/dir/foo/bar'</span>
+
+<span class="var">path</span>.<span class="func">resolve</span>(<span class="string">'/foo/bar'</span>, <span class="string">'./baz'</span>);
+<span class="comment">// → '/foo/bar/baz'</span>
+
+<span class="var">path</span>.<span class="func">resolve</span>(<span class="string">'/foo/bar'</span>, <span class="string">'/tmp/file/'</span>);
+<span class="comment">// → '/tmp/file' (absolute overrides previous)</span>
+
+<span class="var">path</span>.<span class="func">resolve</span>(<span class="string">'wwwroot'</span>, <span class="string">'static_files/png/'</span>, <span class="string">'../gif/image.gif'</span>);
+<span class="comment">// → '/cwd/wwwroot/static_files/gif/image.gif'</span></code></pre>
+    <div class="note">✅ Use for: converting relative paths to absolute, resolving config paths.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-build">Build</span>
+      <h2>path.normalize</h2>
+    </div>
+    <div class="method">path.normalize(path)</div>
+    <p class="desc">Clean up a path by resolving <code>..</code> and <code>.</code> segments, removing duplicate slashes, and trailing slashes.</p>
+    <pre><code><span class="var">path</span>.<span class="func">normalize</span>(<span class="string">'/foo/bar//baz/asdf/quux/..'</span>);
+<span class="comment">// → '/foo/bar/baz/asdf'</span>
+
+<span class="var">path</span>.<span class="func">normalize</span>(<span class="string">'foo\bar\baz'</span>);
+<span class="comment">// → 'foo/bar/baz' (on POSIX) or 'foo\bar\baz' (on Windows)</span>
+
+<span class="var">path</span>.<span class="func">normalize</span>(<span class="string">'C:\\temp\\\foo\bar'</span>);
+<span class="comment">// → 'C:\temp\foo\bar' (Windows)</span></code></pre>
+    <div class="note">ℹ️ Usually not needed explicitly — <code>join</code> and <code>resolve</code> normalize automatically.</div>
+  </div>
+
+  <div class="section-title">🔍 Parsing Paths</div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-parse">Parse</span>
+      <h2>path.basename</h2>
+    </div>
+    <div class="method">path.basename(path, ext?)</div>
+    <p class="desc">Get the last portion (filename) of a path. Optionally strip an extension.</p>
+    <pre><code><span class="var">path</span>.<span class="func">basename</span>(<span class="string">'/foo/bar/baz.html'</span>);
+<span class="comment">// → 'baz.html'</span>
+
+<span class="var">path</span>.<span class="func">basename</span>(<span class="string">'/foo/bar/baz.html'</span>, <span class="string">'.html'</span>);
+<span class="comment">// → 'baz'</span>
+
+<span class="var">path</span>.<span class="func">basename</span>(<span class="string">'C:\\foo\bar\baz.txt'</span>);
+<span class="comment">// → 'baz.txt' (Windows)</span></code></pre>
+    <div class="note">⚠️ Ignores trailing separators: <code>basename('/foo/bar/')</code> → <code>'bar'</code></div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-parse">Parse</span>
+      <h2>path.dirname</h2>
+    </div>
+    <div class="method">path.dirname(path)</div>
+    <p class="desc">Get the directory portion of a path.</p>
+    <pre><code><span class="var">path</span>.<span class="func">dirname</span>(<span class="string">'/foo/bar/baz.txt'</span>);
+<span class="comment">// → '/foo/bar'</span>
+
+<span class="var">path</span>.<span class="func">dirname</span>(<span class="string">'/foo/bar/'</span>);
+<span class="comment">// → '/foo'</span>
+
+<span class="var">path</span>.<span class="func">dirname</span>(<span class="string">'baz.txt'</span>);
+<span class="comment">// → '.' (current directory)</span></code></pre>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-parse">Parse</span>
+      <h2>path.extname</h2>
+    </div>
+    <div class="method">path.extname(path)</div>
+    <p class="desc">Get the file extension from the last <code>.</code> in the basename.</p>
+    <pre><code><span class="var">path</span>.<span class="func">extname</span>(<span class="string">'index.html'</span>);
+<span class="comment">// → '.html'</span>
+
+<span class="var">path</span>.<span class="func">extname</span>(<span class="string">'app.min.js'</span>);
+<span class="comment">// → '.js'</span>
+
+<span class="var">path</span>.<span class="func">extname</span>(<span class="string">'README'</span>);
+<span class="comment">// → '' (no extension)</span>
+
+<span class="var">path</span>.<span class="func">extname</span>(<span class="string">'.gitignore'</span>);
+<span class="comment">// → '' (hidden files have no extension)</span></code></pre>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-parse">Parse</span>
+      <h2>path.parse / path.format</h2>
+    </div>
+    <div class="method">path.parse(path)</div>
+    <p class="desc">Break a path into an object with root, dir, base, ext, name. <code>format</code> does the reverse.</p>
+    <pre><code><span class="var">path</span>.<span class="func">parse</span>(<span class="string">'/home/user/dir/file.txt'</span>);
+<span class="comment">// → {</span>
+<span class="comment">//   root: '/',</span>
+<span class="comment">//   dir: '/home/user/dir',</span>
+<span class="comment">//   base: 'file.txt',</span>
+<span class="comment">//   ext: '.txt',</span>
+<span class="comment">//   name: 'file'</span>
+<span class="comment">// }</span>
+
+<span class="comment">// Reconstruct</span>
+<span class="var">path</span>.<span class="func">format</span>({
+  <span class="var">dir</span>: <span class="string">'/home/user'</span>,
+  <span class="var">base</span>: <span class="string">'file.txt'</span>
+});
+<span class="comment">// → '/home/user/file.txt'</span></code></pre>
+  </div>
+
+  <div class="section-title">✅ Checks & Comparison</div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-check">Check</span>
+      <h2>path.isAbsolute</h2>
+    </div>
+    <div class="method">path.isAbsolute(path)</div>
+    <p class="desc">Check if a path is absolute (platform-aware).</p>
+    <pre><code><span class="var">path</span>.<span class="func">isAbsolute</span>(<span class="string">'/foo/bar'</span>);      <span class="comment">// → true (POSIX)</span>
+<span class="var">path</span>.<span class="func">isAbsolute</span>(<span class="string">'C:\\foo'</span>);     <span class="comment">// → true (Windows)</span>
+<span class="var">path</span>.<span class="func">isAbsolute</span>(<span class="string">'foo/bar'</span>);      <span class="comment">// → false</span>
+<span class="var">path</span>.<span class="func">isAbsolute</span>(<span class="string">'..'</span>);           <span class="comment">// → false</span></code></pre>
+    <div class="note">💡 Use before <code>path.resolve()</code> to avoid unnecessary absolute conversion.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-check">Check</span>
+      <h2>path.relative</h2>
+    </div>
+    <div class="method">path.relative(from, to)</div>
+    <p class="desc">Get the relative path from <code>from</code> to <code>to</code>. Think of it as: "what path do I need to get from A to B?"</p>
+    <pre><code><span class="var">path</span>.<span class="func">relative</span>(<span class="string">'/data/orandea/test/aaa'</span>, <span class="string">'/data/orandea/impl/bbb'</span>);
+<span class="comment">// → '../../impl/bbb'</span>
+
+<span class="var">path</span>.<span class="func">relative</span>(<span class="string">'/data/orandea/test/aaa'</span>, <span class="string">'/data/orandea/test/aaa/xxx'</span>);
+<span class="comment">// → 'xxx'</span>
+
+<span class="var">path</span>.<span class="func">relative</span>(<span class="string">'src/components'</span>, <span class="string">'src/utils'</span>);
+<span class="comment">// → '../utils'</span></code></pre>
+    <div class="note">✅ Use for: generating relative imports, creating portable paths in logs.</div>
+  </div>
+
+  <div class="section-title">🛠️ Utilities & Platform</div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-util">Util</span>
+      <h2>path.sep & path.delimiter</h2>
+    </div>
+    <div class="method">path.sep / path.delimiter</div>
+    <p class="desc">Platform-specific path separator and environment PATH delimiter.</p>
+    <pre><code><span class="var">path</span>.<span class="var">sep</span>;
+<span class="comment">// → '/' (POSIX) or '\' (Windows)</span>
+
+<span class="var">path</span>.<span class="var">delimiter</span>;
+<span class="comment">// → ':' (POSIX) or ';' (Windows)</span>
+
+<span class="comment">// Practical: split PATH env variable</span>
+<span class="keyword">const</span> <span class="var">paths</span> = <span class="var">process</span>.<span class="var">env</span>.<span class="var">PATH</span>.<span class="func">split</span>(<span class="var">path</span>.<span class="var">delimiter</span>);</code></pre>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-util">Util</span>
+      <h2>path.posix / path.win32</h2>
+    </div>
+    <div class="method">path.posix / path.win32</div>
+    <p class="desc">Explicitly use POSIX or Windows path logic regardless of the current platform.</p>
+    <pre><code><span class="comment">// Force POSIX paths (always forward slashes)</span>
+<span class="var">path</span>.<span class="var">posix</span>.<span class="func">join</span>(<span class="string">'foo'</span>, <span class="string">'bar'</span>);
+<span class="comment">// → 'foo/bar' (even on Windows)</span>
+
+<span class="var">path</span>.<span class="var">posix</span>.<span class="func">normalize</span>(<span class="string">'C:\\foo\bar'</span>);
+<span class="comment">// → 'C:/foo/bar'</span>
+
+<span class="comment">// Force Windows paths (always backslashes)</span>
+<span class="var">path</span>.<span class="var">win32</span>.<span class="func">join</span>(<span class="string">'foo'</span>, <span class="string">'bar'</span>);
+<span class="comment">// → 'foo\bar' (even on Linux/Mac)</span>
+
+<span class="comment">// Common use: generating URLs or config files</span>
+<span class="var">path</span>.<span class="var">posix</span>.<span class="func">relative</span>(<span class="string">'/src'</span>, <span class="string">'/src/components/Button.js'</span>);
+<span class="comment">// → 'components/Button.js' (portable URL path)</span></code></pre>
+    <div class="note">🌐 Use <code>path.posix</code> when generating paths for URLs, web configs, or tar archives.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-util">Util</span>
+      <h2>path.toNamespacedPath</h2>
+    </div>
+    <div class="method">path.toNamespacedPath(path)</div>
+    <p class="desc">On Windows, returns a \?\ prefixed path for extended-length paths. On POSIX, returns as-is.</p>
+    <pre><code><span class="var">path</span>.<span class="func">toNamespacedPath</span>(<span class="string">'C:\\foo\bar'</span>);
+<span class="comment">// → '\\?\C:\foo\bar' (Windows)</span>
+
+<span class="var">path</span>.<span class="func">toNamespacedPath</span>(<span class="string">'/foo/bar'</span>);
+<span class="comment">// → '/foo/bar' (POSIX, unchanged)</span></code></pre>
+    <div class="note">ℹ️ Rarely needed directly. Used internally by <code>fs</code> module on Windows.</div>
+  </div>
+
+</div>
+
+<div class="tip">
+  <strong>🚀 Pro Pattern — Safe File Path Builder:</strong>
+  <pre style="margin-top:0.5rem; background:rgba(0,0,0,0.2); border:none;"><code><span class="keyword">import</span> <span class="var">path</span> <span class="keyword">from</span> <span class="string">'node:path'</span>;
+<span class="keyword">import</span> { <span class="var">fileURLToPath</span> } <span class="keyword">from</span> <span class="string">'node:url'</span>;
+
+<span class="comment">// __dirname in ESM modules</span>
+<span class="keyword">const</span> <span class="var">__filename</span> = <span class="func">fileURLToPath</span>(<span class="keyword">import</span>.<span class="var">meta</span>.<span class="var">url</span>);
+<span class="keyword">const</span> <span class="var">__dirname</span> = <span class="var">path</span>.<span class="func">dirname</span>(<span class="var">__filename</span>);
+
+<span class="comment">// Build absolute paths relative to project root</span>
+<span class="keyword">const</span> <span class="var">configPath</span> = <span class="var">path</span>.<span class="func">resolve</span>(<span class="var">__dirname</span>, <span class="string">'../config/app.json'</span>);
+<span class="keyword">const</span> <span class="var">uploadDir</span>  = <span class="var">path</span>.<span class="func">join</span>(<span class="var">__dirname</span>, <span class="string">'uploads'</span>);
+
+<span class="comment">// Change extension</span>
+<span class="keyword">const</span> { <span class="var">dir</span>, <span class="var">name</span> } = <span class="var">path</span>.<span class="func">parse</span>(<span class="string">'./src/app.js'</span>);
+<span class="keyword">const</span> <span class="var">tsPath</span> = <span class="var">path</span>.<span class="func">format</span>({ <span class="var">dir</span>, <span class="var">name</span>, <span class="var">ext</span>: <span class="string">'.ts'</span> });
+<span class="comment">// → './src/app.ts'</span></code></pre>
+</div>
+
+<h2 style="margin-top:2rem; color:var(--heading); border-bottom:1px solid var(--border); padding-bottom:0.5rem;">📋 Quick Decision Guide</h2>
+<table>
+  <tr><th>Goal</th><th>Use</th></tr>
+  <tr><td>Build a file path from segments</td><td><code>path.join()</code></td></tr>
+  <tr><td>Get absolute path from relative</td><td><code>path.resolve()</code></td></tr>
+  <tr><td>Get filename only</td><td><code>path.basename()</code></td></tr>
+  <tr><td>Get directory only</td><td><code>path.dirname()</code></td></tr>
+  <tr><td>Get extension</td><td><code>path.extname()</code></td></tr>
+  <tr><td>Break path into parts</td><td><code>path.parse()</code></td></tr>
+  <tr><td>Build path from parts</td><td><code>path.format()</code></td></tr>
+  <tr><td>Check if absolute</td><td><code>path.isAbsolute()</code></td></tr>
+  <tr><td>Get relative path between two</td><td><code>path.relative()</code></td></tr>
+  <tr><td>Clean up messy path</td><td><code>path.normalize()</code></td></tr>
+  <tr><td>Force forward slashes (URLs)</td><td><code>path.posix.join()</code></td></tr>
+</table>
+
+<h2 style="margin-top:2rem; color:var(--heading); border-bottom:1px solid var(--border); padding-bottom:0.5rem;">⚠️ Common Pitfalls</h2>
+<table>
+  <tr><th>Mistake</th><th>Why It's Wrong</th><th>Fix</th></tr>
+  <tr><td><code>'dir' + '/' + 'file'</code></td><td>Breaks on Windows</td><td><code>path.join('dir', 'file')</code></td></tr>
+  <tr><td><code>path.join('/a', '/b')</code></td><td>Absolute <code>/b</code> resets the path</td><td><code>path.resolve('/a', '/b')</code> or remove leading slash</td></tr>
+  <tr><td><code>path.basename('file.tar.gz')</code></td><td>Returns <code>'file.tar.gz'</code>, not <code>'file'</code></td><td><code>path.basename('file.tar.gz', '.tar.gz')</code></td></tr>
+  <tr><td><code>path.extname('.gitignore')</code></td><td>Returns <code>''</code> (no extension)</td><td>Use <code>path.basename()</code> or check manually</td></tr>
+  <tr><td><code>path.join(__dirname, '../config')</code></td><td>Works but <code>resolve</code> is clearer for absolute</td><td><code>path.resolve(__dirname, '../config')</code></td></tr>
+</table>
+
+<div class="footer">
+  Node.js path Module Cheat Sheet &mdash; Save this file and open in any browser for quick reference.<br>
+  Based on Node.js 18+ with <code>node:path</code> API.
+</div>
+
+</body>
+</html>
