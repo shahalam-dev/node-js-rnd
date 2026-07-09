@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Node.js Timers Module Cheat Sheet</title>
+  <style>
+    :root {
+      --bg: #0d1117;
+      --card: #161b22;
+      --border: #30363d;
+      --text: #c9d1d9;
+      --heading: #f0f6fc;
+      --code-bg: #1f2937;
+      --code-text: #e6edf3;
+      --accent: #58a6ff;
+      --accent2: #3fb950;
+      --accent3: #d29922;
+      --accent4: #f85149;
+      --muted: #8b949e;
+      --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      line-height: 1.6;
+      padding: 2rem 1rem;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+    h1 {
+      color: var(--heading);
+      font-size: 2.2rem;
+      margin-bottom: 0.5rem;
+      border-bottom: 2px solid var(--accent);
+      padding-bottom: 0.5rem;
+    }
+    .subtitle {
+      color: var(--muted);
+      font-size: 0.95rem;
+      margin-bottom: 2rem;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 1.5rem;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem;
+      transition: border-color 0.2s;
+    }
+    .card:hover { border-color: var(--accent); }
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.75rem;
+    }
+    .badge {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      padding: 2px 8px;
+      border-radius: 4px;
+      letter-spacing: 0.5px;
+    }
+    .badge-timeout { background: rgba(88,166,255,0.15); color: var(--accent); }
+    .badge-interval { background: rgba(63,185,80,0.15); color: var(--accent2); }
+    .badge-immediate { background: rgba(210,153,34,0.15); color: var(--accent3); }
+    .badge-ref { background: rgba(248,81,73,0.15); color: var(--accent4); }
+    .badge-util { background: rgba(139,148,158,0.15); color: var(--muted); }
+    h2 {
+      color: var(--heading);
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
+    .method {
+      font-family: "SFMono-Regular", Consolas, monospace;
+      font-size: 0.85rem;
+      color: var(--accent);
+      background: rgba(88,166,255,0.08);
+      padding: 2px 6px;
+      border-radius: 4px;
+      margin-bottom: 0.4rem;
+      display: inline-block;
+    }
+    p.desc {
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-bottom: 0.6rem;
+    }
+    pre {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      overflow-x: auto;
+      font-size: 0.8rem;
+      line-height: 1.5;
+    }
+    code {
+      font-family: "SFMono-Regular", Consolas, monospace;
+      color: var(--code-text);
+    }
+    .comment { color: #8b949e; }
+    .keyword { color: #ff7b72; }
+    .string { color: #a5d6ff; }
+    .func { color: #d2a8ff; }
+    .var { color: #79c0ff; }
+    .output { color: #7ee787; }
+    .note {
+      font-size: 0.8rem;
+      color: var(--accent3);
+      margin-top: 0.5rem;
+      padding-left: 0.5rem;
+      border-left: 2px solid var(--accent3);
+    }
+    .tip {
+      background: rgba(88,166,255,0.08);
+      border: 1px solid rgba(88,166,255,0.3);
+      border-radius: 8px;
+      padding: 1rem;
+      margin: 2rem 0;
+      font-size: 0.9rem;
+    }
+    .tip strong { color: var(--accent); }
+    .footer {
+      text-align: center;
+      margin-top: 3rem;
+      color: var(--muted);
+      font-size: 0.8rem;
+    }
+    .section-title {
+      grid-column: 1 / -1;
+      color: var(--heading);
+      font-size: 1.3rem;
+      margin-top: 1rem;
+      margin-bottom: -0.5rem;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 0.5rem;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+      margin-top: 0.5rem;
+    }
+    th, td {
+      text-align: left;
+      padding: 0.5rem 0.75rem;
+      border-bottom: 1px solid var(--border);
+    }
+    th { color: var(--heading); font-weight: 600; }
+    td code { color: var(--accent); }
+  </style>
+  <base target="_blank">
+</head>
+<body>
+
+<h1>⏱️ Node.js <code>timers</code> Module Cheat Sheet</h1>
+<p class="subtitle">setTimeout, setInterval, setImmediate & advanced control — Node.js 18+</p>
+
+<div class="tip">
+  <strong>💡 Golden Rule:</strong> Timers are <strong>global</strong> — no import needed. Use <code>setTimeout</code> for delays, <code>setInterval</code> for recurring tasks, <code>setImmediate</code> for the next event loop iteration. Node.js timers are <strong>not</strong> guaranteed to be precise — they're minimum delays.
+</div>
+
+<div class="grid">
+
+  <div class="section-title">⏰ setTimeout & clearTimeout</div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-timeout">Timeout</span>
+      <h2>setTimeout / clearTimeout</h2>
+    </div>
+    <div class="method">setTimeout(callback, delay?, ...args) / clearTimeout(timeout)</div>
+    <p class="desc">Schedule a callback after a minimum delay (in milliseconds). Returns a Timeout object.</p>
+    <pre><code><span class="comment">// Basic timeout</span>
+<span class="keyword">const</span> <span class="var">timeout</span> = <span class="func">setTimeout</span>(() => {
+  <span class="var">console</span>.<span class="func">log</span>(<span class="string">'Executed after 1 second'</span>);
+}, <span class="number">1000</span>);
+
+<span class="comment">// With arguments</span>
+<span class="func">setTimeout</span>((<span class="var">name</span>, <span class="var">age</span>) => {
+  <span class="var">console</span>.<span class="func">log</span>(<span class="string">`Hello ${name}, age ${age}`</span>);
+}, <span class="number">500</span>, <span class="string">'Alice'</span>, <span class="number">30</span>);
+
+<span class="comment">// Clear before execution</span>
+<span class="keyword">const</span> <span class="var">timeout2</span> = <span class="func">setTimeout</span>(() => {
+  <span class="var">console</span>.<span class="func">log</span>(<span class="string">'Will never run'</span>);
+}, <span class="number">1000</span>);
+<span class="func">clearTimeout</span>(<span class="var">timeout2</span>);
+
+<span class="comment">// Zero delay (schedules on next tick)</span>
+<span class="func">setTimeout</span>(() => {
+  <span class="var">console</span>.<span class="func">log</span>(<span class="string">'Runs after I/O events'</span>);
+}, <span class="number">0</span>);</code></pre>
+    <div class="note">⚠️ <code>setTimeout(fn, 0)</code> schedules on the next event loop tick, but after I/O events. Not guaranteed to run immediately.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-ref">Advanced</span>
+      <h2>timeout.ref() / timeout.unref() / hasRef()</h2>
+    </div>
+    <div class="method">timeout.ref() / timeout.unref() / timeout.hasRef()</div>
+    <p class="desc">Control whether the timer keeps the event loop alive. <code>unref()</code> allows the program to exit if this is the only active timer.</p>
+    <pre><code><span class="keyword">const</span> <span class="var">timeout</span> = <span class="func">setTimeout</span>(() => {
+  <span class="var">console</span>.<span class="func">log</span>(<span class="string">'Will run, but won't keep the process alive'</span>);
+}, <span class="number">5000</span>);
+
+<span class="comment">// Unref: won't prevent process exit</span>
+<span class="var">timeout</span>.<span class="func">unref</span>();
+<span class="var">console</span>.<span class="func">log</span>(<span class="var">timeout</span>.<span class="func">hasRef</span>()); <span class="comment">// false</span>
+
+<span class="comment">// Ref: keep the event loop alive (default)</span>
+<span class="var">timeout</span>.<span class="func">ref</span>();
+
+<span class="comment">// ⚠️ Careful: if process exits, unref'd timer may be garbage collected</span>
+<span class="comment">// before it fires if the event loop is empty</span></code></pre>
+    <div class="note">✅ Use <code>unref()</code> for background tasks that shouldn't block process exit (e.g., logging, health checks).</div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-ref">Advanced</span>
+      <h2>timeout.refresh() / timeout[Symbol.toPrimitive]</h2>
+    </div>
+    <div class="method">timeout.refresh() / timeout[Symbol.toPrimitive]()</div>
+    <p class="desc">Reset the timer to the original delay. Useful for extending timeouts. <code>Symbol.toPrimitive</code> returns the timeout ID.</p>
+    <pre><code><span class="keyword">const</span> <span class="var">timeout</span> = <span class="func">setTimeout</span>(() => {
+  <span class="var">console</span>.<span class="func">log</span>(<span class="string">'This will be delayed'</span>);
+}, <span class="number">1000</span>);
+
+<span class="comment">// Reset the timer (extends by 1000ms each time)</span>
+<span class="func">setInterval</span>(() => {
+  <span class="var">timeout</span>.<span class="func">refresh</span>(); <span class="comment">// Keeps postponing the callback</span>
+}, <span class="number">500</span>);
+
+<span class="comment">// Get the numeric timeout ID</span>
+<span class="keyword">const</span> <span class="var">id</span> = <span class="var">timeout</span>[<span class="var">Symbol</span>.<span class="func">toPrimitive</span>]();
+<span class="comment">// Equivalent: Number(timeout) or +timeout</span>
+<span class="var">console</span>.<span class="func">log</span>(<span class="string">'Timeout ID:'</span>, <span class="var">id</span>);</code></pre>
+    <div class="note">✅ Use <code>refresh()</code> for keep-alive mechanisms or idle timeouts (e.g., session timeouts).</div>
+  </div>
+
+  <div class="section-title">🔄 setInterval & clearInterval</div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-interval">Interval</span>
+      <h2>setInterval / clearInterval</h2>
+    </div>
+    <div class="method">setInterval(callback, delay?, ...args) / clearInterval(interval)</div>
+    <p class="desc">Schedule a callback repeatedly with a fixed delay between executions.</p>
+    <pre><code><span class="comment">// Basic interval</span>
+<span class="keyword">let</span> <span class="var">count</span> = <span class="number">0</span>;
+<span class="keyword">const</span> <span class="var">interval</span> = <span class="func">setInterval</span>(() => {
+  <span class="var">count</span>++;
+  <span class="var">console</span>.<span class="func">log</span>(<span class="string">`Tick ${count}`</span>);
+  
+  <span class="keyword">if</span> (<span class="var">count</span> === <span class="number">5</span>) {
+    <span class="func">clearInterval</span>(<span class="var">interval</span>);
+    <span class="var">console</span>.<span class="func">log</span>(<span class="string">'Interval cleared!'</span>);
+  }
+}, <span class="number">1000</span>);
+
+<span class="comment">// With arguments</span>
+<span class="func">setInterval</span>((<span class="var">msg</span>) => {
+  <span class="var">console</span>.<span class="func">log</span>(<span class="var">msg</span>);
+}, <span class="number">2000</span>, <span class="string">'Repeating message'</span>);</code></pre>
+    <div class="note">⚠️ Intervals are <strong>not</strong> guaranteed to run exactly on schedule — they may drift due to event loop congestion.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-ref">Advanced</span>
+      <h2>interval.ref() / interval.unref() / hasRef()</h2>
+    </div>
+    <div class="method">interval.ref() / interval.unref() / interval.hasRef()</div>
+    <p class="desc">Same as timeout — control whether the interval keeps the event loop alive.</p>
+    <pre><code><span class="keyword">const</span> <span class="var">interval</span> = <span class="func">setInterval</span>(() => {
+  <span class="var">console</span>.<span class="func">log</span>(<span class="string">'Background tick'</span>);
+}, <span class="number">1000</span>);
+
+<span class="comment">// Don't block process exit</span>
+<span class="var">interval</span>.<span class="func">unref</span>();
+
+<span class="comment">// Process will exit even if interval is still active</span>
+<span class="func">setTimeout</span>(() => {
+  <span class="var">console</span>.<span class="func">log</span>(<span class="string">'Exiting...'</span>);
+  <span class="var">process</span>.<span class="func">exit</span>(<span class="number">0</span>);
+}, <span class="number">3000</span>);</code></pre>
+    <div class="note">✅ Use <code>unref()</code> for background polling or metrics collection that shouldn't prevent shutdown.</div>
+  </div>
+
+  <div class="section-title">⚡ setImmediate & clearImmediate</div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-immediate">Immediate</span>
+      <h2>setImmediate / clearImmediate</h2>
+    </div>
+    <div class="method">setImmediate(callback, ...args) / clearImmediate(immediate)</div>
+    <p class="desc">Execute callback on the <strong>next event loop iteration</strong> (after I/O events, before timers).</p>
+    <pre><code><span class="comment">// Basic immediate</span>
+<span class="keyword">const</span> <span class="var">immediate</span> = <span class="func">setImmediate</span>(() => {
+  <span class="var">console</span>.<span class="func">log</span>(<span class="string">'Runs on the next event loop tick'</span>);
+});
+
+<span class="comment">// With arguments</span>
+<span class="func">setImmediate</span>((<span class="var">msg</span>) => {
+  <span class="var">console</span>.<span class="func">log</span>(<span class="var">msg</span>);
+}, <span class="string">'Immediate with args'</span>);
+
+<span class="comment">// Clear before execution</span>
+<span class="keyword">const</span> <span class="var">imm</span> = <span class="func">setImmediate</span>(() => {
+  <span class="var">console</span>.<span class="func">log</span>(<span class="string">'Will never run'</span>);
+});
+<span class="func">clearImmediate</span>(<span class="var">imm</span>);
+
+<span class="comment">// Execution order: setImmediate vs setTimeout(0)</span>
+<span class="func">setTimeout</span>(() => {
+  <span class="var">console</span>.<span class="func">log</span>(<span class="string">'Timeout 0'</span>);
+}, <span class="number">0</span>);
+
+<span class="func">setImmediate</span>(() => {
+  <span class="var">console</span>.<span class="func">log</span>(<span class="string">'Immediate'</span>); <span class="comment">// Usually runs before setTimeout(0)</span>
+});</code></pre>
+    <div class="note">✅ Use <code>setImmediate</code> for breaking up long-running synchronous operations (yield to the event loop).</div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-ref">Advanced</span>
+      <h2>immediate.ref() / immediate.unref() / hasRef()</h2>
+    </div>
+    <div class="method">immediate.ref() / immediate.unref() / immediate.hasRef()</div>
+    <p class="desc">Same as timeout/interval — control whether the immediate keeps the event loop alive.</p>
+    <pre><code><span class="keyword">const</span> <span class="var">imm</span> = <span class="func">setImmediate</span>(() => {
+  <span class="var">console</span>.<span class="func">log</span>(<span class="string">'Will run, but not keep process alive'</span>);
+});
+
+<span class="comment">// Unref: process can exit before this runs</span>
+<span class="var">imm</span>.<span class="func">unref</span>();
+
+<span class="comment">// If process exits now, the immediate may not run</span>
+<span class="var">process</span>.<span class="func">exit</span>(<span class="number">0</span>);</code></pre>
+    <div class="note">⚠️ If the event loop is empty and the immediate is unref'd, it may be garbage collected before execution.</div>
+  </div>
+
+  <div class="section-title">🔧 Utility Functions</div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-util">Util</span>
+      <h2>setTimeout / setInterval / setImmediate with Promises</h2>
+    </div>
+    <div class="method">promisify / Promise wrappers</div>
+    <p class="desc">Wrap timers in Promises for async/await usage.</p>
+    <pre><code><span class="keyword">import</span> { <span class="var">promisify</span> } <span class="keyword">from</span> <span class="string">'node:util'</span>;
+
+<span class="comment">// Promise-based setTimeout</span>
+<span class="keyword">function</span> <span class="func">sleep</span>(<span class="var">ms</span>) {
+  <span class="keyword">return</span> <span class="keyword">new</span> <span class="func">Promise</span>(<span class="var">resolve</span> => <span class="func">setTimeout</span>(<span class="var">resolve</span>, <span class="var">ms</span>));
+}
+
+<span class="comment">// Usage in async functions</span>
+<span class="keyword">async function</span> <span class="func">example</span>() {
+  <span class="var">console</span>.<span class="func">log</span>(<span class="string">'Start'</span>);
+  <span class="keyword">await</span> <span class="func">sleep</span>(<span class="number">2000</span>);
+  <span class="var">console</span>.<span class="func">log</span>(<span class="string">'After 2 seconds'</span>);
+  
+  <span class="comment">// setImmediate as Promise</span>
+  <span class="keyword">await</span> <span class="keyword">new</span> <span class="func">Promise</span>(<span class="var">resolve</span> => <span class="func">setImmediate</span>(<span class="var">resolve</span>));
+  <span class="var">console</span>.<span class="func">log</span>(<span class="string">'After next tick'</span>);
+}
+
+<span class="comment">// Using promisify (for Node.js 18+)</span>
+<span class="keyword">import</span> { <span class="var">setTimeout</span> <span class="keyword">as</span> <span class="var">setTimeoutPromise</span> } <span class="keyword">from</span> <span class="string">'node:timers/promises'</span>;
+<span class="keyword">await</span> <span class="func">setTimeoutPromise</span>(<span class="number">1000</span>); <span class="comment">// Promises version (Node.js 16+)</span></code></pre>
+    <div class="note">✅ Node.js 16+ has built-in Promise versions in <code>node:timers/promises</code>.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-util">Util</span>
+      <h2>Event Loop Ordering</h2>
+    </div>
+    <div class="method">Execution order: microtasks → timers → I/O → check → close</div>
+    <p class="desc">Understanding where timers run in the event loop phases.</p>
+    <pre><code><span class="comment">// Microtasks (process.nextTick, Promise.then) run FIRST</span>
+<span class="var">process</span>.<span class="func">nextTick</span>(() => {
+  <span class="var">console</span>.<span class="func">log</span>(<span class="string">'1: process.nextTick'</span>);
+});
+
+<span class="func">Promise</span>.<span class="func">resolve</span>().<span class="func">then</span>(() => {
+  <span class="var">console</span>.<span class="func">log</span>(<span class="string">'2: Promise.then'</span>);
+});
+
+<span class="comment">// Timers phase</span>
+<span class="func">setTimeout</span>(() => {
+  <span class="var">console</span>.<span class="func">log</span>(<span class="string">'3: setTimeout'</span>);
+}, <span class="number">0</span>);
+
+<span class="comment">// Check phase (setImmediate)</span>
+<span class="func">setImmediate</span>(() => {
+  <span class="var">console</span>.<span class="func">log</span>(<span class="string">'4: setImmediate'</span>);
+});
+
+<span class="comment">// Output order: 1, 2, 3, 4 (usually)</span>
+<span class="comment">// But setTimeout(0) vs setImmediate order can vary!</span></code></pre>
+    <div class="note">ℹ️ <code>setImmediate</code> runs in the "check" phase, after I/O events. <code>setTimeout(0)</code> runs in the "timers" phase.</div>
+  </div>
+
+</div>
+
+<div class="tip">
+  <strong>🚀 Pro Pattern — Idle Timeout with Refresh:</strong>
+  <pre style="margin-top:0.5rem; background:rgba(0,0,0,0.2); border:none;"><code><span class="keyword">class</span> <span class="func">IdleTimeout</span> {
+  <span class="func">constructor</span>(<span class="var">timeoutMs</span>, <span class="var">onTimeout</span>) {
+    <span class="var">this</span>.<span class="var">timeoutMs</span> = <span class="var">timeoutMs</span>;
+    <span class="var">this</span>.<span class="var">onTimeout</span> = <span class="var">onTimeout</span>;
+    <span class="var">this</span>.<span class="var">_timer</span> = <span class="keyword">null</span>;
+    <span class="var">this</span>.<span class="func">reset</span>();
+  }
+
+  <span class="func">reset</span>() {
+    <span class="keyword">if</span> (<span class="var">this</span>.<span class="var">_timer</span>) {
+      <span class="func">clearTimeout</span>(<span class="var">this</span>.<span class="var">_timer</span>);
+    }
+    <span class="var">this</span>.<span class="var">_timer</span> = <span class="func">setTimeout</span>(() => {
+      <span class="var">this</span>.<span class="var">_timer</span> = <span class="keyword">null</span>;
+      <span class="var">this</span>.<span class="var">onTimeout</span>();
+    }, <span class="var">this</span>.<span class="var">timeoutMs</span>);
+    <span class="var">this</span>.<span class="var">_timer</span>.<span class="func">unref</span>(); <span class="comment">// Don't block process exit</span>
+  }
+
+  <span class="func">clear</span>() {
+    <span class="keyword">if</span> (<span class="var">this</span>.<span class="var">_timer</span>) {
+      <span class="func">clearTimeout</span>(<span class="var">this</span>.<span class="var">_timer</span>);
+      <span class="var">this</span>.<span class="var">_timer</span> = <span class="keyword">null</span>;
+    }
+  }
+}
+
+<span class="comment">// Usage: reset on user activity</span>
+<span class="keyword">const</span> <span class="var">idle</span> = <span class="keyword">new</span> <span class="func">IdleTimeout</span>(<span class="number">30000</span>, () => {
+  <span class="var">console</span>.<span class="func">log</span>(<span class="string">'User inactive for 30s'</span>);
+});
+<span class="comment">// On user activity: idle.reset();</span></code></pre>
+</div>
+
+<h2 style="margin-top:2rem; color:var(--heading); border-bottom:1px solid var(--border); padding-bottom:0.5rem;">📋 Quick Reference</h2>
+<table>
+  <tr><th>Timer Type</th><th>Creation</th><th>Clear</th><th>When it runs</th></tr>
+  <tr><td>Timeout</td><td><code>setTimeout(fn, ms)</code></td><td><code>clearTimeout()</code></td><td>After <code>ms</code> milliseconds (minimum)</td></tr>
+  <tr><td>Interval</td><td><code>setInterval(fn, ms)</code></td><td><code>clearInterval()</code></td><td>Every <code>ms</code> milliseconds</td></tr>
+  <tr><td>Immediate</td><td><code>setImmediate(fn)</code></td><td><code>clearImmediate()</code></td><td>Next event loop iteration (check phase)</td></tr>
+  <tr><td>Microtask</td><td><code>process.nextTick(fn)</code></td><td>N/A</td><td>Before any other timer</td></tr>
+</table>
+
+<h2 style="margin-top:2rem; color:var(--heading); border-bottom:1px solid var(--border); padding-bottom:0.5rem;">📊 Advanced Methods Summary</h2>
+<table>
+  <tr><th>Method</th><th>Description</th><th>Use Case</th></tr>
+  <tr><td><code>timer.ref()</code></td><td>Keep event loop alive (default)</td><td>Ensure timer runs</td></tr>
+  <tr><td><code>timer.unref()</code></td><td>Allow process exit while timer is active</td><td>Background tasks</td></tr>
+  <tr><td><code>timer.hasRef()</code></td><td>Check if timer is keeping event loop alive</td><td>Debugging</td></tr>
+  <tr><td><code>timer.refresh()</code></td><td>Reset timer to original delay</td><td>Keep-alive, session timeouts</td></tr>
+  <tr><td><code>timer[Symbol.toPrimitive]()</code></td><td>Get numeric timer ID</td><td>Legacy APIs expecting IDs</td></tr>
+</table>
+
+<h2 style="margin-top:2rem; color:var(--heading); border-bottom:1px solid var(--border); padding-bottom:0.5rem;">⚠️ Common Pitfalls</h2>
+<table>
+  <tr><th>Mistake</th><th>Why It's Wrong</th><th>Fix</th></tr>
+  <tr><td>Using <code>setTimeout(fn, 0)</code> for "immediate" execution</td><td>Runs after I/O, not immediately</td><td>Use <code>setImmediate()</code> or <code>process.nextTick()</code></td></tr>
+  <tr><td>Assuming precise timing</td><td>Event loop congestion causes delays</td><td>Treat delays as minimum, not exact</td></tr>
+  <tr><td>Not clearing intervals</td><td>Memory leaks, resource waste</td><td>Always clear intervals when done</td></tr>
+  <tr><td>Using <code>unref()</code> on critical timers</td><td>Process may exit before timer fires</td><td>Use <code>ref()</code> for critical operations</td></tr>
+  <tr><td>Nested <code>setTimeout</code> without clearing</td><td>Accumulating timers, memory leaks</td><td>Track and clear nested timers</td></tr>
+  <tr><td>Heavy work in timers</td><td>Blocks the event loop</td><td>Use <code>setImmediate</code> to break up work</td></tr>
+</table>
+
+<div class="footer">
+  Node.js Timers Module Cheat Sheet &mdash; Save this file and open in any browser for quick reference.<br>
+  Based on Node.js 18+ with global <code>setTimeout</code>, <code>setInterval</code>, <code>setImmediate</code>, and their advanced variants.
+</div>
+
+</body>
+</html>

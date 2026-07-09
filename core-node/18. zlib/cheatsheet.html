@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Node.js zlib Module Cheat Sheet</title>
+  <style>
+    :root {
+      --bg: #0d1117;
+      --card: #161b22;
+      --border: #30363d;
+      --text: #c9d1d9;
+      --heading: #f0f6fc;
+      --code-bg: #1f2937;
+      --code-text: #e6edf3;
+      --accent: #58a6ff;
+      --accent2: #3fb950;
+      --accent3: #d29922;
+      --accent4: #f85149;
+      --muted: #8b949e;
+      --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      line-height: 1.6;
+      padding: 2rem 1rem;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+    h1 {
+      color: var(--heading);
+      font-size: 2.2rem;
+      margin-bottom: 0.5rem;
+      border-bottom: 2px solid var(--accent3);
+      padding-bottom: 0.5rem;
+    }
+    .subtitle {
+      color: var(--muted);
+      font-size: 0.95rem;
+      margin-bottom: 2rem;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 1.5rem;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem;
+      transition: border-color 0.2s;
+    }
+    .card:hover { border-color: var(--accent3); }
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.75rem;
+    }
+    .badge {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      padding: 2px 8px;
+      border-radius: 4px;
+      letter-spacing: 0.5px;
+    }
+    .badge-gzip { background: rgba(88,166,255,0.15); color: var(--accent); }
+    .badge-deflate { background: rgba(63,185,80,0.15); color: var(--accent2); }
+    .badge-brotli { background: rgba(210,153,34,0.15); color: var(--accent3); }
+    .badge-util { background: rgba(248,81,73,0.15); color: var(--accent4); }
+    h2 {
+      color: var(--heading);
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
+    .method {
+      font-family: "SFMono-Regular", Consolas, monospace;
+      font-size: 0.85rem;
+      color: var(--accent3);
+      background: rgba(210,153,34,0.08);
+      padding: 2px 6px;
+      border-radius: 4px;
+      margin-bottom: 0.4rem;
+      display: inline-block;
+    }
+    p.desc {
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-bottom: 0.6rem;
+    }
+    pre {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      overflow-x: auto;
+      font-size: 0.8rem;
+      line-height: 1.5;
+    }
+    code {
+      font-family: "SFMono-Regular", Consolas, monospace;
+      color: var(--code-text);
+    }
+    .comment { color: #8b949e; }
+    .keyword { color: #ff7b72; }
+    .string { color: #a5d6ff; }
+    .func { color: #d2a8ff; }
+    .var { color: #79c0ff; }
+    .output { color: #7ee787; }
+    .note {
+      font-size: 0.8rem;
+      color: var(--accent3);
+      margin-top: 0.5rem;
+      padding-left: 0.5rem;
+      border-left: 2px solid var(--accent3);
+    }
+    .tip {
+      background: rgba(210,153,34,0.08);
+      border: 1px solid rgba(210,153,34,0.3);
+      border-radius: 8px;
+      padding: 1rem;
+      margin: 2rem 0;
+      font-size: 0.9rem;
+    }
+    .tip strong { color: var(--accent3); }
+    .footer {
+      text-align: center;
+      margin-top: 3rem;
+      color: var(--muted);
+      font-size: 0.8rem;
+    }
+    .section-title {
+      grid-column: 1 / -1;
+      color: var(--heading);
+      font-size: 1.3rem;
+      margin-top: 1rem;
+      margin-bottom: -0.5rem;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 0.5rem;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+      margin-top: 0.5rem;
+    }
+    th, td {
+      text-align: left;
+      padding: 0.5rem 0.75rem;
+      border-bottom: 1px solid var(--border);
+    }
+    th { color: var(--heading); font-weight: 600; }
+    td code { color: var(--accent3); }
+  </style>
+  <base target="_blank">
+</head>
+<body>
+
+<h1>📦 Node.js <code>zlib</code> Module Cheat Sheet</h1>
+<p class="subtitle">Compression and decompression — gzip, deflate, brotli — Node.js 18+</p>
+
+<div class="tip">
+  <strong>💡 Golden Rule:</strong> Use <code>zlib</code> for compressing HTTP responses, files, or any data. <strong>Brotli</strong> offers better compression than gzip but is slower. Import with <code>node:zlib</code> prefix. Always handle errors and memory limits.
+</div>
+
+<div class="grid">
+
+  <div class="section-title">🗜️ Compression (Streams)</div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-gzip">Gzip</span>
+      <h2>zlib.createGzip / createGunzip</h2>
+    </div>
+    <div class="method">zlib.createGzip(options?) / zlib.createGunzip(options?)</div>
+    <p class="desc">Compress/decompress using gzip format. Great for HTTP compression and file compression.</p>
+    <pre><code><span class="keyword">import</span> <span class="var">zlib</span> <span class="keyword">from</span> <span class="string">'node:zlib'</span>;
+<span class="keyword">import</span> { <span class="var">createReadStream</span>, <span class="var">createWriteStream</span> } <span class="keyword">from</span> <span class="string">'node:fs'</span>;
+
+<span class="comment">// Compress a file (gzip)</span>
+<span class="keyword">const</span> <span class="var">gzip</span> = <span class="var">zlib</span>.<span class="func">createGzip</span>();
+<span class="keyword">const</span> <span class="var">source</span> = <span class="func">createReadStream</span>(<span class="string">'input.txt'</span>);
+<span class="keyword">const</span> <span class="var">destination</span> = <span class="func">createWriteStream</span>(<span class="string">'input.txt.gz'</span>);
+
+<span class="var">source</span>.<span class="func">pipe</span>(<span class="var">gzip</span>).<span class="func">pipe</span>(<span class="var">destination</span>)
+  .<span class="func">on</span>(<span class="string">'finish'</span>, () => <span class="var">console</span>.<span class="func">log</span>(<span class="string">'Compression complete'</span>))
+  .<span class="func">on</span>(<span class="string">'error'</span>, (<span class="var">err</span>) => <span class="var">console</span>.<span class="func">error</span>(<span class="var">err</span>));
+
+<span class="comment">// Decompress a gzip file</span>
+<span class="keyword">const</span> <span class="var">gunzip</span> = <span class="var">zlib</span>.<span class="func">createGunzip</span>();
+<span class="keyword">const</span> <span class="var">compressed</span> = <span class="func">createReadStream</span>(<span class="string">'input.txt.gz'</span>);
+<span class="keyword">const</span> <span class="var">decompressed</span> = <span class="func">createWriteStream</span>(<span class="string">'output.txt'</span>);
+
+<span class="var">compressed</span>.<span class="func">pipe</span>(<span class="var">gunzip</span>).<span class="func">pipe</span>(<span class="var">decompressed</span>)
+  .<span class="func">on</span>(<span class="string">'finish'</span>, () => <span class="var">console</span>.<span class="func">log</span>(<span class="string">'Decompression complete'</span>));</code></pre>
+    <div class="note">✅ Use gzip for general-purpose compression. Compatible with most tools and browsers.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-deflate">Deflate</span>
+      <h2>zlib.createDeflate / createInflate</h2>
+    </div>
+    <div class="method">zlib.createDeflate(options?) / zlib.createInflate(options?)</div>
+    <p class="desc">Compress/decompress using deflate format (raw zlib without headers).</p>
+    <pre><code><span class="keyword">import</span> <span class="var">zlib</span> <span class="keyword">from</span> <span class="string">'node:zlib'</span>;
+
+<span class="comment">// Compress with deflate</span>
+<span class="keyword">const</span> <span class="var">deflate</span> = <span class="var">zlib</span>.<span class="func">createDeflate</span>({
+  <span class="var">level</span>: <span class="number">9</span>,              <span class="comment">// Compression level (0-9)</span>
+  <span class="var">memLevel</span>: <span class="number">8</span>            <span class="comment">// Memory usage (1-9)</span>
+});
+
+<span class="keyword">const</span> <span class="var">input</span> = <span class="var">Buffer</span>.<span class="func">from</span>(<span class="string">'Hello world!'</span>);
+<span class="keyword">const</span> <span class="var">chunks</span> = [];
+<span class="var">deflate</span>.<span class="func">on</span>(<span class="string">'data'</span>, <span class="var">chunk</span> => <span class="var">chunks</span>.<span class="func">push</span>(<span class="var">chunk</span>));
+<span class="var">deflate</span>.<span class="func">on</span>(<span class="string">'end'</span>, () => {
+  <span class="keyword">const</span> <span class="var">compressed</span> = <span class="var">Buffer</span>.<span class="func">concat</span>(<span class="var">chunks</span>);
+  <span class="var">console</span>.<span class="func">log</span>(<span class="string">'Compressed size:'</span>, <span class="var">compressed</span>.<span class="var">length</span>);
+  
+  <span class="comment">// Decompress</span>
+  <span class="keyword">const</span> <span class="var">inflate</span> = <span class="var">zlib</span>.<span class="func">createInflate</span>();
+  <span class="keyword">const</span> <span class="var">decompressedChunks</span> = [];
+  <span class="var">inflate</span>.<span class="func">on</span>(<span class="string">'data'</span>, <span class="var">chunk</span> => <span class="var">decompressedChunks</span>.<span class="func">push</span>(<span class="var">chunk</span>));
+  <span class="var">inflate</span>.<span class="func">on</span>(<span class="string">'end'</span>, () => {
+    <span class="keyword">const</span> <span class="var">decompressed</span> = <span class="var">Buffer</span>.<span class="func">concat</span>(<span class="var">decompressedChunks</span>);
+    <span class="var">console</span>.<span class="func">log</span>(<span class="string">'Decompressed:'</span>, <span class="var">decompressed</span>.<span class="func">toString</span>());
+  });
+  <span class="var">inflate</span>.<span class="func">write</span>(<span class="var">compressed</span>);
+  <span class="var">inflate</span>.<span class="func">end</span>();
+});
+
+<span class="var">deflate</span>.<span class="func">write</span>(<span class="var">input</span>);
+<span class="var">deflate</span>.<span class="func">end</span>();</code></pre>
+    <div class="note">✅ Deflate is the foundation of gzip. Use when you need raw zlib format.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-deflate">Deflate</span>
+      <h2>zlib.createDeflateRaw / createInflateRaw</h2>
+    </div>
+    <div class="method">zlib.createDeflateRaw() / zlib.createInflateRaw()</div>
+    <p class="desc">Compress/decompress without zlib headers (raw deflate). Used in some protocols.</p>
+    <pre><code><span class="keyword">import</span> <span class="var">zlib</span> <span class="keyword">from</span> <span class="string">'node:zlib'</span>;
+
+<span class="comment">// Raw deflate (no headers)</span>
+<span class="keyword">const</span> <span class="var">deflateRaw</span> = <span class="var">zlib</span>.<span class="func">createDeflateRaw</span>();
+<span class="keyword">const</span> <span class="var">inflateRaw</span> = <span class="var">zlib</span>.<span class="func">createInflateRaw</span>();
+
+<span class="keyword">const</span> <span class="var">data</span> = <span class="var">Buffer</span>.<span class="func">from</span>(<span class="string">'Raw deflate compression'</span>);
+
+<span class="comment">// Compress</span>
+<span class="keyword">const</span> <span class="var">compressed</span> = <span class="var">zlib</span>.<span class="func">deflateRawSync</span>(<span class="var">data</span>);
+<span class="var">console</span>.<span class="func">log</span>(<span class="string">'Raw compressed:'</span>, <span class="var">compressed</span>.<span class="func">toString</span>(<span class="string">'base64'</span>));
+
+<span class="comment">// Decompress</span>
+<span class="keyword">const</span> <span class="var">decompressed</span> = <span class="var">zlib</span>.<span class="func">inflateRawSync</span>(<span class="var">compressed</span>);
+<span class="var">console</span>.<span class="func">log</span>(<span class="string">'Raw decompressed:'</span>, <span class="var">decompressed</span>.<span class="func">toString</span>());</code></pre>
+    <div class="note">⚠️ Raw deflate is less common. Only use if you know the other side expects raw format.</div>
+  </div>
+
+  <div class="section-title">🌀 Brotli Compression</div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-brotli">Brotli</span>
+      <h2>zlib.createBrotliCompress / createBrotliDecompress</h2>
+    </div>
+    <div class="method">zlib.createBrotliCompress(options?) / zlib.createBrotliDecompress(options?)</div>
+    <p class="desc">Compress/decompress using Brotli algorithm. Better compression than gzip but slower.</p>
+    <pre><code><span class="keyword">import</span> <span class="var">zlib</span> <span class="keyword">from</span> <span class="string">'node:zlib'</span>;
+<span class="keyword">import</span> { <span class="var">createReadStream</span>, <span class="var">createWriteStream</span> } <span class="keyword">from</span> <span class="string">'node:fs'</span>;
+
+<span class="comment">// Brotli compress with options</span>
+<span class="keyword">const</span> <span class="var">brotliCompress</span> = <span class="var">zlib</span>.<span class="func">createBrotliCompress</span>({
+  <span class="var">params</span>: {
+    <span class="comment">// Quality: 0-11 (higher = better compression, slower)</span>
+    [<span class="var">zlib</span>.<span class="var">constants</span>.<span class="var">BROTLI_PARAM_QUALITY</span>]: <span class="number">11</span>,
+    <span class="comment">// LGWIN: 10-24 (larger = better compression, more memory)</span>
+    [<span class="var">zlib</span>.<span class="var">constants</span>.<span class="var">BROTLI_PARAM_LGWIN</span>]: <span class="number">22</span>,
+    <span class="comment">// Mode: TEXT, FONT, or GENERIC</span>
+    [<span class="var">zlib</span>.<span class="var">constants</span>.<span class="var">BROTLI_PARAM_MODE</span>]: <span class="var">zlib</span>.<span class="var">constants</span>.<span class="var">BROTLI_MODE_TEXT</span>
+  }
+});
+
+<span class="keyword">const</span> <span class="var">source</span> = <span class="func">createReadStream</span>(<span class="string">'large-file.txt'</span>);
+<span class="keyword">const</span> <span class="var">dest</span> = <span class="func">createWriteStream</span>(<span class="string">'large-file.txt.br'</span>);
+
+<span class="var">source</span>.<span class="func">pipe</span>(<span class="var">brotliCompress</span>).<span class="func">pipe</span>(<span class="var">dest</span>)
+  .<span class="func">on</span>(<span class="string">'finish'</span>, () => <span class="var">console</span>.<span class="func">log</span>(<span class="string">'Brotli compression complete'</span>));
+
+<span class="comment">// Decompress Brotli</span>
+<span class="keyword">const</span> <span class="var">brotliDecompress</span> = <span class="var">zlib</span>.<span class="func">createBrotliDecompress</span>();
+<span class="keyword">const</span> <span class="var">compressed</span> = <span class="func">createReadStream</span>(<span class="string">'large-file.txt.br'</span>);
+<span class="keyword">const</span> <span class="var">output</span> = <span class="func">createWriteStream</span>(<span class="string">'decompressed.txt'</span>);
+
+<span class="var">compressed</span>.<span class="func">pipe</span>(<span class="var">brotliDecompress</span>).<span class="func">pipe</span>(<span class="var">output</span>)
+  .<span class="func">on</span>(<span class="string">'finish'</span>, () => <span class="var">console</span>.<span class="func">log</span>(<span class="string">'Brotli decompression complete'</span>));</code></pre>
+    <div class="note">✅ Brotli is best for web content (text, HTML, CSS, JS). Most modern browsers support it.</div>
+  </div>
+
+  <div class="section-title">⚡ Synchronous & Promise APIs</div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-util">Util</span>
+      <h2>Sync compression / decompression</h2>
+    </div>
+    <div class="method">zlib.gzipSync(data, options?) / zlib.gunzipSync(data, options?) / zlib.deflateSync() / zlib.inflateSync() / zlib.brotliCompressSync() / zlib.brotliDecompressSync()</div>
+    <p class="desc">Synchronous versions of compression/decompression. Simpler but blocks the event loop.</p>
+    <pre><code><span class="keyword">import</span> <span class="var">zlib</span> <span class="keyword">from</span> <span class="string">'node:zlib'</span>;
+
+<span class="comment">// Sync gzip compress</span>
+<span class="keyword">const</span> <span class="var">data</span> = <span class="var">Buffer</span>.<span class="func">from</span>(<span class="string">'Hello world!'.repeat(1000)</span>);
+<span class="keyword">const</span> <span class="var">compressed</span> = <span class="var">zlib</span>.<span class="func">gzipSync</span>(<span class="var">data</span>, { <span class="var">level</span>: <span class="number">9</span> });
+<span class="var">console</span>.<span class="func">log</span>(<span class="string">`Compressed: ${compressed.length} bytes (from ${data.length})`</span>);
+
+<span class="keyword">const</span> <span class="var">decompressed</span> = <span class="var">zlib</span>.<span class="func">gunzipSync</span>(<span class="var">compressed</span>);
+<span class="var">console</span>.<span class="func">log</span>(<span class="string">`Decompressed: ${decompressed.length} bytes`</span>);
+
+<span class="comment">// Sync deflate</span>
+<span class="keyword">const</span> <span class="var">deflated</span> = <span class="var">zlib</span>.<span class="func">deflateSync</span>(<span class="var">data</span>);
+<span class="keyword">const</span> <span class="var">inflated</span> = <span class="var">zlib</span>.<span class="func">inflateSync</span>(<span class="var">deflated</span>);
+
+<span class="comment">// Sync Brotli</span>
+<span class="keyword">const</span> <span class="var">brCompressed</span> = <span class="var">zlib</span>.<span class="func">brotliCompressSync</span>(<span class="var">data</span>, {
+  <span class="var">params</span>: {
+    [<span class="var">zlib</span>.<span class="var">constants</span>.<span class="var">BROTLI_PARAM_QUALITY</span>]: <span class="number">11</span>
+  }
+});
+<span class="keyword">const</span> <span class="var">brDecompressed</span> = <span class="var">zlib</span>.<span class="func">brotliDecompressSync</span>(<span class="var">brCompressed</span>);</code></pre>
+    <div class="note">⚠️ Sync methods <strong>block the event loop</strong>. Use streams or promises for large data.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-util">Util</span>
+      <h2>Promise-based compression (Node.js 15+)</h2>
+    </div>
+    <div class="method">zlib.gzip(data, options?) / zlib.gunzip(data, options?) / zlib.brotliCompress(data, options?)</div>
+    <p class="desc">Callback-style functions that can be promisified. Use with <code>util.promisify</code>.</p>
+    <pre><code><span class="keyword">import</span> <span class="var">zlib</span> <span class="keyword">from</span> <span class="string">'node:zlib'</span>;
+<span class="keyword">import</span> { <span class="var">promisify</span> } <span class="keyword">from</span> <span class="string">'node:util'</span>;
+
+<span class="keyword">const</span> <span class="var">gzip</span> = <span class="func">promisify</span>(<span class="var">zlib</span>.<span class="var">gzip</span>);
+<span class="keyword">const</span> <span class="var">gunzip</span> = <span class="func">promisify</span>(<span class="var">zlib</span>.<span class="var">gunzip</span>);
+<span class="keyword">const</span> <span class="var">brotliCompress</span> = <span class="func">promisify</span>(<span class="var">zlib</span>.<span class="var">brotliCompress</span>);
+<span class="keyword">const</span> <span class="var">brotliDecompress</span> = <span class="func">promisify</span>(<span class="var">zlib</span>.<span class="var">brotliDecompress</span>);
+
+<span class="comment">// Async/await usage</span>
+<span class="keyword">async function</span> <span class="func">compressData</span>(<span class="var">data</span>) {
+  <span class="keyword">try</span> {
+    <span class="keyword">const</span> <span class="var">compressed</span> = <span class="keyword">await</span> <span class="func">gzip</span>(<span class="var">data</span>, { <span class="var">level</span>: <span class="number">9</span> });
+    <span class="var">console</span>.<span class="func">log</span>(<span class="string">`Compressed to ${compressed.length} bytes`</span>);
+    
+    <span class="keyword">const</span> <span class="var">decompressed</span> = <span class="keyword">await</span> <span class="func">gunzip</span>(<span class="var">compressed</span>);
+    <span class="keyword">return</span> { <span class="var">compressed</span>, <span class="var">decompressed</span> };
+  } <span class="keyword">catch</span> (<span class="var">err</span>) {
+    <span class="var">console</span>.<span class="func">error</span>(<span class="string">'Compression error:'</span>, <span class="var">err</span>);
+  }
+}
+
+<span class="comment">// Brotli with quality control</span>
+<span class="keyword">const</span> <span class="var">br</span> = <span class="keyword">await</span> <span class="func">brotliCompress</span>(<span class="var">Buffer</span>.<span class="func">from</span>(<span class="string">'Hello world'</span>), {
+  <span class="var">params</span>: {
+    [<span class="var">zlib</span>.<span class="var">constants</span>.<span class="var">BROTLI_PARAM_QUALITY</span>]: <span class="number">11</span>
+  }
+});</code></pre>
+    <div class="note">✅ Promisified versions are great for async workflows with moderate data sizes.</div>
+  </div>
+
+  <div class="section-title">🔧 Advanced Options</div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-util">Util</span>
+      <h2>Compression levels & options</h2>
+    </div>
+    <div class="method">zlib.constants (level, memLevel, strategy, etc.)</div>
+    <p class="desc">Fine-tune compression with options like level, memory, and strategy.</p>
+    <pre><code><span class="keyword">import</span> <span class="var">zlib</span> <span class="keyword">from</span> <span class="string">'node:zlib'</span>;
+
+<span class="comment">// Gzip options</span>
+<span class="keyword">const</span> <span class="var">gzip</span> = <span class="var">zlib</span>.<span class="func">createGzip</span>({
+  <span class="var">level</span>: <span class="number">9</span>,                    <span class="comment">// 0-9 (0=no compression, 9=best)</span>
+  <span class="var">memLevel</span>: <span class="number">8</span>,                 <span class="comment">// 1-9 (memory usage)</span>
+  <span class="var">strategy</span>: <span class="var">zlib</span>.<span class="var">constants</span>.<span class="var">Z_RLE</span>, <span class="comment">// Strategy for compression</span>
+  <span class="var">windowBits</span>: <span class="number">15</span>,               <span class="comment">// 8-15 (window size)</span>
+  <span class="var">chunkSize</span>: <span class="number">16</span> * <span class="number">1024</span>,        <span class="comment">// Internal buffer size</span>
+  <span class="var">flush</span>: <span class="var">zlib</span>.<span class="var">constants</span>.<span class="var">Z_SYNC_FLUSH</span>
+});
+
+<span class="comment">// Compression strategies</span>
+<span class="comment">// Z_DEFAULT_STRATEGY - default</span>
+<span class="comment">// Z_FILTERED - for data with lots of small values</span>
+<span class="comment">// Z_HUFFMAN_ONLY - only Huffman coding</span>
+<span class="comment">// Z_RLE - run-length encoding</span>
+<span class="comment">// Z_FIXED - fixed Huffman tables</span>
+
+<span class="comment">// Brotli options</span>
+<span class="keyword">const</span> <span class="var">brotli</span> = <span class="var">zlib</span>.<span class="func">createBrotliCompress</span>({
+  <span class="var">params</span>: {
+    [<span class="var">zlib</span>.<span class="var">constants</span>.<span class="var">BROTLI_PARAM_QUALITY</span>]: <span class="number">11</span>,        <span class="comment">// 0-11</span>
+    [<span class="var">zlib</span>.<span class="var">constants</span>.<span class="var">BROTLI_PARAM_LGWIN</span>]: <span class="number">24</span>,          <span class="comment">// 10-24</span>
+    [<span class="var">zlib</span>.<span class="var">constants</span>.<span class="var">BROTLI_PARAM_MODE</span>]: <span class="var">zlib</span>.<span class="var">constants</span>.<span class="var">BROTLI_MODE_TEXT</span>,
+    [<span class="var">zlib</span>.<span class="var">constants</span>.<span class="var">BROTLI_PARAM_SIZE_HINT</span>]: <span class="number">1024</span>        <span class="comment">// Hint for better compression</span>
+  }
+});</code></pre>
+    <div class="note">⚠️ Higher compression levels use more CPU and memory. Balance based on your use case.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-util">Util</span>
+      <h2>Memory limits & error handling</h2>
+    </div>
+    <div class="method">zlib.constants.Z_FINISH / zlib.constants.Z_NO_FLUSH / zlib.constants.Z_SYNC_FLUSH</div>
+    <p class="desc">Control flushing behavior and memory limits to prevent out-of-memory errors.</p>
+    <pre><code><span class="keyword">import</span> <span class="var">zlib</span> <span class="keyword">from</span> <span class="string">'node:zlib'</span>;
+
+<span class="comment">// Flush options</span>
+<span class="keyword">const</span> <span class="var">deflate</span> = <span class="var">zlib</span>.<span class="func">createDeflate</span>({
+  <span class="var">flush</span>: <span class="var">zlib</span>.<span class="var">constants</span>.<span class="var">Z_SYNC_FLUSH</span> <span class="comment">// Flush data immediately</span>
+});
+
+<span class="comment">// Manual flush</span>
+<span class="var">deflate</span>.<span class="func">write</span>(<span class="var">data</span>);
+<span class="var">deflate</span>.<span class="func">flush</span>(<span class="var">zlib</span>.<span class="var">constants</span>.<span class="var">Z_SYNC_FLUSH</span>);
+
+<span class="comment">// Set memory limits for protection</span>
+<span class="keyword">const</span> <span class="var">gzip</span> = <span class="var">zlib</span>.<span class="func">createGzip</span>({
+  <span class="var">memLevel</span>: <span class="number">4</span>,          <span class="comment">// Lower memory usage</span>
+  <span class="var">windowBits</span>: <span class="number">12</span>        <span class="comment">// Smaller window (less memory)</span>
+});
+
+<span class="comment">// Error handling is critical</span>
+<span class="keyword">const</span> <span class="var">gunzip</span> = <span class="var">zlib</span>.<span class="func">createGunzip</span>();
+<span class="var">gunzip</span>.<span class="func">on</span>(<span class="string">'error'</span>, (<span class="var">err</span>) => {
+  <span class="keyword">if</span> (<span class="var">err</span>.<span class="var">code</span> === <span class="string">'Z_BUF_ERROR'</span>) {
+    <span class="var">console</span>.<span class="func">error</span>(<span class="string">'Buffer error - data may be corrupted'</span>);
+  } <span class="keyword">else</span> <span class="keyword">if</span> (<span class="var">err</span>.<span class="var">code</span> === <span class="string">'Z_DATA_ERROR'</span>) {
+    <span class="var">console</span>.<span class="func">error</span>(<span class="string">'Data corrupted'</span>);
+  } <span class="keyword">else</span> {
+    <span class="var">console</span>.<span class="func">error</span>(<span class="string">'Compression error:'</span>, <span class="var">err</span>);
+  }
+});</code></pre>
+    <div class="note">✅ Always handle errors. Corrupted or incomplete data can cause fatal zlib errors.</div>
+  </div>
+
+  <div class="section-title">🌐 HTTP Compression</div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-gzip">HTTP</span>
+      <h2>zlib with HTTP (Accept-Encoding)</h2>
+    </div>
+    <div class="method">HTTP compression middleware style</div>
+    <p class="desc">Compress HTTP responses based on client's Accept-Encoding header.</p>
+    <pre><code><span class="keyword">import</span> <span class="var">zlib</span> <span class="keyword">from</span> <span class="string">'node:zlib'</span>;
+<span class="keyword">import</span> <span class="var">http</span> <span class="keyword">from</span> <span class="string">'node:http'</span>;
+
+<span class="keyword">const</span> <span class="var">server</span> = <span class="var">http</span>.<span class="func">createServer</span>((<span class="var">req</span>, <span class="var">res</span>) => {
+  <span class="keyword">const</span> <span class="var">acceptEncoding</span> = <span class="var">req</span>.<span class="var">headers</span>[<span class="string">'accept-encoding'</span>] || <span class="string">''</span>;
+  <span class="keyword">const</span> <span class="var">data</span> = <span class="var">Buffer</span>.<span class="func">from</span>(<span class="string">'Hello world! '.repeat(1000)</span>);
+
+  <span class="comment">// Choose encoding based on client support</span>
+  <span class="keyword">if</span> (<span class="var">acceptEncoding</span>.<span class="func">includes</span>(<span class="string">'br'</span>)) {
+    <span class="comment">// Brotli (best compression)</span>
+    <span class="var">res</span>.<span class="func">writeHead</span>(<span class="number">200</span>, { <span class="string">'Content-Encoding'</span>: <span class="string">'br'</span> });
+    <span class="keyword">const</span> <span class="var">compress</span> = <span class="var">zlib</span>.<span class="func">createBrotliCompress</span>();
+    <span class="var">compress</span>.<span class="func">pipe</span>(<span class="var">res</span>);
+    <span class="var">compress</span>.<span class="func">write</span>(<span class="var">data</span>);
+    <span class="var">compress</span>.<span class="func">end</span>();
+  } <span class="keyword">else</span> <span class="keyword">if</span> (<span class="var">acceptEncoding</span>.<span class="func">includes</span>(<span class="string">'gzip'</span>)) {
+    <span class="comment">// Gzip (fallback)</span>
+    <span class="var">res</span>.<span class="func">writeHead</span>(<span class="number">200</span>, { <span class="string">'Content-Encoding'</span>: <span class="string">'gzip'</span> });
+    <span class="keyword">const</span> <span class="var">compress</span> = <span class="var">zlib</span>.<span class="func">createGzip</span>();
+    <span class="var">compress</span>.<span class="func">pipe</span>(<span class="var">res</span>);
+    <span class="var">compress</span>.<span class="func">write</span>(<span class="var">data</span>);
+    <span class="var">compress</span>.<span class="func">end</span>();
+  } <span class="keyword">else</span> {
+    <span class="comment">// No compression</span>
+    <span class="var">res</span>.<span class="func">end</span>(<span class="var">data</span>);
+  }
+});
+
+<span class="var">server</span>.<span class="func">listen</span>(<span class="number">3000</span>, () => {
+  <span class="var">console</span>.<span class="func">log</span>(<span class="string">'HTTP server with compression'</span>);
+});</code></pre>
+    <div class="note">✅ Always check Accept-Encoding and use the best supported algorithm (br > gzip > deflate).</div>
+  </div>
+
+</div>
+
+<div class="tip">
+  <strong>🚀 Pro Pattern — Compress String with Best Algorithm:</strong>
+  <pre style="margin-top:0.5rem; background:rgba(0,0,0,0.2); border:none;"><code><span class="keyword">import</span> <span class="var">zlib</span> <span class="keyword">from</span> <span class="string">'node:zlib'</span>;
+
+<span class="comment">// Smart compression based on data size and type</span>
+<span class="keyword">async function</span> <span class="func">compress</span>(<span class="var">data</span>, <span class="var">options</span> = {}) {
+  <span class="keyword">const</span> <span class="var">input</span> = <span class="keyword">typeof</span> <span class="var">data</span> === <span class="string">'string'</span> 
+    ? <span class="var">Buffer</span>.<span class="func">from</span>(<span class="var">data</span>, <span class="string">'utf-8'</span>) 
+    : <span class="var">data</span>;
+
+  <span class="comment">// For small data, compression may not help</span>
+  <span class="keyword">if</span> (<span class="var">input</span>.<span class="var">length</span> < < <span class="number">100</span>) {
+    <span class="keyword">return</span> { <span class="var">compressed</span>: <span class="var">input</span>, <span class="var">algorithm</span>: <span class="string">'none'</span>, <span class="var">size</span>: <span class="var">input</span>.<span class="var">length</span> };
+  }
+
+  <span class="comment">// Try Brotli first (best compression)</span>
+  <span class="keyword">try</span> {
+    <span class="keyword">const</span> <span class="var">br</span> = <span class="keyword">await</span> <span class="var">zlib</span>.<span class="func">brotliCompress</span>(<span class="var">input</span>, {
+      <span class="var">params</span>: { [<span class="var">zlib</span>.<span class="var">constants</span>.<span class="var">BROTLI_PARAM_QUALITY</span>]: <span class="var">options</span>.<span class="var">quality</span> || <span class="number">6</span> }
+    });
+    <span class="keyword">return</span> { <span class="var">compressed</span>: <span class="var">br</span>, <span class="var">algorithm</span>: <span class="string">'brotli'</span>, <span class="var">size</span>: <span class="var">br</span>.<span class="var">length</span> };
+  } <span class="keyword">catch</span> (<span class="var">err</span>) {
+    <span class="comment">// Fallback to gzip</span>
+    <span class="keyword">const</span> <span class="var">gzip</span> = <span class="keyword">await</span> <span class="var">zlib</span>.<span class="func">gzip</span>(<span class="var">input</span>, { <span class="var">level</span>: <span class="var">options</span>.<span class="var">level</span> || <span class="number">6</span> });
+    <span class="keyword">return</span> { <span class="var">compressed</span>: <span class="var">gzip</span>, <span class="var">algorithm</span>: <span class="string">'gzip'</span>, <span class="var">size</span>: <span class="var">gzip</span>.<span class="var">length</span> };
+  }
+}
+
+<span class="comment">// Usage</span>
+<span class="keyword">const</span> <span class="var">result</span> = <span class="keyword">await</span> <span class="func">compress</span>(<span class="string">'Hello world '.repeat(1000)</span>);
+<span class="var">console</span>.<span class="func">log</span>(<span class="string">`Compressed with ${result.algorithm}: ${result.size} bytes`</span>);</code></pre>
+</div>
+
+<h2 style="margin-top:2rem; color:var(--heading); border-bottom:1px solid var(--border); padding-bottom:0.5rem;">📋 Quick Reference</h2>
+<table>
+  <tr><th>Algorithm</th><th>Compress</th><th>Decompress</th><th>Sync</th><th>Best For</th></tr>
+  <tr><td><strong>Gzip</strong></td><td><code>createGzip()</code></td><td><code>createGunzip()</code></td><td><code>gzipSync()</code></td><td>General purpose, widely supported</td></tr>
+  <tr><td><strong>Deflate</strong></td><td><code>createDeflate()</code></td><td><code>createInflate()</code></td><td><code>deflateSync()</code></td><td>Raw zlib format</td></tr>
+  <tr><td><strong>DeflateRaw</strong></td><td><code>createDeflateRaw()</code></td><td><code>createInflateRaw()</code></td><td><code>deflateRawSync()</code></td><td>Protocols without headers</td></tr>
+  <tr><td><strong>Brotli</strong></td><td><code>createBrotliCompress()</code></td><td><code>createBrotliDecompress()</code></td><td><code>brotliCompressSync()</code></td><td>Web content (best compression)</td></tr>
+</table>
+
+<h2 style="margin-top:2rem; color:var(--heading); border-bottom:1px solid var(--border); padding-bottom:0.5rem;">⚙️ Compression Levels</h2>
+<table>
+  <tr><th>Level</th><th>Description</th><th>Use Case</th></tr>
+  <tr><td><code>0</code></td><td>No compression (fastest)</td><td>When you just need to pass through data</td></tr>
+  <tr><td><code>1-3</code></td><td>Fast compression</td><td>Real-time streaming, low CPU</td></tr>
+  <tr><td><code>4-6</code></td><td>Balanced (default)</td><td>General purpose, good trade-off</td></tr>
+  <tr><td><code>7-9</code></td><td>Maximum compression</td><td>Static assets, archiving (CPU intensive)</td></tr>
+</table>
+
+<h2 style="margin-top:2rem; color:var(--heading); border-bottom:1px solid var(--border); padding-bottom:0.5rem;">⚠️ Common Pitfalls</h2>
+<table>
+  <tr><th>Mistake</th><th>Why It's Wrong</th><th>Fix</th></tr>
+  <tr><td>Not handling errors</td><td>Corrupted data crashes the process</td><td>Always add <code>.on('error')</code> or try/catch</td></tr>
+  <tr><td>Using sync methods in servers</td><td>Blocks the event loop</td><td>Use streams or promises with async/await</td></tr>
+  <tr><td>Compressing already compressed data</td><td>Wastes CPU, may increase size</td><td>Check content type or file extension</td></tr>
+  <tr><td>Memory limits exceeded</td><td>Out of memory errors</td><td>Use streams for large files, adjust <code>memLevel</code></td></tr>
+  <tr><td>Assuming all browsers support Brotli</td><td>Older browsers don't support it</td><td>Check Accept-Encoding header</td></tr>
+  <tr><td>Not flushing data</td><td>Data may be buffered indefinitely</td><td>Use <code>flush()</code> or let stream end naturally</td></tr>
+</table>
+
+<div class="footer">
+  Node.js zlib Module Cheat Sheet &mdash; Save this file and open in any browser for quick reference.<br>
+  Based on Node.js 18+ with <code>node:zlib</code> API. Compress and decompress with gzip, deflate, and brotli.
+</div>
+
+</body>
+</html>

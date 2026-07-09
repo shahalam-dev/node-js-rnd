@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Node.js assert Module Cheat Sheet</title>
+  <style>
+    :root {
+      --bg: #0d1117;
+      --card: #161b22;
+      --border: #30363d;
+      --text: #c9d1d9;
+      --heading: #f0f6fc;
+      --code-bg: #1f2937;
+      --code-text: #e6edf3;
+      --accent: #58a6ff;
+      --accent2: #3fb950;
+      --accent3: #d29922;
+      --accent4: #f85149;
+      --muted: #8b949e;
+      --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      line-height: 1.6;
+      padding: 2rem 1rem;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+    h1 {
+      color: var(--heading);
+      font-size: 2.2rem;
+      margin-bottom: 0.5rem;
+      border-bottom: 2px solid var(--accent4);
+      padding-bottom: 0.5rem;
+    }
+    .subtitle {
+      color: var(--muted);
+      font-size: 0.95rem;
+      margin-bottom: 2rem;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 1.5rem;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem;
+      transition: border-color 0.2s;
+    }
+    .card:hover { border-color: var(--accent4); }
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.75rem;
+    }
+    .badge {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      padding: 2px 8px;
+      border-radius: 4px;
+      letter-spacing: 0.5px;
+    }
+    .badge-equality { background: rgba(88,166,255,0.15); color: var(--accent); }
+    .badge-comparison { background: rgba(63,185,80,0.15); color: var(--accent2); }
+    .badge-error { background: rgba(210,153,34,0.15); color: var(--accent3); }
+    .badge-util { background: rgba(248,81,73,0.15); color: var(--accent4); }
+    h2 {
+      color: var(--heading);
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
+    .method {
+      font-family: "SFMono-Regular", Consolas, monospace;
+      font-size: 0.85rem;
+      color: var(--accent4);
+      background: rgba(248,81,73,0.08);
+      padding: 2px 6px;
+      border-radius: 4px;
+      margin-bottom: 0.4rem;
+      display: inline-block;
+    }
+    p.desc {
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-bottom: 0.6rem;
+    }
+    pre {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      overflow-x: auto;
+      font-size: 0.8rem;
+      line-height: 1.5;
+    }
+    code {
+      font-family: "SFMono-Regular", Consolas, monospace;
+      color: var(--code-text);
+    }
+    .comment { color: #8b949e; }
+    .keyword { color: #ff7b72; }
+    .string { color: #a5d6ff; }
+    .func { color: #d2a8ff; }
+    .var { color: #79c0ff; }
+    .output { color: #7ee787; }
+    .note {
+      font-size: 0.8rem;
+      color: var(--accent3);
+      margin-top: 0.5rem;
+      padding-left: 0.5rem;
+      border-left: 2px solid var(--accent3);
+    }
+    .tip {
+      background: rgba(248,81,73,0.08);
+      border: 1px solid rgba(248,81,73,0.3);
+      border-radius: 8px;
+      padding: 1rem;
+      margin: 2rem 0;
+      font-size: 0.9rem;
+    }
+    .tip strong { color: var(--accent4); }
+    .footer {
+      text-align: center;
+      margin-top: 3rem;
+      color: var(--muted);
+      font-size: 0.8rem;
+    }
+    .section-title {
+      grid-column: 1 / -1;
+      color: var(--heading);
+      font-size: 1.3rem;
+      margin-top: 1rem;
+      margin-bottom: -0.5rem;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 0.5rem;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+      margin-top: 0.5rem;
+    }
+    th, td {
+      text-align: left;
+      padding: 0.5rem 0.75rem;
+      border-bottom: 1px solid var(--border);
+    }
+    th { color: var(--heading); font-weight: 600; }
+    td code { color: var(--accent4); }
+  </style>
+  <base target="_blank">
+</head>
+<body>
+
+<h1>✅ Node.js <code>assert</code> Module Cheat Sheet</h1>
+<p class="subtitle">Testing assertions and value validation — Node.js 18+</p>
+
+<div class="tip">
+  <strong>💡 Golden Rule:</strong> The <code>assert</code> module provides a set of assertion functions for testing invariants. Use <strong>strict mode</strong> (<code>assert.strict</code>) for reliable comparisons without coercion. Import with <code>node:assert</code> prefix. For production, use <code>assert</code> for validation; for tests, use a full testing framework.
+</div>
+
+<div class="grid">
+
+  <div class="section-title">⚖️ Equality Assertions</div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-equality">Equality</span>
+      <h2>assert.equal / strictEqual</h2>
+    </div>
+    <div class="method">assert.equal(actual, expected, message?) / assert.strictEqual(actual, expected, message?)</div>
+    <p class="desc"><code>equal</code> uses loose equality (==). <code>strictEqual</code> uses strict equality (===). <strong>Prefer strictEqual</strong>.</p>
+    <pre><code><span class="keyword">import</span> <span class="var">assert</span> <span class="keyword">from</span> <span class="string">'node:assert'</span>;
+<span class="keyword">import</span> { <span class="var">strict</span> } <span class="keyword">from</span> <span class="string">'node:assert'</span>;
+
+<span class="comment">// Loose equality (==) - avoid!</span>
+<span class="var">assert</span>.<span class="func">equal</span>(<span class="number">1</span>, <span class="string">'1'</span>); <span class="comment">// Passes</span>
+
+<span class="comment">// Strict equality (===) - recommended</span>
+<span class="var">assert</span>.<span class="func">strictEqual</span>(<span class="number">1</span>, <span class="number">1</span>); <span class="comment">// Passes</span>
+<span class="var">assert</span>.<span class="func">strictEqual</span>(<span class="number">1</span>, <span class="string">'1'</span>); <span class="comment">// Throws</span>
+
+<span class="comment">// Using strict import (all methods are strict by default)</span>
+<span class="var">strict</span>.<span class="func">equal</span>(<span class="number">1</span>, <span class="string">'1'</span>); <span class="comment">// Throws (strict equal)</span>
+<span class="var">strict</span>.<span class="func">equal</span>(<span class="number">1</span>, <span class="number">1</span>);  <span class="comment">// Passes</span>
+
+<span class="comment">// With custom message</span>
+<span class="var">assert</span>.<span class="func">strictEqual</span>(<span class="number">1</span>, <span class="number">2</span>, <span class="string">'Numbers should be equal'</span>);</code></pre>
+    <div class="note">✅ Always use <code>strictEqual</code> or <code>assert.strict</code> to avoid coercion bugs.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-equality">Equality</span>
+      <h2>assert.notEqual / notStrictEqual</h2>
+    </div>
+    <div class="method">assert.notEqual(actual, expected, message?) / assert.notStrictEqual(actual, expected, message?)</div>
+    <p class="desc">Assert that two values are <strong>not</strong> equal. Prefer <code>notStrictEqual</code>.</p>
+    <pre><code><span class="keyword">import</span> <span class="var">assert</span> <span class="keyword">from</span> <span class="string">'node:assert'</span>;
+
+<span class="comment">// Loose inequality (avoid)</span>
+<span class="var">assert</span>.<span class="func">notEqual</span>(<span class="number">1</span>, <span class="string">'2'</span>); <span class="comment">// Passes</span>
+
+<span class="comment">// Strict inequality (recommended)</span>
+<span class="var">assert</span>.<span class="func">notStrictEqual</span>(<span class="number">1</span>, <span class="string">'1'</span>); <span class="comment">// Passes (1 !== '1')</span>
+<span class="var">assert</span>.<span class="func">notStrictEqual</span>(<span class="number">1</span>, <span class="number">2</span>); <span class="comment">// Passes</span></code></pre>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-equality">Equality</span>
+      <h2>assert.deepStrictEqual / notDeepStrictEqual</h2>
+    </div>
+    <div class="method">assert.deepStrictEqual(actual, expected, message?) / assert.notDeepStrictEqual(actual, expected, message?)</div>
+    <p class="desc">Deep equality check for objects, arrays, and nested structures. Compares values recursively.</p>
+    <pre><code><span class="keyword">import</span> <span class="var">assert</span> <span class="keyword">from</span> <span class="string">'node:assert'</span>;
+
+<span class="comment">// Deep strict equality</span>
+<span class="keyword">const</span> <span class="var">obj1</span> = { <span class="var">a</span>: <span class="number">1</span>, <span class="var">b</span>: { <span class="var">c</span>: <span class="number">2</span> } };
+<span class="keyword">const</span> <span class="var">obj2</span> = { <span class="var">a</span>: <span class="number">1</span>, <span class="var">b</span>: { <span class="var">c</span>: <span class="number">2</span> } };
+<span class="var">assert</span>.<span class="func">deepStrictEqual</span>(<span class="var">obj1</span>, <span class="var">obj2</span>); <span class="comment">// Passes</span>
+
+<span class="comment">// Arrays</span>
+<span class="keyword">const</span> <span class="var">arr1</span> = [<span class="number">1</span>, [<span class="number">2</span>, <span class="number">3</span>]];
+<span class="keyword">const</span> <span class="var">arr2</span> = [<span class="number">1</span>, [<span class="number">2</span>, <span class="number">3</span>]];
+<span class="var">assert</span>.<span class="func">deepStrictEqual</span>(<span class="var">arr1</span>, <span class="var">arr2</span>); <span class="comment">// Passes</span>
+
+<span class="comment">// Different types fail</span>
+<span class="var">assert</span>.<span class="func">deepStrictEqual</span>([<span class="number">1</span>], { <span class="number">0</span>: <span class="number">1</span> }); <span class="comment">// Throws</span>
+
+<span class="comment">// Not deep strict equal</span>
+<span class="var">assert</span>.<span class="func">notDeepStrictEqual</span>({ <span class="var">a</span>: <span class="number">1</span> }, { <span class="var">a</span>: <span class="number">2</span> }); <span class="comment">// Passes</span></code></pre>
+    <div class="note">✅ Use <code>deepStrictEqual</code> for comparing objects, arrays, and complex structures.</div>
+  </div>
+
+  <div class="section-title">🎯 Comparison Assertions</div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-comparison">Comparison</span>
+      <h2>assert.ok / assert.match</h2>
+    </div>
+    <div class="method">assert.ok(value, message?) / assert.match(string, regexp, message?) / assert.doesNotMatch(string, regexp, message?)</div>
+    <p class="desc">Truthiness and pattern matching assertions.</p>
+    <pre><code><span class="keyword">import</span> <span class="var">assert</span> <span class="keyword">from</span> <span class="string">'node:assert'</span>;
+
+<span class="comment">// assert.ok: check truthiness</span>
+<span class="var">assert</span>.<span class="func">ok</span>(<span class="keyword">true</span>);           <span class="comment">// Passes</span>
+<span class="var">assert</span>.<span class="func">ok</span>(<span class="number">1</span>);             <span class="comment">// Passes</span>
+<span class="var">assert</span>.<span class="func">ok</span>(<span class="string">'hello'</span>);       <span class="comment">// Passes</span>
+<span class="var">assert</span>.<span class="func">ok</span>(<span class="keyword">false</span>, <span class="string">'Must be truthy'</span>); <span class="comment">// Throws</span>
+<span class="var">assert</span>.<span class="func">ok</span>(<span class="number">0</span>);            <span class="comment">// Throws</span>
+<span class="var">assert</span>.<span class="func">ok</span>(<span class="keyword">null</span>);         <span class="comment">// Throws</span>
+
+<span class="comment">// assert.match: regex match</span>
+<span class="var">assert</span>.<span class="func">match</span>(<span class="string">'hello world'</span>, <span class="regex">/world/</span>); <span class="comment">// Passes</span>
+<span class="var">assert</span>.<span class="func">match</span>(<span class="string">'foo bar'</span>, <span class="regex">/baz/</span>);        <span class="comment">// Throws</span>
+
+<span class="comment">// assert.doesNotMatch: no regex match</span>
+<span class="var">assert</span>.<span class="func">doesNotMatch</span>(<span class="string">'hello world'</span>, <span class="regex">/baz/</span>); <span class="comment">// Passes</span></code></pre>
+    <div class="note">✅ <code>assert.ok</code> is great for checking existence or truthiness of values.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-comparison">Comparison</span>
+      <h2>assert.throws / assert.doesNotThrow</h2>
+    </div>
+    <div class="method">assert.throws(fn, error?, message?) / assert.doesNotThrow(fn, message?)</div>
+    <p class="desc">Test if a function throws an error. Can match error type, message, or instance.</p>
+    <pre><code><span class="keyword">import</span> <span class="var">assert</span> <span class="keyword">from</span> <span class="string">'node:assert'</span>;
+
+<span class="comment">// Assert that a function throws</span>
+<span class="var">assert</span>.<span class="func">throws</span>(() => {
+  <span class="keyword">throw</span> <span class="keyword">new</span> <span class="func">Error</span>(<span class="string">'Something went wrong'</span>);
+});
+
+<span class="comment">// Match error message</span>
+<span class="var">assert</span>.<span class="func">throws</span>(
+  () => { <span class="keyword">throw</span> <span class="keyword">new</span> <span class="func">Error</span>(<span class="string">'Invalid input'</span>); },
+  <span class="regex">/invalid/i</span>
+);
+
+<span class="comment">// Match error constructor</span>
+<span class="var">assert</span>.<span class="func">throws</span>(
+  () => { <span class="keyword">throw</span> <span class="keyword">new</span> <span class="func">TypeError</span>(<span class="string">'Bad type'</span>); },
+  <span class="var">TypeError</span>
+);
+
+<span class="comment">// Match both</span>
+<span class="var">assert</span>.<span class="func">throws</span>(
+  () => { <span class="keyword">throw</span> <span class="keyword">new</span> <span class="func">RangeError</span>(<span class="string">'Out of range'</span>); },
+  { <span class="var">name</span>: <span class="string">'RangeError'</span>, <span class="var">message</span>: <span class="regex">/range/i</span> }
+);
+
+<span class="comment">// Assert that a function does NOT throw</span>
+<span class="var">assert</span>.<span class="func">doesNotThrow</span>(() => {
+  <span class="comment">// No error thrown</span>
+});</code></pre>
+    <div class="note">✅ Essential for testing error handling and validation logic.</div>
+  </div>
+
+  <div class="section-title">🚨 Error Assertions</div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-error">Error</span>
+      <h2>assert.ifError</h2>
+    </div>
+    <div class="method">assert.ifError(value, message?)</div>
+    <p class="desc">Assert that a value is <code>null</code> or <code>undefined</code>. Usually used to check callback errors.</p>
+    <pre><code><span class="keyword">import</span> <span class="var">assert</span> <span class="keyword">from</span> <span class="string">'node:assert'</span>;
+
+<span class="comment">// Callback-style error handling</span>
+<span class="keyword">function</span> <span class="func">readFile</span>(<span class="var">path</span>, <span class="var">callback</span>) {
+  <span class="comment">// Simulate success</span>
+  <span class="var">callback</span>(<span class="keyword">null</span>, <span class="string">'file content'</span>);
+}
+
+<span class="func">readFile</span>(<span class="string">'file.txt'</span>, (<span class="var">err</span>, <span class="var">data</span>) => {
+  <span class="var">assert</span>.<span class="func">ifError</span>(<span class="var">err</span>); <span class="comment">// Passes if err is null/undefined</span>
+  <span class="var">console</span>.<span class="func">log</span>(<span class="var">data</span>);
+});
+
+<span class="comment">// With error</span>
+<span class="keyword">function</span> <span class="func">badRead</span>(<span class="var">callback</span>) {
+  <span class="var">callback</span>(<span class="keyword">new</span> <span class="func">Error</span>(<span class="string">'Failed'</span>));
+}
+
+<span class="func">badRead</span>((<span class="var">err</span>) => {
+  <span class="var">assert</span>.<span class="func">ifError</span>(<span class="var">err</span>); <span class="comment">// Throws with the error</span>
+});</code></pre>
+    <div class="note">✅ Perfect for testing callback-based APIs and ensuring no errors occurred.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-error">Error</span>
+      <h2>assert.fail</h2>
+    </div>
+    <div class="method">assert.fail(message?)</div>
+    <p class="desc">Force an assertion failure. Useful for marking unreachable code or expected failures.</p>
+    <pre><code><span class="keyword">import</span> <span class="var">assert</span> <span class="keyword">from</span> <span class="string">'node:assert'</span>;
+
+<span class="comment">// Mark code that should never be reached</span>
+<span class="keyword">function</span> <span class="func">processValue</span>(<span class="var">value</span>) {
+  <span class="keyword">switch</span> (<span class="var">value</span>) {
+    <span class="keyword">case</span> <span class="string">'a'</span>:
+      <span class="keyword">return</span> <span class="number">1</span>;
+    <span class="keyword">case</span> <span class="string">'b'</span>:
+      <span class="keyword">return</span> <span class="number">2</span>;
+    <span class="keyword">default</span>:
+      <span class="var">assert</span>.<span class="func">fail</span>(<span class="string">`Unexpected value: ${value}`</span>);
+  }
+}
+
+<span class="comment">// In tests, to assert a failure case</span>
+<span class="keyword">try</span> {
+  <span class="func">processValue</span>(<span class="string">'c'</span>);
+} <span class="keyword">catch</span> (<span class="var">err</span>) {
+  <span class="var">assert</span>.<span class="func">strictEqual</span>(<span class="var">err</span>.<span class="var">message</span>, <span class="string">'Unexpected value: c'</span>);
+}</code></pre>
+  </div>
+
+  <div class="section-title">🧪 Utility Assertions</div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-util">Util</span>
+      <h2>assert.strict / assert.deepEqual (deprecated)</h2>
+    </div>
+    <div class="method">assert.strict (object) / assert.deepEqual (deprecated)</div>
+    <p class="desc">The <code>strict</code> object provides all strict versions of assertions. <code>deepEqual</code> is deprecated — use <code>deepStrictEqual</code>.</p>
+    <pre><code><span class="keyword">import</span> { <span class="var">strict</span> } <span class="keyword">from</span> <span class="string">'node:assert'</span>;
+
+<span class="comment">// All methods in 'strict' are strict by default</span>
+<span class="var">strict</span>.<span class="func">equal</span>(<span class="number">1</span>, <span class="number">1</span>);                 <span class="comment">// strictEqual</span>
+<span class="var">strict</span>.<span class="func">notEqual</span>(<span class="number">1</span>, <span class="string">'1'</span>);             <span class="comment">// notStrictEqual</span>
+<span class="var">strict</span>.<span class="func">deepEqual</span>({ <span class="var">a</span>: <span class="number">1</span> }, { <span class="var">a</span>: <span class="number">1</span> }); <span class="comment">// deepStrictEqual</span>
+
+<span class="comment">// ❌ DEPRECATED: avoid using assert.deepEqual</span>
+<span class="keyword">import</span> <span class="var">assert</span> <span class="keyword">from</span> <span class="string">'node:assert'</span>;
+<span class="var">assert</span>.<span class="func">deepEqual</span>(<span class="number">1</span>, <span class="string">'1'</span>); <span class="comment">// Passes (coercion) - avoid!</span>
+
+<span class="comment">// ✅ Use deepStrictEqual instead</span>
+<span class="var">assert</span>.<span class="func">deepStrictEqual</span>(<span class="number">1</span>, <span class="number">1</span>);</code></pre>
+    <div class="note">✅ Always use <code>strict</code> import for modern, coercion-free assertions.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-util">Util</span>
+      <h2>assert.snapshot / assert.rejects</h2>
+    </div>
+    <div class="method">assert.rejects(asyncFn, error?, message?) / assert.doesNotReject(asyncFn, message?)</div>
+    <p class="desc">Test Promise rejection. Async/await friendly alternatives to <code>throws</code>.</p>
+    <pre><code><span class="keyword">import</span> <span class="var">assert</span> <span class="keyword">from</span> <span class="string">'node:assert'</span>;
+
+<span class="comment">// Test async function that rejects</span>
+<span class="keyword">async function</span> <span class="func">asyncError</span>() {
+  <span class="keyword">throw</span> <span class="keyword">new</span> <span class="func">Error</span>(<span class="string">'Async error'</span>);
+}
+
+<span class="comment">// assert.rejects</span>
+<span class="keyword">await</span> <span class="var">assert</span>.<span class="func">rejects</span>(
+  <span class="keyword">async</span> () => <span class="keyword">await</span> <span class="func">asyncError</span>(),
+  <span class="regex">/Async error/</span>
+);
+
+<span class="comment">// Test promise rejection</span>
+<span class="keyword">await</span> <span class="var">assert</span>.<span class="func">rejects</span>(
+  <span class="func">Promise</span>.<span class="func">reject</span>(<span class="keyword">new</span> <span class="func">Error</span>(<span class="string">'Promise error'</span>)),
+  <span class="var">Error</span>
+);
+
+<span class="comment">// assert.doesNotReject</span>
+<span class="keyword">await</span> <span class="var">assert</span>.<span class="func">doesNotReject</span>(
+  <span class="keyword">async</span> () => <span class="keyword">await</span> <span class="func">Promise</span>.<span class="func">resolve</span>(<span class="string">'ok'</span>)
+);</code></pre>
+    <div class="note">✅ Use <code>assert.rejects</code> for testing async functions that should throw.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-util">Util</span>
+      <h2>assert.AssertionError</h2>
+    </div>
+    <div class="method">new assert.AssertionError(options)</div>
+    <p class="desc">Custom assertion error class. Useful for creating custom assertions.</p>
+    <pre><code><span class="keyword">import</span> <span class="var">assert</span> <span class="keyword">from</span> <span class="string">'node:assert'</span>;
+
+<span class="comment">// Create a custom assertion error</span>
+<span class="keyword">const</span> <span class="var">err</span> = <span class="keyword">new</span> <span class="var">assert</span>.<span class="var">AssertionError</span>({
+  <span class="var">message</span>: <span class="string">'Custom assertion failed'</span>,
+  <span class="var">actual</span>: <span class="number">42</span>,
+  <span class="var">expected</span>: <span class="number">43</span>,
+  <span class="var">operator</span>: <span class="string">'strictEqual'</span>
+});
+
+<span class="comment">// Use in custom assertion</span>
+<span class="keyword">function</span> <span class="func">customAssert</span>(<span class="var">condition</span>, <span class="var">message</span>) {
+  <span class="keyword">if</span> (!<span class="var">condition</span>) {
+    <span class="keyword">throw</span> <span class="keyword">new</span> <span class="var">assert</span>.<span class="var">AssertionError</span>({
+      <span class="var">message</span>: <span class="var">message</span> || <span class="string">'Custom assertion failed'</span>,
+      <span class="var">actual</span>: <span class="var">condition</span>,
+      <span class="var">expected</span>: <span class="keyword">true</span>,
+      <span class="var">operator</span>: <span class="string">'customAssert'</span>
+    });
+  }
+}
+
+<span class="comment">// Check if error is from assert</span>
+<span class="keyword">try</span> {
+  <span class="func">customAssert</span>(<span class="keyword">false</span>);
+} <span class="keyword">catch</span> (<span class="var">err</span>) {
+  <span class="keyword">if</span> (<span class="var">err</span> <span class="keyword">instanceof</span> <span class="var">assert</span>.<span class="var">AssertionError</span>) {
+    <span class="var">console</span>.<span class="func">log</span>(<span class="string">'This is an assertion error'</span>);
+  }
+}</code></pre>
+  </div>
+
+</div>
+
+<div class="tip">
+  <strong>🚀 Pro Pattern — Custom Validation with Assertions:</strong>
+  <pre style="margin-top:0.5rem; background:rgba(0,0,0,0.2); border:none;"><code><span class="keyword">import</span> <span class="var">assert</span> <span class="keyword">from</span> <span class="string">'node:assert'</span>;
+
+<span class="comment">// Input validation function</span>
+<span class="keyword">function</span> <span class="func">validateUser</span>(<span class="var">user</span>) {
+  <span class="var">assert</span>.<span class="func">strictEqual</span>(<span class="keyword">typeof</span> <span class="var">user</span>, <span class="string">'object'</span>, <span class="string">'User must be an object'</span>);
+  <span class="var">assert</span>.<span class="func">ok</span>(<span class="var">user</span>.<span class="var">name</span>, <span class="string">'User must have a name'</span>);
+  <span class="var">assert</span>.<span class="func">match</span>(<span class="var">user</span>.<span class="var">email</span>, <span class="regex">/^[^\s@]+@[^\s@]+\.[^\s@]+$/</span>, <span class="string">'Invalid email format'</span>);
+  <span class="var">assert</span>.<span class="func">ok</span>(<span class="var">user</span>.<span class="var">age</span> >= <span class="number">18</span>, <span class="string">'User must be 18 or older'</span>);
+  <span class="var">assert</span>.<span class="func">deepStrictEqual</span>(
+    <span class="var">Object</span>.<span class="func">keys</span>(<span class="var">user</span>),
+    [<span class="string">'name'</span>, <span class="string">'email'</span>, <span class="string">'age'</span>],
+    <span class="string">'User object has unexpected properties'</span>
+  );
+  <span class="keyword">return</span> <span class="var">user</span>;
+}
+
+<span class="comment">// Production validation with graceful error handling</span>
+<span class="keyword">function</span> <span class="func">safeValidate</span>(<span class="var">user</span>) {
+  <span class="keyword">try</span> {
+    <span class="keyword">return</span> { <span class="var">valid</span>: <span class="keyword">true</span>, <span class="var">data</span>: <span class="func">validateUser</span>(<span class="var">user</span>) };
+  } <span class="keyword">catch</span> (<span class="var">err</span>) {
+    <span class="keyword">if</span> (<span class="var">err</span> <span class="keyword">instanceof</span> <span class="var">assert</span>.<span class="var">AssertionError</span>) {
+      <span class="keyword">return</span> { <span class="var">valid</span>: <span class="keyword">false</span>, <span class="var">error</span>: <span class="var">err</span>.<span class="var">message</span> };
+    }
+    <span class="keyword">throw</span> <span class="var">err</span>;
+  }
+}</code></pre>
+</div>
+
+<h2 style="margin-top:2rem; color:var(--heading); border-bottom:1px solid var(--border); padding-bottom:0.5rem;">📋 Quick Reference</h2>
+<table>
+  <tr><th>Assertion</th><th>Description</th><th>Strict Version</th></tr>
+  <tr><td><code>assert.equal()</code></td><td>Loose equality (==)</td><td><code>assert.strictEqual()</code></td></tr>
+  <tr><td><code>assert.notEqual()</code></td><td>Loose inequality (!=)</td><td><code>assert.notStrictEqual()</code></td></tr>
+  <tr><td><code>assert.deepEqual()</code></td><td>Loose deep equality</td><td><code>assert.deepStrictEqual()</code></td></tr>
+  <tr><td><code>assert.ok()</code></td><td>Truthiness check</td><td>Same</td></tr>
+  <tr><td><code>assert.throws()</code></td><td>Function throws</td><td>Same</td></tr>
+  <tr><td><code>assert.doesNotThrow()</code></td><td>Function doesn't throw</td><td>Same</td></tr>
+  <tr><td><code>assert.rejects()</code></td><td>Promise rejects</td><td>Same</td></tr>
+  <tr><td><code>assert.doesNotReject()</code></td><td>Promise doesn't reject</td><td>Same</td></tr>
+  <tr><td><code>assert.ifError()</code></td><td>Value is null/undefined</td><td>Same</td></tr>
+  <tr><td><code>assert.match()</code></td><td>Regex match</td><td>Same</td></tr>
+  <tr><td><code>assert.fail()</code></td><td>Force failure</td><td>Same</td></tr>
+</table>
+
+<h2 style="margin-top:2rem; color:var(--heading); border-bottom:1px solid var(--border); padding-bottom:0.5rem;">⚠️ Common Pitfalls</h2>
+<table>
+  <tr><th>Mistake</th><th>Why It's Wrong</th><th>Fix</th></tr>
+  <tr><td>Using <code>equal</code> instead of <code>strictEqual</code></td>
+      <td>Type coercion hides bugs (1 == '1')</td><td>Use <code>strictEqual</code> or <code>assert.strict</code></td></tr>
+  <tr><td>Using <code>deepEqual</code> instead of <code>deepStrictEqual</code></td>
+      <td>Coerces values in objects</td><td>Use <code>deepStrictEqual</code></td></tr>
+  <tr><td>Not including error messages</td>
+      <td>Hard to debug assertion failures</td><td>Always add descriptive messages</td></tr>
+  <tr><td>Using <code>assert.ok</code> with <code>false</code> values</td>
+      <td>0, '', null, undefined all fail</td><td>Be explicit: <code>assert.strictEqual(val, expected)</code></td></tr>
+  <tr><td>Not handling <code>assert.throws</code> async</td>
+      <td>Doesn't work with Promises</td><td>Use <code>assert.rejects</code> for async</td></tr>
+  <tr><td>Assertions in production</td>
+      <td>They throw and crash the process</td><td>Use try/catch or only in development</td></tr>
+</table>
+
+<div class="footer">
+  Node.js assert Module Cheat Sheet &mdash; Save this file and open in any browser for quick reference.<br>
+  Based on Node.js 18+ with <code>node:assert</code> API. Use <code>assert.strict</code> for coercion-free assertions.
+</div>
+
+</body>
+</html>

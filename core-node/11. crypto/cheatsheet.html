@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Node.js crypto Module Cheat Sheet</title>
+  <style>
+    :root {
+      --bg: #0d1117;
+      --card: #161b22;
+      --border: #30363d;
+      --text: #c9d1d9;
+      --heading: #f0f6fc;
+      --code-bg: #1f2937;
+      --code-text: #e6edf3;
+      --accent: #58a6ff;
+      --accent2: #3fb950;
+      --accent3: #d29922;
+      --accent4: #f85149;
+      --muted: #8b949e;
+      --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      line-height: 1.6;
+      padding: 2rem 1rem;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+    h1 {
+      color: var(--heading);
+      font-size: 2.2rem;
+      margin-bottom: 0.5rem;
+      border-bottom: 2px solid var(--accent4);
+      padding-bottom: 0.5rem;
+    }
+    .subtitle {
+      color: var(--muted);
+      font-size: 0.95rem;
+      margin-bottom: 2rem;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 1.5rem;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem;
+      transition: border-color 0.2s;
+    }
+    .card:hover { border-color: var(--accent4); }
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.75rem;
+    }
+    .badge {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      padding: 2px 8px;
+      border-radius: 4px;
+      letter-spacing: 0.5px;
+    }
+    .badge-hash { background: rgba(88,166,255,0.15); color: var(--accent); }
+    .badge-hmac { background: rgba(63,185,80,0.15); color: var(--accent2); }
+    .badge-cipher { background: rgba(210,153,34,0.15); color: var(--accent3); }
+    .badge-sign { background: rgba(248,81,73,0.15); color: var(--accent4); }
+    .badge-key { background: rgba(139,148,158,0.15); color: var(--muted); }
+    h2 {
+      color: var(--heading);
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
+    .method {
+      font-family: "SFMono-Regular", Consolas, monospace;
+      font-size: 0.85rem;
+      color: var(--accent4);
+      background: rgba(248,81,73,0.08);
+      padding: 2px 6px;
+      border-radius: 4px;
+      margin-bottom: 0.4rem;
+      display: inline-block;
+    }
+    p.desc {
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-bottom: 0.6rem;
+    }
+    pre {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      overflow-x: auto;
+      font-size: 0.8rem;
+      line-height: 1.5;
+    }
+    code {
+      font-family: "SFMono-Regular", Consolas, monospace;
+      color: var(--code-text);
+    }
+    .comment { color: #8b949e; }
+    .keyword { color: #ff7b72; }
+    .string { color: #a5d6ff; }
+    .func { color: #d2a8ff; }
+    .var { color: #79c0ff; }
+    .output { color: #7ee787; }
+    .note {
+      font-size: 0.8rem;
+      color: var(--accent3);
+      margin-top: 0.5rem;
+      padding-left: 0.5rem;
+      border-left: 2px solid var(--accent3);
+    }
+    .tip {
+      background: rgba(248,81,73,0.08);
+      border: 1px solid rgba(248,81,73,0.3);
+      border-radius: 8px;
+      padding: 1rem;
+      margin: 2rem 0;
+      font-size: 0.9rem;
+    }
+    .tip strong { color: var(--accent4); }
+    .footer {
+      text-align: center;
+      margin-top: 3rem;
+      color: var(--muted);
+      font-size: 0.8rem;
+    }
+    .section-title {
+      grid-column: 1 / -1;
+      color: var(--heading);
+      font-size: 1.3rem;
+      margin-top: 1rem;
+      margin-bottom: -0.5rem;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 0.5rem;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+      margin-top: 0.5rem;
+    }
+    th, td {
+      text-align: left;
+      padding: 0.5rem 0.75rem;
+      border-bottom: 1px solid var(--border);
+    }
+    th { color: var(--heading); font-weight: 600; }
+    td code { color: var(--accent4); }
+  </style>
+  <base target="_blank">
+</head>
+<body>
+
+<h1>🔐 Node.js <code>crypto</code> Module Cheat Sheet</h1>
+<p class="subtitle">Hashing, encryption, signing, and key generation — Node.js 18+</p>
+
+<div class="tip">
+  <strong>💡 Golden Rule:</strong> Use <strong>modern algorithms</strong> (SHA-256, SHA-512, AES-256-GCM, RSA-OAEP, ECDSA). Avoid deprecated algorithms like MD5, SHA1, DES, or ECB mode for security-sensitive operations. Import with <code>node:crypto</code> prefix.
+</div>
+
+<div class="grid">
+
+  <div class="section-title">🔑 Hashing (Digest)</div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-hash">Hash</span>
+      <h2>crypto.createHash</h2>
+    </div>
+    <div class="method">crypto.createHash(algorithm)</div>
+    <p class="desc">Create a hash object. Supports SHA-256, SHA-512, SHA-3, and more.</p>
+    <pre><code><span class="keyword">import</span> <span class="var">crypto</span> <span class="keyword">from</span> <span class="string">'node:crypto'</span>;
+
+<span class="comment">// Hash a string</span>
+<span class="keyword">const</span> <span class="var">hash</span> = <span class="var">crypto</span>.<span class="func">createHash</span>(<span class="string">'sha256'</span>)
+  .<span class="func">update</span>(<span class="string">'hello world'</span>)
+  .<span class="func">digest</span>(<span class="string">'hex'</span>);
+<span class="comment">// → 'b94d27b9934d3e08a52e52d7da7dabfac484efe37a5380ee9088f7ace2efcde9'</span>
+
+<span class="comment">// Hash a Buffer</span>
+<span class="keyword">const</span> <span class="var">buf</span> = <span class="var">Buffer</span>.<span class="func">from</span>(<span class="string">'hello world'</span>);
+<span class="keyword">const</span> <span class="var">hashBuf</span> = <span class="var">crypto</span>.<span class="func">createHash</span>(<span class="string">'sha256'</span>).<span class="func">update</span>(<span class="var">buf</span>).<span class="func">digest</span>();
+<span class="comment">// Returns Buffer</span>
+
+<span class="comment">// Multiple updates (streaming)</span>
+<span class="keyword">const</span> <span class="var">hash2</span> = <span class="var">crypto</span>.<span class="func">createHash</span>(<span class="string">'sha512'</span>);
+<span class="var">hash2</span>.<span class="func">update</span>(<span class="string">'first chunk'</span>);
+<span class="var">hash2</span>.<span class="func">update</span>(<span class="string">'second chunk'</span>);
+<span class="keyword">const</span> <span class="var">result</span> = <span class="var">hash2</span>.<span class="func">digest</span>(<span class="string">'base64'</span>);</code></pre>
+    <div class="note">✅ Use for: password hashing (with salt), file integrity checks, data fingerprinting.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-hash">Hash</span>
+      <h2>hash.update / hash.digest</h2>
+    </div>
+    <div class="method">hash.update(data) / hash.digest(encoding?)</div>
+    <p class="desc"><code>update</code> adds data to the hash. <code>digest</code> finalizes and returns the hash.</p>
+    <pre><code><span class="keyword">const</span> <span class="var">hash</span> = <span class="var">crypto</span>.<span class="func">createHash</span>(<span class="string">'sha256'</span>);
+
+<span class="comment">// update can be called multiple times</span>
+<span class="var">hash</span>.<span class="func">update</span>(<span class="string">'part1'</span>);
+<span class="var">hash</span>.<span class="func">update</span>(<span class="string">'part2'</span>);
+<span class="keyword">const</span> <span class="var">digest</span> = <span class="var">hash</span>.<span class="func">digest</span>(<span class="string">'hex'</span>);
+<span class="comment">// Same as hash.update('part1' + 'part2')</span>
+
+<span class="comment">// After digest, the hash object is no longer usable</span>
+<span class="comment">// hash.update('more') → throws error</span></code></pre>
+    <div class="note">⚠️ Once <code>digest()</code> is called, the hash object cannot be reused.</div>
+  </div>
+
+  <div class="section-title">🔑 HMAC (Keyed-Hashing)</div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-hmac">HMAC</span>
+      <h2>crypto.createHmac</h2>
+    </div>
+    <div class="method">crypto.createHmac(algorithm, secretKey)</div>
+    <p class="desc">Create an HMAC for message authentication with a secret key.</p>
+    <pre><code><span class="keyword">import</span> <span class="var">crypto</span> <span class="keyword">from</span> <span class="string">'node:crypto'</span>;
+
+<span class="keyword">const</span> <span class="var">secret</span> = <span class="string">'my-secret-key'</span>;
+<span class="keyword">const</span> <span class="var">message</span> = <span class="string">'important data'</span>;
+
+<span class="keyword">const</span> <span class="var">hmac</span> = <span class="var">crypto</span>.<span class="func">createHmac</span>(<span class="string">'sha256'</span>, <span class="var">secret</span>)
+  .<span class="func">update</span>(<span class="var">message</span>)
+  .<span class="func">digest</span>(<span class="string">'hex'</span>);
+<span class="comment">// → '1f3f...' (64 hex chars for SHA-256)</span>
+
+<span class="comment">// Verify HMAC</span>
+<span class="keyword">function</span> <span class="func">verifyHmac</span>(<span class="var">message</span>, <span class="var">hmacToVerify</span>, <span class="var">secret</span>) {
+  <span class="keyword">const</span> <span class="var">expected</span> = <span class="var">crypto</span>.<span class="func">createHmac</span>(<span class="string">'sha256'</span>, <span class="var">secret</span>)
+    .<span class="func">update</span>(<span class="var">message</span>)
+    .<span class="func">digest</span>(<span class="string">'hex'</span>);
+  <span class="keyword">return</span> <span class="var">crypto</span>.<span class="func">timingSafeEqual</span>(
+    <span class="var">Buffer</span>.<span class="func">from</span>(<span class="var">expected</span>),
+    <span class="var">Buffer</span>.<span class="func">from</span>(<span class="var">hmacToVerify</span>)
+  );
+}</code></pre>
+    <div class="note">✅ Use for: API authentication (JWT-style), request signing, data integrity with shared secret.</div>
+  </div>
+
+  <div class="section-title">🔒 Symmetric Encryption (AES)</div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-cipher">Cipher</span>
+      <h2>crypto.createCipheriv / createDecipheriv</h2>
+    </div>
+    <div class="method">crypto.createCipheriv(algorithm, key, iv) / createDecipheriv</div>
+    <p class="desc">Encrypt/decrypt with AES-GCM (recommended) or AES-CBC. <strong>Always use IV (initialization vector).</strong></p>
+    <pre><code><span class="keyword">import</span> <span class="var">crypto</span> <span class="keyword">from</span> <span class="string">'node:crypto'</span>;
+
+<span class="comment">// ENCRYPT (AES-256-GCM - recommended)</span>
+<span class="keyword">function</span> <span class="func">encrypt</span>(<span class="var">text</span>, <span class="var">key</span>) {
+  <span class="keyword">const</span> <span class="var">iv</span> = <span class="var">crypto</span>.<span class="func">randomBytes</span>(<span class="number">12</span>); <span class="comment">// 12 bytes for GCM</span>
+  <span class="keyword">const</span> <span class="var">cipher</span> = <span class="var">crypto</span>.<span class="func">createCipheriv</span>(<span class="string">'aes-256-gcm'</span>, <span class="var">key</span>, <span class="var">iv</span>);
+  
+  <span class="keyword">const</span> <span class="var">encrypted</span> = <span class="var">Buffer</span>.<span class="func">concat</span>([
+    <span class="var">cipher</span>.<span class="func">update</span>(<span class="var">text</span>, <span class="string">'utf8'</span>),
+    <span class="var">cipher</span>.<span class="func">final</span>()
+  ]);
+  <span class="keyword">const</span> <span class="var">authTag</span> = <span class="var">cipher</span>.<span class="func">getAuthTag</span>();
+  
+  <span class="keyword">return</span> { <span class="var">iv</span>, <span class="var">encrypted</span>, <span class="var">authTag</span> };
+}
+
+<span class="comment">// DECRYPT (AES-256-GCM)</span>
+<span class="keyword">function</span> <span class="func">decrypt</span>(<span class="var">encrypted</span>, <span class="var">key</span>, <span class="var">iv</span>, <span class="var">authTag</span>) {
+  <span class="keyword">const</span> <span class="var">decipher</span> = <span class="var">crypto</span>.<span class="func">createDecipheriv</span>(<span class="string">'aes-256-gcm'</span>, <span class="var">key</span>, <span class="var">iv</span>);
+  <span class="var">decipher</span>.<span class="func">setAuthTag</span>(<span class="var">authTag</span>);
+  
+  <span class="keyword">return</span> <span class="var">Buffer</span>.<span class="func">concat</span>([
+    <span class="var">decipher</span>.<span class="func">update</span>(<span class="var">encrypted</span>),
+    <span class="var">decipher</span>.<span class="func">final</span>()
+  ]).<span class="func">toString</span>(<span class="string">'utf8'</span>);
+}</code></pre>
+    <div class="note">⚠️ AES-GCM requires <code>setAuthTag</code> during decryption. Never reuse IV with the same key!</div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-cipher">Cipher</span>
+      <h2>Key & IV Generation</h2>
+    </div>
+    <div class="method">crypto.randomBytes / crypto.scrypt</div>
+    <p class="desc">Generate secure random bytes for keys and IVs. Use <code>scrypt</code> for password-based key derivation.</p>
+    <pre><code><span class="keyword">import</span> <span class="var">crypto</span> <span class="keyword">from</span> <span class="string">'node:crypto'</span>;
+
+<span class="comment">// Generate random key (32 bytes = 256 bits for AES-256)</span>
+<span class="keyword">const</span> <span class="var">key</span> = <span class="var">crypto</span>.<span class="func">randomBytes</span>(<span class="number">32</span>);
+<span class="keyword">const</span> <span class="var">iv</span> = <span class="var">crypto</span>.<span class="func">randomBytes</span>(<span class="number">12</span>); <span class="comment">// 12 bytes for GCM</span>
+
+<span class="comment">// Derive key from password (scrypt)</span>
+<span class="keyword">const</span> <span class="var">password</span> = <span class="string">'my-password'</span>;
+<span class="keyword">const</span> <span class="var">salt</span> = <span class="var">crypto</span>.<span class="func">randomBytes</span>(<span class="number">16</span>);
+<span class="keyword">const</span> <span class="var">derivedKey</span> = <span class="keyword">await</span> <span class="var">crypto</span>.<span class="func">scrypt</span>(<span class="var">password</span>, <span class="var">salt</span>, <span class="number">32</span>, {
+  <span class="var">N</span>: <span class="number">16384</span>,
+  <span class="var">r</span>: <span class="number">8</span>,
+  <span class="var">p</span>: <span class="number">1</span>
+});
+<span class="comment">// Use derivedKey for encryption</span></code></pre>
+    <div class="note">✅ Use <code>randomBytes</code> for secure random data. Use <code>scrypt</code> for deriving keys from passwords.</div>
+  </div>
+
+  <div class="section-title">🔑 Asymmetric Encryption (RSA)</div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-sign">Sign</span>
+      <h2>crypto.generateKeyPair</h2>
+    </div>
+    <div class="method">crypto.generateKeyPair(type, options, callback)</div>
+    <p class="desc">Generate RSA key pairs for encryption/signing. Use 2048+ bits for RSA.</p>
+    <pre><code><span class="keyword">import</span> <span class="var">crypto</span> <span class="keyword">from</span> <span class="string">'node:crypto'</span>;
+
+<span class="comment">// Generate RSA-2048 key pair</span>
+<span class="keyword">const</span> { <span class="var">publicKey</span>, <span class="var">privateKey</span> } = <span class="keyword">await</span> <span class="var">crypto</span>.<span class="func">generateKeyPair</span>(<span class="string">'rsa'</span>, {
+  <span class="var">modulusLength</span>: <span class="number">2048</span>,
+  <span class="var">publicKeyEncoding</span>: {
+    <span class="var">type</span>: <span class="string">'spki'</span>,
+    <span class="var">format</span>: <span class="string">'pem'</span>
+  },
+  <span class="var">privateKeyEncoding</span>: {
+    <span class="var">type</span>: <span class="string">'pkcs8'</span>,
+    <span class="var">format</span>: <span class="string">'pem'</span>
+  }
+});
+
+<span class="comment">// Encrypt with public key</span>
+<span class="keyword">const</span> <span class="var">encrypted</span> = <span class="var">crypto</span>.<span class="func">publicEncrypt</span>(
+  <span class="var">publicKey</span>,
+  <span class="var">Buffer</span>.<span class="func">from</span>(<span class="string">'secret message'</span>)
+);
+
+<span class="comment">// Decrypt with private key</span>
+<span class="keyword">const</span> <span class="var">decrypted</span> = <span class="var">crypto</span>.<span class="func">privateDecrypt</span>(
+  <span class="var">privateKey</span>,
+  <span class="var">encrypted</span>
+).<span class="func">toString</span>(<span class="string">'utf8'</span>);</code></pre>
+    <div class="note">✅ Use for: secure key exchange, encrypting small payloads, digital signatures.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-sign">Sign</span>
+      <h2>crypto.sign / crypto.verify</h2>
+    </div>
+    <div class="method">crypto.sign(algorithm, data, key) / crypto.verify</div>
+    <p class="desc">Sign data with private key and verify with public key. Supports RSA, ECDSA, Ed25519.</p>
+    <pre><code><span class="keyword">import</span> <span class="var">crypto</span> <span class="keyword">from</span> <span class="string">'node:crypto'</span>;
+
+<span class="comment">// Sign with private key (RSA-SHA256)</span>
+<span class="keyword">const</span> <span class="var">data</span> = <span class="var">Buffer</span>.<span class="func">from</span>(<span class="string">'important data'</span>);
+<span class="keyword">const</span> <span class="var">signature</span> = <span class="var">crypto</span>.<span class="func">sign</span>(<span class="string">'sha256'</span>, <span class="var">data</span>, <span class="var">privateKey</span>);
+
+<span class="comment">// Verify with public key</span>
+<span class="keyword">const</span> <span class="var">isValid</span> = <span class="var">crypto</span>.<span class="func">verify</span>(<span class="string">'sha256'</span>, <span class="var">data</span>, <span class="var">publicKey</span>, <span class="var">signature</span>);
+<span class="comment">// → true/false</span>
+
+<span class="comment">// ECDSA with P-256 curve</span>
+<span class="keyword">const</span> { <span class="var">publicKey</span>: <span class="var">ecPub</span>, <span class="var">privateKey</span>: <span class="var">ecPriv</span> } = <span class="keyword">await</span> <span class="var">crypto</span>.<span class="func">generateKeyPair</span>(<span class="string">'ec'</span>, {
+  <span class="var">namedCurve</span>: <span class="string">'prime256v1'</span>
+});
+<span class="keyword">const</span> <span class="var">ecSig</span> = <span class="var">crypto</span>.<span class="func">sign</span>(<span class="string">'sha256'</span>, <span class="var">data</span>, <span class="var">ecPriv</span>);</code></pre>
+    <div class="note">✅ Use for: JWT, digital signatures, certificate validation.</div>
+  </div>
+
+  <div class="section-title">🧪 Utility Functions</div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-key">Utility</span>
+      <h2>crypto.timingSafeEqual</h2>
+    </div>
+    <div class="method">crypto.timingSafeEqual(a, b)</div>
+    <p class="desc">Constant-time comparison to prevent timing attacks. Use for comparing secrets, HMACs, or passwords.</p>
+    <pre><code><span class="keyword">import</span> <span class="var">crypto</span> <span class="keyword">from</span> <span class="string">'node:crypto'</span>;
+
+<span class="comment">// Always compare buffers of the same length</span>
+<span class="keyword">const</span> <span class="var">a</span> = <span class="var">Buffer</span>.<span class="func">from</span>(<span class="string">'secret'</span>);
+<span class="keyword">const</span> <span class="var">b</span> = <span class="var">Buffer</span>.<span class="func">from</span>(<span class="string">'secret'</span>);
+<span class="keyword">const</span> <span class="var">c</span> = <span class="var">Buffer</span>.<span class="func">from</span>(<span class="string">'wrong'</span>);
+
+<span class="var">crypto</span>.<span class="func">timingSafeEqual</span>(<span class="var">a</span>, <span class="var">b</span>); <span class="comment">// true</span>
+<span class="var">crypto</span>.<span class="func">timingSafeEqual</span>(<span class="var">a</span>, <span class="var">c</span>); <span class="comment">// false</span>
+
+<span class="comment">// ⚠️ Must be same length or throws error</span>
+<span class="comment">// crypto.timingSafeEqual(Buffer.from('abc'), Buffer.from('abcd')) → throws</span></code></pre>
+    <div class="note">✅ Use for: password verification, HMAC validation, signature verification.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-key">Utility</span>
+      <h2>crypto.randomUUID / randomInt</h2>
+    </div>
+    <div class="method">crypto.randomUUID() / crypto.randomInt(min, max)</div>
+    <p class="desc">Generate cryptographically secure random UUIDs and integers.</p>
+    <pre><code><span class="keyword">import</span> <span class="var">crypto</span> <span class="keyword">from</span> <span class="string">'node:crypto'</span>;
+
+<span class="comment">// UUID v4</span>
+<span class="keyword">const</span> <span class="var">uuid</span> = <span class="var">crypto</span>.<span class="func">randomUUID</span>();
+<span class="comment">// → 'f47ac10b-58cc-4372-a567-0e02b2c3d479'</span>
+
+<span class="comment">// Random integer (cryptographically secure)</span>
+<span class="keyword">const</span> <span class="var">num</span> = <span class="var">crypto</span>.<span class="func">randomInt</span>(<span class="number">1</span>, <span class="number">100</span>); <span class="comment">// 1-99</span>
+<span class="keyword">const</span> <span class="var">num2</span> = <span class="var">crypto</span>.<span class="func">randomInt</span>(<span class="number">10</span>); <span class="comment">// 0-9</span></code></pre>
+    <div class="note">✅ Use <code>randomUUID</code> for unique IDs. <code>randomInt</code> for secure random numbers.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-key">Utility</span>
+      <h2>crypto.getCiphers / getHashes</h2>
+    </div>
+    <div class="method">crypto.getCiphers() / crypto.getHashes()</div>
+    <p class="desc">List all available ciphers and hash algorithms in your Node.js environment.</p>
+    <pre><code><span class="keyword">import</span> <span class="var">crypto</span> <span class="keyword">from</span> <span class="string">'node:crypto'</span>;
+
+<span class="comment">// All supported hashes</span>
+<span class="keyword">const</span> <span class="var">hashes</span> = <span class="var">crypto</span>.<span class="func">getHashes</span>();
+<span class="comment">// → ['md5', 'sha1', 'sha256', 'sha512', 'shake256', ...]</span>
+
+<span class="comment">// All supported ciphers</span>
+<span class="keyword">const</span> <span class="var">ciphers</span> = <span class="var">crypto</span>.<span class="func">getCiphers</span>();
+<span class="comment">// → ['aes-128-cbc', 'aes-256-gcm', 'chacha20', ...]</span></code></pre>
+    <div class="note">ℹ️ Check available algorithms before using them in your code.</div>
+  </div>
+
+</div>
+
+<div class="tip">
+  <strong>🚀 Pro Pattern — Secure Password Storage:</strong>
+  <pre style="margin-top:0.5rem; background:rgba(0,0,0,0.2); border:none;"><code><span class="keyword">import</span> <span class="var">crypto</span> <span class="keyword">from</span> <span class="string">'node:crypto'</span>;
+
+<span class="comment">// Hash password with salt (scrypt)</span>
+<span class="keyword">async function</span> <span class="func">hashPassword</span>(<span class="var">password</span>) {
+  <span class="keyword">const</span> <span class="var">salt</span> = <span class="var">crypto</span>.<span class="func">randomBytes</span>(<span class="number">16</span>);
+  <span class="keyword">const</span> <span class="var">hash</span> = <span class="keyword">await</span> <span class="var">crypto</span>.<span class="func">scrypt</span>(<span class="var">password</span>, <span class="var">salt</span>, <span class="number">64</span>, {
+    <span class="var">N</span>: <span class="number">16384</span>,
+    <span class="var">r</span>: <span class="number">8</span>,
+    <span class="var">p</span>: <span class="number">1</span>
+  });
+  <span class="keyword">return</span> { <span class="var">salt</span>: <span class="var">salt</span>.<span class="func">toString</span>(<span class="string">'hex'</span>), <span class="var">hash</span>: <span class="var">hash</span>.<span class="func">toString</span>(<span class="string">'hex'</span>) };
+}
+
+<span class="comment">// Verify password</span>
+<span class="keyword">async function</span> <span class="func">verifyPassword</span>(<span class="var">password</span>, <span class="var">salt</span>, <span class="var">hash</span>) {
+  <span class="keyword">const</span> <span class="var">derived</span> = <span class="keyword">await</span> <span class="var">crypto</span>.<span class="func">scrypt</span>(<span class="var">password</span>, <span class="var">Buffer</span>.<span class="func">from</span>(<span class="var">salt</span>, <span class="string">'hex'</span>), <span class="number">64</span>, {
+    <span class="var">N</span>: <span class="number">16384</span>,
+    <span class="var">r</span>: <span class="number">8</span>,
+    <span class="var">p</span>: <span class="number">1</span>
+  });
+  <span class="keyword">return</span> <span class="var">crypto</span>.<span class="func">timingSafeEqual</span>(
+    <span class="var">Buffer</span>.<span class="func">from</span>(<span class="var">hash</span>, <span class="string">'hex'</span>),
+    <span class="var">derived</span>
+  );
+}</code></pre>
+</div>
+
+<h2 style="margin-top:2rem; color:var(--heading); border-bottom:1px solid var(--border); padding-bottom:0.5rem;">📋 Algorithm Quick Reference</h2>
+<table>
+  <tr><th>Purpose</th><th>Recommended</th><th>Avoid</th></tr>
+  <tr><td>Hashing</td><td><code>sha256</code>, <code>sha512</code>, <code>sha3-256</code></td><td><code>md5</code>, <code>sha1</code></td></tr>
+  <tr><td>Symmetric Encryption</td><td><code>aes-256-gcm</code>, <code>chacha20</code></td><td><code>des</code>, <code>aes-256-ecb</code></td></tr>
+  <tr><td>Key Derivation</td><td><code>scrypt</code>, <code>pbkdf2</code></td><td><code>crypto.createHash</code> for passwords</td></tr>
+  <tr><td>Asymmetric Encryption</td><td>RSA-2048+, ECDSA (P-256, P-384)</td><td>RSA-1024, DSA</td></tr>
+  <tr><td>Signatures</td><td>RSA-SHA256, ECDSA-SHA256, Ed25519</td><td>RSA-SHA1</td></tr>
+</table>
+
+<h2 style="margin-top:2rem; color:var(--heading); border-bottom:1px solid var(--border); padding-bottom:0.5rem;">⚠️ Common Pitfalls</h2>
+<table>
+  <tr><th>Mistake</th><th>Why It's Wrong</th><th>Fix</th></tr>
+  <tr><td>Using MD5/SHA1 for security</td><td>Cryptographically broken</td><td>Use SHA-256 or SHA-512</td></tr>
+  <tr><td>Reusing IV with AES-GCM</td><td>Breaks security entirely</td><td>Generate new random IV for each encryption</td></tr>
+  <tr><td>Using ECB mode</td><td>Reveals patterns in data</td><td>Use GCM or CBC with IV</td></tr>
+  <tr><td>Not using <code>timingSafeEqual</code></td><td>Timing attacks possible</td><td>Always use <code>timingSafeEqual</code> for secrets</td></tr>
+  <tr><td>Storing passwords as plain text</td><td>Security disaster</td><td>Use scrypt or bcrypt with salt</td></tr>
+  <tr><td>Using <code>createCipher</code> (not <code>createCipheriv</code>)</td><td>Deprecated, uses fixed IV</td><td>Use <code>createCipheriv</code> with random IV</td></tr>
+</table>
+
+<div class="footer">
+  Node.js crypto Module Cheat Sheet &mdash; Save this file and open in any browser for quick reference.<br>
+  Based on Node.js 18+ with <code>node:crypto</code> API. Always use modern, secure algorithms.
+</div>
+
+</body>
+</html>

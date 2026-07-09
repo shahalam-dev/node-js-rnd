@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Node.js child_process Module Cheat Sheet</title>
+  <style>
+    :root {
+      --bg: #0d1117;
+      --card: #161b22;
+      --border: #30363d;
+      --text: #c9d1d9;
+      --heading: #f0f6fc;
+      --code-bg: #1f2937;
+      --code-text: #e6edf3;
+      --accent: #58a6ff;
+      --accent2: #3fb950;
+      --accent3: #d29922;
+      --accent4: #f85149;
+      --muted: #8b949e;
+      --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      line-height: 1.6;
+      padding: 2rem 1rem;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+    h1 {
+      color: var(--heading);
+      font-size: 2.2rem;
+      margin-bottom: 0.5rem;
+      border-bottom: 2px solid var(--accent3);
+      padding-bottom: 0.5rem;
+    }
+    .subtitle {
+      color: var(--muted);
+      font-size: 0.95rem;
+      margin-bottom: 2rem;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 1.5rem;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem;
+      transition: border-color 0.2s;
+    }
+    .card:hover { border-color: var(--accent3); }
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.75rem;
+    }
+    .badge {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      padding: 2px 8px;
+      border-radius: 4px;
+      letter-spacing: 0.5px;
+    }
+    .badge-spawn { background: rgba(88,166,255,0.15); color: var(--accent); }
+    .badge-exec { background: rgba(63,185,80,0.15); color: var(--accent2); }
+    .badge-fork { background: rgba(210,153,34,0.15); color: var(--accent3); }
+    .badge-util { background: rgba(248,81,73,0.15); color: var(--accent4); }
+    h2 {
+      color: var(--heading);
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
+    .method {
+      font-family: "SFMono-Regular", Consolas, monospace;
+      font-size: 0.85rem;
+      color: var(--accent3);
+      background: rgba(210,153,34,0.08);
+      padding: 2px 6px;
+      border-radius: 4px;
+      margin-bottom: 0.4rem;
+      display: inline-block;
+    }
+    p.desc {
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-bottom: 0.6rem;
+    }
+    pre {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      overflow-x: auto;
+      font-size: 0.8rem;
+      line-height: 1.5;
+    }
+    code {
+      font-family: "SFMono-Regular", Consolas, monospace;
+      color: var(--code-text);
+    }
+    .comment { color: #8b949e; }
+    .keyword { color: #ff7b72; }
+    .string { color: #a5d6ff; }
+    .func { color: #d2a8ff; }
+    .var { color: #79c0ff; }
+    .output { color: #7ee787; }
+    .note {
+      font-size: 0.8rem;
+      color: var(--accent3);
+      margin-top: 0.5rem;
+      padding-left: 0.5rem;
+      border-left: 2px solid var(--accent3);
+    }
+    .tip {
+      background: rgba(210,153,34,0.08);
+      border: 1px solid rgba(210,153,34,0.3);
+      border-radius: 8px;
+      padding: 1rem;
+      margin: 2rem 0;
+      font-size: 0.9rem;
+    }
+    .tip strong { color: var(--accent3); }
+    .footer {
+      text-align: center;
+      margin-top: 3rem;
+      color: var(--muted);
+      font-size: 0.8rem;
+    }
+    .section-title {
+      grid-column: 1 / -1;
+      color: var(--heading);
+      font-size: 1.3rem;
+      margin-top: 1rem;
+      margin-bottom: -0.5rem;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 0.5rem;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+      margin-top: 0.5rem;
+    }
+    th, td {
+      text-align: left;
+      padding: 0.5rem 0.75rem;
+      border-bottom: 1px solid var(--border);
+    }
+    th { color: var(--heading); font-weight: 600; }
+    td code { color: var(--accent3); }
+  </style>
+  <base target="_blank">
+</head>
+<body>
+
+<h1>🔄 Node.js <code>child_process</code> Module Cheat Sheet</h1>
+<p class="subtitle">Spawn, execute, and manage child processes — Node.js 18+</p>
+
+<div class="tip">
+  <strong>💡 Golden Rule:</strong> Use <strong><code>spawn</code></strong> for streaming large outputs, <strong><code>exec</code></strong> for small outputs, and <strong><code>fork</code></strong> for Node.js subprocesses with IPC. Always use <code>node:</code> prefix. Prefer <code>spawn</code> over <code>exec</code> for security when handling user input.
+</div>
+
+<div class="grid">
+
+  <div class="section-title">🚀 Spawning Processes (Streaming)</div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-spawn">Spawn</span>
+      <h2>child_process.spawn</h2>
+    </div>
+    <div class="method">spawn(command, args?, options?)</div>
+    <p class="desc">Launch a new process with a command and arguments. <strong>Streams</strong> stdout/stderr. Best for long-running or large-output processes.</p>
+    <pre><code><span class="keyword">import</span> { <span class="var">spawn</span> } <span class="keyword">from</span> <span class="string">'node:child_process'</span>;
+
+<span class="comment">// Basic spawn</span>
+<span class="keyword">const</span> <span class="var">ls</span> = <span class="func">spawn</span>(<span class="string">'ls'</span>, [<span class="string">'-la'</span>, <span class="string">'/usr'</span>]);
+
+<span class="var">ls</span>.<span class="var">stdout</span>.<span class="func">on</span>(<span class="string">'data'</span>, (<span class="var">data</span>) => {
+  <span class="var">console</span>.<span class="func">log</span>(<span class="var">data</span>.<span class="func">toString</span>());
+});
+
+<span class="var">ls</span>.<span class="var">stderr</span>.<span class="func">on</span>(<span class="string">'data'</span>, (<span class="var">data</span>) => {
+  <span class="var">console</span>.<span class="func">error</span>(<span class="var">data</span>.<span class="func">toString</span>());
+});
+
+<span class="var">ls</span>.<span class="func">on</span>(<span class="string">'close'</span>, (<span class="var">code</span>) => {
+  <span class="var">console</span>.<span class="func">log</span>(<span class="string">`Exited with code ${code}`</span>);
+});
+
+<span class="comment">// With options (cwd, env, etc.)</span>
+<span class="keyword">const</span> <span class="var">proc</span> = <span class="func">spawn</span>(<span class="string">'node'</span>, [<span class="string">'script.js'</span>], {
+  <span class="var">cwd</span>: <span class="string">'/path/to/project'</span>,
+  <span class="var">env</span>: { <span class="var">NODE_ENV</span>: <span class="string">'production'</span> },
+  <span class="var">shell</span>: <span class="keyword">true</span>   <span class="comment">// use shell for command parsing</span>
+});</code></pre>
+    <div class="note">✅ Use for: streaming output, long-running processes, large data.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-spawn">Spawn</span>
+      <h2>spawn options: stdio</h2>
+    </div>
+    <div class="method">stdio: 'pipe' | 'ignore' | 'inherit' | ['pipe', 'pipe', 'pipe']</div>
+    <p class="desc">Control how stdio streams are handled. Useful for piping between processes.</p>
+    <pre><code><span class="keyword">import</span> { <span class="var">spawn</span> } <span class="keyword">from</span> <span class="string">'node:child_process'</span>;
+
+<span class="comment">// Inherit parent's stdio (output goes to console)</span>
+<span class="keyword">const</span> <span class="var">proc1</span> = <span class="func">spawn</span>(<span class="string">'npm'</span>, [<span class="string">'install'</span>], {
+  <span class="var">stdio</span>: <span class="string">'inherit'</span>
+});
+
+<span class="comment">// Pipe stdio (default)</span>
+<span class="keyword">const</span> <span class="var">proc2</span> = <span class="func">spawn</span>(<span class="string">'grep'</span>, [<span class="string">'pattern'</span>], {
+  <span class="var">stdio</span>: [<span class="string">'pipe'</span>, <span class="string">'pipe'</span>, <span class="string">'pipe'</span>]
+});
+
+<span class="comment">// Pipe to another process (Unix style)</span>
+<span class="keyword">const</span> <span class="var">ls</span> = <span class="func">spawn</span>(<span class="string">'ls'</span>, [<span class="string">'-la'</span>]);
+<span class="keyword">const</span> <span class="var">grep</span> = <span class="func">spawn</span>(<span class="string">'grep'</span>, [<span class="string">'js'</span>]);
+<span class="var">ls</span>.<span class="var">stdout</span>.<span class="func">pipe</span>(<span class="var">grep</span>.<span class="var">stdin</span>);
+<span class="var">grep</span>.<span class="var">stdout</span>.<span class="func">on</span>(<span class="string">'data'</span>, <span class="var">data</span> => <span class="var">console</span>.<span class="func">log</span>(<span class="var">data</span>.<span class="func">toString</span>()));</code></pre>
+    <div class="note">✅ Use <code>inherit</code> for CLI tools. Use <code>pipe</code> for programmatic access.</div>
+  </div>
+
+  <div class="section-title">📦 Executing Commands (Buffered)</div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-exec">Exec</span>
+      <h2>child_process.exec</h2>
+    </div>
+    <div class="method">exec(command, options?, callback?)</div>
+    <p class="desc">Execute a command in a shell and <strong>buffer</strong> the output. Returns all output at once. Good for small outputs.</p>
+    <pre><code><span class="keyword">import</span> { <span class="var">exec</span> } <span class="keyword">from</span> <span class="string">'node:child_process'</span>;
+
+<span class="comment">// With callback</span>
+<span class="func">exec</span>(<span class="string">'ls -la /usr'</span>, (<span class="var">error</span>, <span class="var">stdout</span>, <span class="var">stderr</span>) => {
+  <span class="keyword">if</span> (<span class="var">error</span>) {
+    <span class="var">console</span>.<span class="func">error</span>(<span class="string">`Error: ${error.message}`</span>);
+    <span class="keyword">return</span>;
+  }
+  <span class="var">console</span>.<span class="func">log</span>(<span class="var">stdout</span>);
+  <span class="var">console</span>.<span class="func">error</span>(<span class="var">stderr</span>);
+});
+
+<span class="comment">// With options (timeout, maxBuffer)</span>
+<span class="func">exec</span>(<span class="string">'npm install'</span>, {
+  <span class="var">cwd</span>: <span class="string">'/project/path'</span>,
+  <span class="var">timeout</span>: <span class="number">30000</span>,        <span class="comment">// 30 seconds</span>
+  <span class="var">maxBuffer</span>: <span class="number">1024</span> * <span class="number">1024</span> <span class="comment">// 1 MB max output</span>
+}, (<span class="var">error</span>, <span class="var">stdout</span>) => {
+  <span class="comment">// ...</span>
+});
+
+<span class="comment">// Promise wrapper (util.promisify)</span>
+<span class="keyword">import</span> { <span class="var">promisify</span> } <span class="keyword">from</span> <span class="string">'node:util'</span>;
+<span class="keyword">const</span> <span class="var">execAsync</span> = <span class="func">promisify</span>(<span class="var">exec</span>);
+<span class="keyword">const</span> { <span class="var">stdout</span>, <span class="var">stderr</span> } = <span class="keyword">await</span> <span class="func">execAsync</span>(<span class="string">'ls -la'</span>);</code></pre>
+    <div class="note">⚠️ Uses shell by default. <strong>Security risk</strong> with user input. Uses <code>/bin/sh</code> on Unix, <code>cmd.exe</code> on Windows.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-exec">Exec</span>
+      <h2>child_process.execFile</h2>
+    </div>
+    <div class="method">execFile(file, args?, options?, callback?)</div>
+    <p class="desc">Execute a file directly <strong>without a shell</strong>. More secure than <code>exec</code> and slightly faster.</p>
+    <pre><code><span class="keyword">import</span> { <span class="var">execFile</span> } <span class="keyword">from</span> <span class="string">'node:child_process'</span>;
+
+<span class="comment">// Execute binary directly</span>
+<span class="func">execFile</span>(<span class="string">'node'</span>, [<span class="string">'-e'</span>, <span class="string">'console.log("Hello")'</span>], (<span class="var">err</span>, <span class="var">stdout</span>) => {
+  <span class="var">console</span>.<span class="func">log</span>(<span class="var">stdout</span>); <span class="comment">// 'Hello\n'</span>
+});
+
+<span class="comment">// With full path</span>
+<span class="func">execFile</span>(<span class="string">'/usr/bin/curl'</span>, [<span class="string">'https://api.ipify.org'</span>], (<span class="var">err</span>, <span class="var">stdout</span>) => {
+  <span class="var">console</span>.<span class="func">log</span>(<span class="var">stdout</span>); <span class="comment">// IP address</span>
+});
+
+<span class="comment">// Promise version</span>
+<span class="keyword">import</span> { <span class="var">promisify</span> } <span class="keyword">from</span> <span class="string">'node:util'</span>;
+<span class="keyword">const</span> <span class="var">execFileAsync</span> = <span class="func">promisify</span>(<span class="var">execFile</span>);
+<span class="keyword">const</span> { <span class="var">stdout</span> } = <span class="keyword">await</span> <span class="func">execFileAsync</span>(<span class="string">'node'</span>, [<span class="string">'--version'</span>]);</code></pre>
+    <div class="note">✅ More secure than <code>exec</code>. <strong>Recommended</strong> when you don't need shell features.</div>
+  </div>
+
+  <div class="section-title">🔄 Node.js Subprocesses (IPC)</div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-fork">Fork</span>
+      <h2>child_process.fork</h2>
+    </div>
+    <div class="method">fork(modulePath, args?, options?)</div>
+    <p class="desc">Spawn a new Node.js process with an <strong>IPC channel</strong> for message passing. Great for CPU-intensive tasks.</p>
+    <pre><code><span class="keyword">import</span> { <span class="var">fork</span> } <span class="keyword">from</span> <span class="string">'node:child_process'</span>;
+
+<span class="comment">// Parent process</span>
+<span class="keyword">const</span> <span class="var">child</span> = <span class="func">fork</span>(<span class="string">'./worker.js'</span>, [<span class="string">'arg1'</span>, <span class="string">'arg2'</span>]);
+
+<span class="comment">// Send message to child</span>
+<span class="var">child</span>.<span class="func">send</span>({ <span class="var">type</span>: <span class="string">'task'</span>, <span class="var">data</span>: <span class="string">'Hello'</span> });
+
+<span class="comment">// Receive message from child</span>
+<span class="var">child</span>.<span class="func">on</span>(<span class="string">'message'</span>, (<span class="var">message</span>) => {
+  <span class="var">console</span>.<span class="func">log</span>(<span class="string">'From child:'</span>, <span class="var">message</span>);
+});
+
+<span class="var">child</span>.<span class="func">on</span>(<span class="string">'exit'</span>, (<span class="var">code</span>) => {
+  <span class="var">console</span>.<span class="func">log</span>(<span class="string">`Child exited with code ${code}`</span>);
+});
+
+<span class="comment">// worker.js (child process)</span>
+<span class="comment">// process.on('message', (msg) => {</span>
+<span class="comment">//   console.log('From parent:', msg);</span>
+<span class="comment">//   process.send({ result: 'OK' });</span>
+<span class="comment">// });</span></code></pre>
+    <div class="note">✅ Use for: CPU-intensive tasks, parallel processing, worker pools. IPC is <strong>serialized JSON</strong>.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-fork">Fork</span>
+      <h2>fork options: silent, execArgv</h2>
+    </div>
+    <div class="method">fork(module, args, { silent, execArgv, ... })</div>
+    <p class="desc">Control stdio and Node.js arguments for forked processes.</p>
+    <pre><code><span class="keyword">import</span> { <span class="var">fork</span> } <span class="keyword">from</span> <span class="string">'node:child_process'</span>;
+
+<span class="comment">// Silent: prevents child from inheriting parent's stdio</span>
+<span class="keyword">const</span> <span class="var">child1</span> = <span class="func">fork</span>(<span class="string">'./worker.js'</span>, [], {
+  <span class="var">silent</span>: <span class="keyword">true</span>
+});
+<span class="comment">// child1.stdout/stderr are not connected to parent</span>
+
+<span class="comment">// Pass Node.js arguments to child</span>
+<span class="keyword">const</span> <span class="var">child2</span> = <span class="func">fork</span>(<span class="string">'./worker.js'</span>, [], {
+  <span class="var">execArgv</span>: [<span class="string">'--inspect'</span>, <span class="string">'--max-old-space-size=4096'</span>]
+});
+
+<span class="comment">// Custom environment</span>
+<span class="keyword">const</span> <span class="var">child3</span> = <span class="func">fork</span>(<span class="string">'./worker.js'</span>, [], {
+  <span class="var">env</span>: { <span class="var">NODE_ENV</span>: <span class="string">'production'</span>, <span class="var">CUSTOM_VAR</span>: <span class="string">'value'</span> }
+});</code></pre>
+    <div class="note">ℹ️ <code>execArgv</code> lets you pass V8 flags to child processes.</div>
+  </div>
+
+  <div class="section-title">🔧 Utility Functions</div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-util">Util</span>
+      <h2>child_process.spawnSync / execSync / execFileSync / forkSync</h2>
+    </div>
+    <div class="method">spawnSync(command, args?, options?) / execSync(command, options?)</div>
+    <p class="desc">Synchronous versions of spawn/exec/execFile. Block the event loop.</p>
+    <pre><code><span class="keyword">import</span> { <span class="var">spawnSync</span>, <span class="var">execSync</span>, <span class="var">execFileSync</span> } <span class="keyword">from</span> <span class="string">'node:child_process'</span>;
+
+<span class="comment">// Synchronous spawn</span>
+<span class="keyword">const</span> <span class="var">result</span> = <span class="func">spawnSync</span>(<span class="string">'ls'</span>, [<span class="string">'-la'</span>]);
+<span class="var">console</span>.<span class="func">log</span>(<span class="var">result</span>.<span class="var">stdout</span>.<span class="func">toString</span>());
+<span class="var">console</span>.<span class="func">log</span>(<span class="string">`Status: ${result.status}`</span>);
+
+<span class="comment">// Synchronous exec</span>
+<span class="keyword">const</span> <span class="var">output</span> = <span class="func">execSync</span>(<span class="string">'echo "Hello World"'</span>);
+<span class="var">console</span>.<span class="func">log</span>(<span class="var">output</span>.<span class="func">toString</span>()); <span class="comment">// 'Hello World\n'</span>
+
+<span class="comment">// Synchronous execFile</span>
+<span class="keyword">const</span> <span class="var">nodeVersion</span> = <span class="func">execFileSync</span>(<span class="string">'node'</span>, [<span class="string">'--version'</span>]);
+<span class="var">console</span>.<span class="func">log</span>(<span class="var">nodeVersion</span>.<span class="func">toString</span>());
+
+<span class="comment">// ⚠️ These block the event loop!</span>
+<span class="comment">// Only use during startup or in CLI scripts.</span></code></pre>
+    <div class="note">⚠️ Synchronous methods <strong>block the event loop</strong>. Only use during server startup or in CLI scripts.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-util">Util</span>
+      <h2>Process signals & cleanup</h2>
+    </div>
+    <div class="method">child.kill(signal?) / child.on('error') / child.on('exit')</div>
+    <p class="desc">Send signals, handle errors, and clean up child processes.</p>
+    <pre><code><span class="keyword">import</span> { <span class="var">spawn</span> } <span class="keyword">from</span> <span class="string">'node:child_process'</span>;
+
+<span class="keyword">const</span> <span class="var">child</span> = <span class="func">spawn</span>(<span class="string">'node'</span>, [<span class="string">'server.js'</span>]);
+
+<span class="comment">// Handle errors</span>
+<span class="var">child</span>.<span class="func">on</span>(<span class="string">'error'</span>, (<span class="var">err</span>) => {
+  <span class="var">console</span>.<span class="func">error</span>(<span class="string">'Process error:'</span>, <span class="var">err</span>);
+});
+
+<span class="comment">// Handle exit</span>
+<span class="var">child</span>.<span class="func">on</span>(<span class="string">'exit'</span>, (<span class="var">code</span>, <span class="var">signal</span>) => {
+  <span class="var">console</span>.<span class="func">log</span>(<span class="string">`Exited with code ${code}, signal ${signal}`</span>);
+});
+
+<span class="comment">// Kill with signal</span>
+<span class="var">child</span>.<span class="func">kill</span>();          <span class="comment">// SIGTERM</span>
+<span class="var">child</span>.<span class="func">kill</span>(<span class="string">'SIGKILL'</span>); <span class="comment">// Force kill</span>
+<span class="var">child</span>.<span class="func">kill</span>(<span class="string">'SIGINT'</span>);  <span class="comment">// Ctrl+C</span>
+
+<span class="comment">// Cleanup on parent exit</span>
+<span class="var">process</span>.<span class="func">on</span>(<span class="string">'exit'</span>, () => {
+  <span class="keyword">if</span> (!<span class="var">child</span>.<span class="var">killed</span>) {
+    <span class="var">child</span>.<span class="func">kill</span>();
+  }
+});</code></pre>
+    <div class="note">✅ Always handle <code>error</code> and <code>exit</code> events. Clean up child processes on parent exit.</div>
+  </div>
+
+</div>
+
+<div class="tip">
+  <strong>🚀 Pro Pattern — Safe Command Execution:</strong>
+  <pre style="margin-top:0.5rem; background:rgba(0,0,0,0.2); border:none;"><code><span class="keyword">import</span> { <span class="var">spawn</span> } <span class="keyword">from</span> <span class="string">'node:child_process'</span>;
+
+<span class="comment">// Safe: arguments are passed as array, no shell</span>
+<span class="keyword">function</span> <span class="func">safeExec</span>(<span class="var">cmd</span>, <span class="var">args</span>, <span class="var">options</span> = {}) {
+  <span class="keyword">return</span> <span class="keyword">new</span> <span class="func">Promise</span>((<span class="var">resolve</span>, <span class="var">reject</span>) => {
+    <span class="keyword">const</span> <span class="var">proc</span> = <span class="func">spawn</span>(<span class="var">cmd</span>, <span class="var">args</span>, {
+      ...<span class="var">options</span>,
+      <span class="var">shell</span>: <span class="keyword">false</span> <span class="comment">// Security: no shell injection</span>
+    });
+    
+    <span class="keyword">let</span> <span class="var">stdout</span> = <span class="string">''</span>;
+    <span class="keyword">let</span> <span class="var">stderr</span> = <span class="string">''</span>;
+    
+    <span class="var">proc</span>.<span class="var">stdout</span>.<span class="func">on</span>(<span class="string">'data'</span>, <span class="var">data</span> => <span class="var">stdout</span> += <span class="var">data</span>);
+    <span class="var">proc</span>.<span class="var">stderr</span>.<span class="func">on</span>(<span class="string">'data'</span>, <span class="var">data</span> => <span class="var">stderr</span> += <span class="var">data</span>);
+    
+    <span class="var">proc</span>.<span class="func">on</span>(<span class="string">'close'</span>, (<span class="var">code</span>) => {
+      <span class="keyword">if</span> (<span class="var">code</span> !== <span class="number">0</span>) {
+        <span class="func">reject</span>(<span class="keyword">new</span> <span class="func">Error</span>(<span class="string">`Exit code: ${code}\n${stderr}`</span>));
+      } <span class="keyword">else</span> {
+        <span class="func">resolve</span>({ <span class="var">stdout</span>, <span class="var">stderr</span> });
+      }
+    });
+  });
+}
+
+<span class="comment">// Usage</span>
+<span class="keyword">const</span> { <span class="var">stdout</span> } = <span class="keyword">await</span> <span class="func">safeExec</span>(<span class="string">'ls'</span>, [<span class="string">'-la'</span>], { <span class="var">cwd</span>: <span class="string">'/usr'</span> });</code></pre>
+</div>
+
+<h2 style="margin-top:2rem; color:var(--heading); border-bottom:1px solid var(--border); padding-bottom:0.5rem;">📋 Quick Decision Guide</h2>
+<table>
+  <tr><th>Goal</th><th>Use</th><th>Why</th></tr>
+  <tr><td>Streaming large output</td><td><code>spawn()</code></td><td>Event-driven, memory-efficient</td></tr>
+  <tr><td>Small output, simple command</td><td><code>exec()</code></td><td>Easy, buffers output</td></tr>
+  <tr><td>No shell, more secure</td><td><code>execFile()</code></td><td>Direct execution, no shell</td></tr>
+  <tr><td>Node.js subprocess with IPC</td><td><code>fork()</code></td><td>Message passing, CPU tasks</td></tr>
+  <tr><td>Synchronous (CLI/startup)</td><td><code>spawnSync()</code> / <code>execSync()</code></td><td>Blocks event loop, simple</td></tr>
+  <tr><td>Piping between commands</td><td><code>spawn()</code> with <code>stdio: 'pipe'</code></td><td>Unix-style piping</td></tr>
+</table>
+
+<h2 style="margin-top:2rem; color:var(--heading); border-bottom:1px solid var(--border); padding-bottom:0.5rem;">⚠️ Common Pitfalls</h2>
+<table>
+  <tr><th>Mistake</th><th>Why It's Wrong</th><th>Fix</th></tr>
+  <tr><td>Using <code>exec()</code> with user input</td><td>Shell injection vulnerability</td><td>Use <code>spawn()</code> with args array or <code>execFile()</code></td></tr>
+  <tr><td>Not handling <code>error</code> event</td><td>Process errors can crash your app</td><td>Always attach <code>.on('error')</code> handler</td></tr>
+  <tr><td>Forgetting to kill child processes</td><td>Zombie processes, resource leaks</td><td>Kill on parent exit or timeout</td></tr>
+  <tr><td>Using <code>execSync()</code> in server</td><td>Blocks event loop, hurts performance</td><td>Use async versions or spawn</td></tr>
+  <tr><td>Not setting <code>maxBuffer</code> for <code>exec()</code></td><td>Buffer overflow for large outputs</td><td>Set appropriate <code>maxBuffer</code> or use <code>spawn()</code></td></tr>
+  <tr><td>Assuming <code>fork()</code> works on Windows</td><td>Requires Node.js, works cross-platform</td><td>It does work, but uses <code>node</code> executable</td></tr>
+</table>
+
+<div class="footer">
+  Node.js child_process Module Cheat Sheet &mdash; Save this file and open in any browser for quick reference.<br>
+  Based on Node.js 18+ with <code>node:child_process</code> API. Use <code>spawn</code> for streaming, <code>exec</code> for small outputs, <code>fork</code> for Node.js IPC.
+</div>
+
+</body>
+</html>

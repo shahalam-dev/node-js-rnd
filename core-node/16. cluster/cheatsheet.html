@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Node.js cluster Module Cheat Sheet</title>
+  <style>
+    :root {
+      --bg: #0d1117;
+      --card: #161b22;
+      --border: #30363d;
+      --text: #c9d1d9;
+      --heading: #f0f6fc;
+      --code-bg: #1f2937;
+      --code-text: #e6edf3;
+      --accent: #58a6ff;
+      --accent2: #3fb950;
+      --accent3: #d29922;
+      --accent4: #f85149;
+      --muted: #8b949e;
+      --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      line-height: 1.6;
+      padding: 2rem 1rem;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+    h1 {
+      color: var(--heading);
+      font-size: 2.2rem;
+      margin-bottom: 0.5rem;
+      border-bottom: 2px solid var(--accent2);
+      padding-bottom: 0.5rem;
+    }
+    .subtitle {
+      color: var(--muted);
+      font-size: 0.95rem;
+      margin-bottom: 2rem;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 1.5rem;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem;
+      transition: border-color 0.2s;
+    }
+    .card:hover { border-color: var(--accent2); }
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.75rem;
+    }
+    .badge {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      padding: 2px 8px;
+      border-radius: 4px;
+      letter-spacing: 0.5px;
+    }
+    .badge-master { background: rgba(88,166,255,0.15); color: var(--accent); }
+    .badge-worker { background: rgba(63,185,80,0.15); color: var(--accent2); }
+    .badge-ipc { background: rgba(210,153,34,0.15); color: var(--accent3); }
+    .badge-util { background: rgba(248,81,73,0.15); color: var(--accent4); }
+    h2 {
+      color: var(--heading);
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
+    .method {
+      font-family: "SFMono-Regular", Consolas, monospace;
+      font-size: 0.85rem;
+      color: var(--accent2);
+      background: rgba(63,185,80,0.08);
+      padding: 2px 6px;
+      border-radius: 4px;
+      margin-bottom: 0.4rem;
+      display: inline-block;
+    }
+    p.desc {
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-bottom: 0.6rem;
+    }
+    pre {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      overflow-x: auto;
+      font-size: 0.8rem;
+      line-height: 1.5;
+    }
+    code {
+      font-family: "SFMono-Regular", Consolas, monospace;
+      color: var(--code-text);
+    }
+    .comment { color: #8b949e; }
+    .keyword { color: #ff7b72; }
+    .string { color: #a5d6ff; }
+    .func { color: #d2a8ff; }
+    .var { color: #79c0ff; }
+    .output { color: #7ee787; }
+    .note {
+      font-size: 0.8rem;
+      color: var(--accent3);
+      margin-top: 0.5rem;
+      padding-left: 0.5rem;
+      border-left: 2px solid var(--accent3);
+    }
+    .tip {
+      background: rgba(63,185,80,0.08);
+      border: 1px solid rgba(63,185,80,0.3);
+      border-radius: 8px;
+      padding: 1rem;
+      margin: 2rem 0;
+      font-size: 0.9rem;
+    }
+    .tip strong { color: var(--accent2); }
+    .footer {
+      text-align: center;
+      margin-top: 3rem;
+      color: var(--muted);
+      font-size: 0.8rem;
+    }
+    .section-title {
+      grid-column: 1 / -1;
+      color: var(--heading);
+      font-size: 1.3rem;
+      margin-top: 1rem;
+      margin-bottom: -0.5rem;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 0.5rem;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+      margin-top: 0.5rem;
+    }
+    th, td {
+      text-align: left;
+      padding: 0.5rem 0.75rem;
+      border-bottom: 1px solid var(--border);
+    }
+    th { color: var(--heading); font-weight: 600; }
+    td code { color: var(--accent2); }
+  </style>
+  <base target="_blank">
+</head>
+<body>
+
+<h1>👥 Node.js <code>cluster</code> Module Cheat Sheet</h1>
+<p class="subtitle">Multi-process architecture for performance and reliability — Node.js 18+</p>
+
+<div class="tip">
+  <strong>💡 Golden Rule:</strong> Use <code>cluster</code> to leverage multi-core CPUs. The <strong>master</strong> process manages <strong>worker</strong> processes. Workers share server ports via the master. Use <code>node:cluster</code> prefix. <strong>Important:</strong> Clusters are for Node.js processes only, not for arbitrary child processes.
+</div>
+
+<div class="grid">
+
+  <div class="section-title">👑 Master & Worker Setup</div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-master">Master</span>
+      <span class="badge badge-worker">Worker</span>
+      <h2>cluster.isMaster / cluster.isWorker</h2>
+    </div>
+    <div class="method">cluster.isMaster / cluster.isWorker (Boolean)</div>
+    <p class="desc">Check if the current process is the master or a worker. Use to define different behavior.</p>
+    <pre><code><span class="keyword">import</span> <span class="var">cluster</span> <span class="keyword">from</span> <span class="string">'node:cluster'</span>;
+<span class="keyword">import</span> <span class="var">os</span> <span class="keyword">from</span> <span class="string">'node:os'</span>;
+<span class="keyword">import</span> <span class="var">http</span> <span class="keyword">from</span> <span class="string">'node:http'</span>;
+
+<span class="keyword">if</span> (<span class="var">cluster</span>.<span class="var">isMaster</span>) {
+  <span class="comment">// Master process: fork workers</span>
+  <span class="keyword">const</span> <span class="var">numCPUs</span> = <span class="var">os</span>.<span class="func">availableParallelism</span>();
+  <span class="var">console</span>.<span class="func">log</span>(<span class="string">`Master ${process.pid} forking ${numCPUs} workers`</span>);
+
+  <span class="keyword">for</span> (<span class="keyword">let</span> <span class="var">i</span> = <span class="number">0</span>; <span class="var">i</span> < <span class="var">numCPUs</span>; <span class="var">i</span>++) {
+    <span class="var">cluster</span>.<span class="func">fork</span>();
+  }
+} <span class="keyword">else</span> {
+  <span class="comment">// Worker process: create server</span>
+  <span class="keyword">const</span> <span class="var">server</span> = <span class="var">http</span>.<span class="func">createServer</span>((<span class="var">req</span>, <span class="var">res</span>) => {
+    <span class="var">res</span>.<span class="func">writeHead</span>(<span class="number">200</span>);
+    <span class="var">res</span>.<span class="func">end</span>(<span class="string">`Hello from worker ${process.pid}`</span>);
+  });
+
+  <span class="var">server</span>.<span class="func">listen</span>(<span class="number">3000</span>, () => {
+    <span class="var">console</span>.<span class="func">log</span>(<span class="string">`Worker ${process.pid} listening`</span>);
+  });
+}</code></pre>
+    <div class="note">✅ <code>isMaster</code> and <code>isWorker</code> are the primary way to separate master and worker logic.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-master">Master</span>
+      <h2>cluster.fork / cluster.setupMaster</h2>
+    </div>
+    <div class="method">cluster.fork(env?) / cluster.setupMaster(settings?)</div>
+    <p class="desc">Fork a new worker process. <code>setupMaster</code> configures how workers are forked (e.g., different script, args).</p>
+    <pre><code><span class="keyword">import</span> <span class="var">cluster</span> <span class="keyword">from</span> <span class="string">'node:cluster'</span>;
+
+<span class="keyword">if</span> (<span class="var">cluster</span>.<span class="var">isMaster</span>) {
+  <span class="comment">// Setup master configuration</span>
+  <span class="var">cluster</span>.<span class="func">setupMaster</span>({
+    <span class="var">exec</span>: <span class="string">'worker.js'</span>,           <span class="comment">// Custom worker file</span>
+    <span class="var">args</span>: [<span class="string">'--harmony'</span>],          <span class="comment">// Args passed to workers</span>
+    <span class="var">silent</span>: <span class="keyword">false</span>                <span class="comment">// Inherit stdout/stderr</span>
+  });
+
+  <span class="comment">// Fork with environment variables</span>
+  <span class="keyword">const</span> <span class="var">worker</span> = <span class="var">cluster</span>.<span class="func">fork</span>({
+    <span class="var">CUSTOM_VAR</span>: <span class="string">'value'</span>,
+    <span class="var">NODE_OPTIONS</span>: <span class="string">'--max-old-space-size=1024'</span>
+  });
+
+  <span class="comment">// Fork multiple workers</span>
+  <span class="keyword">for</span> (<span class="keyword">let</span> <span class="var">i</span> = <span class="number">0</span>; <span class="var">i</span> < <span class="number">4</span>; <span class="var">i</span>++) {
+    <span class="var">cluster</span>.<span class="func">fork</span>();
+  }
+}</code></pre>
+    <div class="note">⚠️ <code>setupMaster</code> must be called <strong>before</strong> any workers are forked.</div>
+  </div>
+
+  <div class="section-title">💬 IPC Communication</div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-ipc">IPC</span>
+      <h2>worker.send / cluster.on('message')</h2>
+    </div>
+    <div class="method">worker.send(message, handle?, callback?) / cluster.on('message', (worker, message, handle) => {})</div>
+    <p class="desc">Send messages between master and workers via IPC. Messages are serialized as JSON.</p>
+    <pre><code><span class="keyword">import</span> <span class="var">cluster</span> <span class="keyword">from</span> <span class="string">'node:cluster'</span>;
+
+<span class="keyword">if</span> (<span class="var">cluster</span>.<span class="var">isMaster</span>) {
+  <span class="comment">// Fork a worker</span>
+  <span class="keyword">const</span> <span class="var">worker</span> = <span class="var">cluster</span>.<span class="func">fork</span>();
+
+  <span class="comment">// Send message to worker</span>
+  <span class="var">worker</span>.<span class="func">send</span>({ <span class="var">type</span>: <span class="string">'greeting'</span>, <span class="var">data</span>: <span class="string">'Hello worker'</span> });
+
+  <span class="comment">// Receive messages from workers</span>
+  <span class="var">cluster</span>.<span class="func">on</span>(<span class="string">'message'</span>, (<span class="var">worker</span>, <span class="var">message</span>, <span class="var">handle</span>) => {
+    <span class="var">console</span>.<span class="func">log</span>(<span class="string">`Master received from ${worker.process.pid}:`</span>, <span class="var">message</span>);
+    
+    <span class="comment">// Can send handle (e.g., socket) for advanced use</span>
+    <span class="keyword">if</span> (<span class="var">handle</span>) {
+      <span class="comment">// handle is a net.Socket or similar</span>
+    }
+  });
+} <span class="keyword">else</span> {
+  <span class="comment">// Worker: receive messages from master</span>
+  <span class="var">process</span>.<span class="func">on</span>(<span class="string">'message'</span>, (<span class="var">message</span>) => {
+    <span class="var">console</span>.<span class="func">log</span>(<span class="string">`Worker ${process.pid} received:`</span>, <span class="var">message</span>);
+    
+    <span class="comment">// Reply to master</span>
+    <span class="var">process</span>.<span class="func">send</span>({ <span class="var">type</span>: <span class="string">'ack'</span>, <span class="var">pid</span>: <span class="var">process</span>.<span class="var">pid</span> });
+  });
+}</code></pre>
+    <div class="note">✅ IPC is JSON-serialized. For large data, use shared memory or files.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-ipc">IPC</span>
+      <h2>cluster.on('online') / cluster.on('listening')</h2>
+    </div>
+    <div class="method">cluster.on('online', worker => {}) / cluster.on('listening', (worker, address) => {})</div>
+    <p class="desc">Detect when workers come online and when they start listening on a server.</p>
+    <pre><code><span class="keyword">import</span> <span class="var">cluster</span> <span class="keyword">from</span> <span class="string">'node:cluster'</span>;
+
+<span class="keyword">if</span> (<span class="var">cluster</span>.<span class="var">isMaster</span>) {
+  <span class="keyword">const</span> <span class="var">workers</span> = [];
+
+  <span class="comment">// When a worker is online</span>
+  <span class="var">cluster</span>.<span class="func">on</span>(<span class="string">'online'</span>, (<span class="var">worker</span>) => {
+    <span class="var">console</span>.<span class="func">log</span>(<span class="string">`Worker ${worker.process.pid} is online`</span>);
+  });
+
+  <span class="comment">// When a worker starts listening</span>
+  <span class="var">cluster</span>.<span class="func">on</span>(<span class="string">'listening'</span>, (<span class="var">worker</span>, <span class="var">address</span>) => {
+    <span class="var">console</span>.<span class="func">log</span>(
+      <span class="string">`Worker ${worker.process.pid} listening on ${address.address}:${address.port}`
+    );
+    <span class="var">workers</span>.<span class="func">push</span>(<span class="var">worker</span>);
+  });
+
+  <span class="comment">// Fork workers</span>
+  <span class="keyword">for</span> (<span class="keyword">let</span> <span class="var">i</span> = <span class="number">0</span>; <span class="var">i</span> < <span class="number">4</span>; <span class="var">i</span>++) {
+    <span class="var">cluster</span>.<span class="func">fork</span>();
+  }
+}</code></pre>
+    <div class="note">✅ Use <code>'listening'</code> to know when workers are ready to accept connections.</div>
+  </div>
+
+  <div class="section-title">🔄 Worker Management</div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-worker">Worker</span>
+      <h2>cluster.workers / cluster.worker</h2>
+    </div>
+    <div class="method">cluster.workers (Object) / cluster.worker (Worker object)</div>
+    <p class="desc"><code>cluster.workers</code> holds all worker objects in the master. <code>cluster.worker</code> gives the current worker its own object.</p>
+    <pre><code><span class="keyword">import</span> <span class="var">cluster</span> <span class="keyword">from</span> <span class="string">'node:cluster'</span>;
+
+<span class="keyword">if</span> (<span class="var">cluster</span>.<span class="var">isMaster</span>) {
+  <span class="comment">// Fork some workers</span>
+  <span class="keyword">for</span> (<span class="keyword">let</span> <span class="var">i</span> = <span class="number">0</span>; <span class="var">i</span> < <span class="number">4</span>; <span class="var">i</span>++) {
+    <span class="var">cluster</span>.<span class="func">fork</span>();
+  }
+
+  <span class="comment">// Access all workers</span>
+  <span class="var">console</span>.<span class="func">log</span>(<span class="string">`Total workers: ${Object.keys(cluster.workers).length}`</span>);
+
+  <span class="comment">// Iterate over workers</span>
+  <span class="keyword">for</span> (<span class="keyword">const</span> <span class="var">id</span> <span class="keyword">in</span> <span class="var">cluster</span>.<span class="var">workers</span>) {
+    <span class="keyword">const</span> <span class="var">worker</span> = <span class="var">cluster</span>.<span class="var">workers</span>[<span class="var">id</span>];
+    <span class="var">console</span>.<span class="func">log</span>(<span class="string">`Worker ${worker.process.pid}`</span>);
+  }
+} <span class="keyword">else</span> {
+  <span class="comment">// Worker: access its own info</span>
+  <span class="var">console</span>.<span class="func">log</span>(<span class="string">`Worker ID: ${cluster.worker.id}, PID: ${process.pid}`</span>);
+  
+  <span class="comment">// Worker can get its own properties</span>
+  <span class="var">console</span>.<span class="func">log</span>(<span class="string">`Worker is connected: ${cluster.worker.isConnected()}`</span>);
+}</code></pre>
+    <div class="note">✅ <code>cluster.workers</code> is only available in the master process. <code>cluster.worker</code> is only available in workers.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-worker">Worker</span>
+      <h2>worker.kill / worker.disconnect</h2>
+    </div>
+    <div class="method">worker.kill(signal?) / worker.disconnect()</div>
+    <p class="desc"><code>kill</code> terminates the worker process. <code>disconnect</code> gracefully disconnects the IPC channel.</p>
+    <pre><code><span class="keyword">import</span> <span class="var">cluster</span> <span class="keyword">from</span> <span class="string">'node:cluster'</span>;
+
+<span class="keyword">if</span> (<span class="var">cluster</span>.<span class="var">isMaster</span>) {
+  <span class="keyword">const</span> <span class="var">worker</span> = <span class="var">cluster</span>.<span class="func">fork</span>();
+
+  <span class="comment">// Graceful disconnect (allows worker to finish tasks)</span>
+  <span class="var">worker</span>.<span class="func">disconnect</span>();
+  <span class="var">worker</span>.<span class="func">on</span>(<span class="string">'disconnect'</span>, () => {
+    <span class="var">console</span>.<span class="func">log</span>(<span class="string">`Worker ${worker.process.pid} disconnected`</span>);
+    <span class="comment">// Force kill after disconnect</span>
+    <span class="var">worker</span>.<span class="func">kill</span>(<span class="string">'SIGTERM'</span>);
+  });
+
+  <span class="comment">// Force kill immediately</span>
+  <span class="var">worker</span>.<span class="func">kill</span>(<span class="string">'SIGKILL'</span>); <span class="comment">// Immediate termination</span>
+
+  <span class="comment">// Listen for death events</span>
+  <span class="var">cluster</span>.<span class="func">on</span>(<span class="string">'exit'</span>, (<span class="var">worker</span>, <span class="var">code</span>, <span class="var">signal</span>) => {
+    <span class="var">console</span>.<span class="func">log</span>(<span class="string">`Worker ${worker.process.pid} died (${code || signal})`</span>);
+  });
+}</code></pre>
+    <div class="note">✅ Use <code>disconnect</code> for graceful shutdown. Use <code>kill</code> for immediate termination.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-worker">Worker</span>
+      <h2>cluster.on('exit') & Auto-restart</h2>
+    </div>
+    <div class="method">cluster.on('exit', (worker, code, signal) => {})</div>
+    <p class="desc">Handle worker exits and implement auto-restart for reliability.</p>
+    <pre><code><span class="keyword">import</span> <span class="var">cluster</span> <span class="keyword">from</span> <span class="string">'node:cluster'</span>;
+<span class="keyword">import</span> <span class="var">os</span> <span class="keyword">from</span> <span class="string">'node:os'</span>;
+
+<span class="keyword">if</span> (<span class="var">cluster</span>.<span class="var">isMaster</span>) {
+  <span class="keyword">const</span> <span class="var">numCPUs</span> = <span class="var">os</span>.<span class="func">availableParallelism</span>();
+
+  <span class="comment">// Fork initial workers</span>
+  <span class="keyword">for</span> (<span class="keyword">let</span> <span class="var">i</span> = <span class="number">0</span>; <span class="var">i</span> < <span class="var">numCPUs</span>; <span class="var">i</span>++) {
+    <span class="var">cluster</span>.<span class="func">fork</span>();
+  }
+
+  <span class="comment">// Auto-restart on exit</span>
+  <span class="var">cluster</span>.<span class="func">on</span>(<span class="string">'exit'</span>, (<span class="var">worker</span>, <span class="var">code</span>, <span class="var">signal</span>) => {
+    <span class="var">console</span>.<span class="func">log</span>(<span class="string">`Worker ${worker.process.pid} died. Restarting...`</span>);
+    
+    <span class="comment">// Fork a new worker to replace the dead one</span>
+    <span class="keyword">const</span> <span class="var">newWorker</span> = <span class="var">cluster</span>.<span class="func">fork</span>();
+    
+    <span class="comment">// Optional: add delay before restart to avoid thrashing</span>
+    <span class="comment">// setTimeout(() => cluster.fork(), 1000);</span>
+  });
+
+  <span class="comment">// Handle worker crashes with error codes</span>
+  <span class="var">cluster</span>.<span class="func">on</span>(<span class="string">'exit'</span>, (<span class="var">worker</span>, <span class="var">code</span>) => {
+    <span class="keyword">if</span> (<span class="var">code</span> !== <span class="number">0</span> && !<span class="var">worker</span>.<span class="var">exitedAfterDisconnect</span>) {
+      <span class="var">console</span>.<span class="func">log</span>(<span class="string">`Worker crashed (code: ${code}). Restarting...`</span>);
+    }
+  });
+}</code></pre>
+    <div class="note">⚠️ Check <code>worker.exitedAfterDisconnect</code> to distinguish between intentional and accidental exits.</div>
+  </div>
+
+  <div class="section-title">🔧 Advanced Patterns</div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-util">Util</span>
+      <h2>cluster.schedulingPolicy</h2>
+    </div>
+    <div class="method">cluster.schedulingPolicy (cluster.SCHED_RR / cluster.SCHED_NONE)</div>
+    <p class="desc">Control how the master distributes connections among workers. Round-robin (default) or OS scheduling.</p>
+    <pre><code><span class="keyword">import</span> <span class="var">cluster</span> <span class="keyword">from</span> <span class="string">'node:cluster'</span>;
+
+<span class="comment">// Round-robin scheduling (default, recommended)</span>
+<span class="var">cluster</span>.<span class="var">schedulingPolicy</span> = <span class="var">cluster</span>.<span class="var">SCHED_RR</span>;
+
+<span class="comment">// OS scheduling (may distribute unevenly)</span>
+<span class="var">cluster</span>.<span class="var">schedulingPolicy</span> = <span class="var">cluster</span>.<span class="var">SCHED_NONE</span>;
+
+<span class="comment">// Check current policy</span>
+<span class="var">console</span>.<span class="func">log</span>(<span class="string">'Scheduling policy:'</span>, <span class="var">cluster</span>.<span class="var">schedulingPolicy</span>);
+
+<span class="comment">// Set before any workers are forked</span>
+<span class="keyword">if</span> (<span class="var">cluster</span>.<span class="var">isMaster</span>) {
+  <span class="var">cluster</span>.<span class="var">schedulingPolicy</span> = <span class="var">cluster</span>.<span class="var">SCHED_RR</span>;
+  <span class="keyword">for</span> (<span class="keyword">let</span> <span class="var">i</span> = <span class="number">0</span>; <span class="var">i</span> < <span class="number">4</span>; <span class="var">i</span>++) {
+    <span class="var">cluster</span>.<span class="func">fork</span>();
+  }
+}</code></pre>
+    <div class="note">✅ Round-robin is usually the best choice for HTTP servers. OS scheduling can cause uneven load distribution.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-util">Util</span>
+      <h2>Worker Object Properties</h2>
+    </div>
+    <div class="method">worker.process.pid, worker.id, worker.isDead(), worker.isConnected()</div>
+    <p class="desc">Various properties and methods on the Worker object.</p>
+    <pre><code><span class="keyword">import</span> <span class="var">cluster</span> <span class="keyword">from</span> <span class="string">'node:cluster'</span>;
+
+<span class="keyword">if</span> (<span class="var">cluster</span>.<span class="var">isMaster</span>) {
+  <span class="keyword">const</span> <span class="var">worker</span> = <span class="var">cluster</span>.<span class="func">fork</span>();
+
+  <span class="comment">// Worker properties</span>
+  <span class="var">console</span>.<span class="func">log</span>(<span class="string">'Worker ID:'</span>, <span class="var">worker</span>.<span class="var">id</span>);
+  <span class="var">console</span>.<span class="func">log</span>(<span class="string">'Worker PID:'</span>, <span class="var">worker</span>.<span class="var">process</span>.<span class="var">pid</span>);
+  <span class="var">console</span>.<span class="func">log</span>(<span class="string">'Worker connected:'</span>, <span class="var">worker</span>.<span class="func">isConnected</span>());
+  <span class="var">console</span>.<span class="func">log</span>(<span class="string">'Worker dead:'</span>, <span class="var">worker</span>.<span class="func">isDead</span>());
+
+  <span class="comment">// Worker events</span>
+  <span class="var">worker</span>.<span class="func">on</span>(<span class="string">'online'</span>, () => <span class="var">console</span>.<span class="func">log</span>(<span class="string">'Worker online'</span>));
+  <span class="var">worker</span>.<span class="func">on</span>(<span class="string">'listening'</span>, () => <span class="var">console</span>.<span class="func">log</span>(<span class="string">'Worker listening'</span>));
+  <span class="var">worker</span>.<span class="func">on</span>(<span class="string">'disconnect'</span>, () => <span class="var">console</span>.<span class="func">log</span>(<span class="string">'Worker disconnected'</span>));
+  <span class="var">worker</span>.<span class="func">on</span>(<span class="string">'exit'</span>, (<span class="var">code</span>, <span class="var">signal</span>) => {
+    <span class="var">console</span>.<span class="func">log</span>(<span class="string">`Worker exited: ${code || signal}`</span>);
+  });
+}</code></pre>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-util">Util</span>
+      <h2>Shared Server Example</h2>
+    </div>
+    <div class="method">Server sharing with net/http</div>
+    <p class="desc">Workers automatically share server ports via the master. No special code needed.</p>
+    <pre><code><span class="keyword">import</span> <span class="var">cluster</span> <span class="keyword">from</span> <span class="string">'node:cluster'</span>;
+<span class="keyword">import</span> <span class="var">http</span> <span class="keyword">from</span> <span class="string">'node:http'</span>;
+<span class="keyword">import</span> <span class="var">os</span> <span class="keyword">from</span> <span class="string">'node:os'</span>;
+
+<span class="keyword">if</span> (<span class="var">cluster</span>.<span class="var">isMaster</span>) {
+  <span class="comment">// Master: just fork workers</span>
+  <span class="keyword">for</span> (<span class="keyword">let</span> <span class="var">i</span> = <span class="number">0</span>; <span class="var">i</span> < <span class="var">os</span>.<span class="func">availableParallelism</span>(); <span class="var">i</span>++) {
+    <span class="var">cluster</span>.<span class="func">fork</span>();
+  }
+} <span class="keyword">else</span> {
+  <span class="comment">// Worker: create server as usual</span>
+  <span class="keyword">const</span> <span class="var">server</span> = <span class="var">http</span>.<span class="func">createServer</span>(<span class="var">req</span> => {
+    <span class="comment">// Each worker handles requests independently</span>
+    <span class="var">console</span>.<span class="func">log</span>(<span class="string">`Handled by ${process.pid}`</span>);
+  });
+
+  <span class="comment">// All workers listen on the same port</span>
+  <span class="comment">// The master automatically distributes connections</span>
+  <span class="var">server</span>.<span class="func">listen</span>(<span class="number">3000</span>, () => {
+    <span class="var">console</span>.<span class="func">log</span>(<span class="string">`Worker ${process.pid} ready`</span>);
+  });
+}</code></pre>
+    <div class="note">✅ The master handles incoming connections and distributes them to workers. Workers don't need to coordinate.</div>
+  </div>
+
+</div>
+
+<div class="tip">
+  <strong>🚀 Pro Pattern — Production-Ready Cluster:</strong>
+  <pre style="margin-top:0.5rem; background:rgba(0,0,0,0.2); border:none;"><code><span class="keyword">import</span> <span class="var">cluster</span> <span class="keyword">from</span> <span class="string">'node:cluster'</span>;
+<span class="keyword">import</span> <span class="var">os</span> <span class="keyword">from</span> <span class="string">'node:os'</span>;
+<span class="keyword">import</span> <span class="var">http</span> <span class="keyword">from</span> <span class="string">'node:http'</span>;
+
+<span class="keyword">if</span> (<span class="var">cluster</span>.<span class="var">isMaster</span>) {
+  <span class="comment">// Set up workers = CPU cores, but leave one for OS</span>
+  <span class="keyword">const</span> <span class="var">numWorkers</span> = <span class="var">Math</span>.<span class="func">max</span>(<span class="number">1</span>, <span class="var">os</span>.<span class="func">availableParallelism</span>() - <span class="number">1</span>);
+  
+  <span class="comment">// Fork workers</span>
+  <span class="keyword">for</span> (<span class="keyword">let</span> <span class="var">i</span> = <span class="number">0</span>; <span class="var">i</span> < <span class="var">numWorkers</span>; <span class="var">i</span>++) {
+    <span class="var">cluster</span>.<span class="func">fork</span>();
+  }
+
+  <span class="comment">// Auto-restart on crash with exponential backoff</span>
+  <span class="keyword">let</span> <span class="var">restartDelay</span> = <span class="number">1000</span>;
+  <span class="var">cluster</span>.<span class="func">on</span>(<span class="string">'exit'</span>, (<span class="var">worker</span>, <span class="var">code</span>) => {
+    <span class="keyword">if</span> (!<span class="var">worker</span>.<span class="var">exitedAfterDisconnect</span>) {
+      <span class="var">console</span>.<span class="func">log</span>(<span class="string">`Worker crashed. Restarting in ${restartDelay}ms`</span>);
+      <span class="func">setTimeout</span>(() => {
+        <span class="var">cluster</span>.<span class="func">fork</span>();
+        <span class="var">restartDelay</span> = <span class="var">Math</span>.<span class="func">min</span>(<span class="var">restartDelay</span> * <span class="number">1.5</span>, <span class="number">30000</span>);
+      }, <span class="var">restartDelay</span>);
+    }
+  });
+
+  <span class="comment">// Graceful shutdown</span>
+  <span class="keyword">const</span> <span class="var">gracefulShutdown</span> = () => {
+    <span class="var">console</span>.<span class="func">log</span>(<span class="string">'Shutting down cluster...'</span>);
+    <span class="keyword">for</span> (<span class="keyword">const</span> <span class="var">id</span> <span class="keyword">in</span> <span class="var">cluster</span>.<span class="var">workers</span>) {
+      <span class="keyword">const</span> <span class="var">worker</span> = <span class="var">cluster</span>.<span class="var">workers</span>[<span class="var">id</span>];
+      <span class="var">worker</span>.<span class="func">disconnect</span>();
+    }
+    <span class="func">setTimeout</span>(() => <span class="var">process</span>.<span class="func">exit</span>(<span class="number">0</span>), <span class="number">5000</span>).<span class="func">unref</span>();
+  };
+
+  <span class="var">process</span>.<span class="func">on</span>(<span class="string">'SIGTERM'</span>, <span class="var">gracefulShutdown</span>);
+  <span class="var">process</span>.<span class="func">on</span>(<span class="string">'SIGINT'</span>, <span class="var">gracefulShutdown</span>);
+} <span class="keyword">else</span> {
+  <span class="comment">// Worker: create app</span>
+  <span class="keyword">const</span> <span class="var">app</span> = <span class="var">http</span>.<span class="func">createServer</span>((<span class="var">req</span>, <span class="var">res</span>) => {
+    <span class="var">res</span>.<span class="func">end</span>(<span class="string">`Worker ${process.pid}\n`</span>);
+  });
+  
+  <span class="keyword">const</span> <span class="var">server</span> = <span class="var">app</span>.<span class="func">listen</span>(<span class="number">3000</span>);
+  
+  <span class="comment">// Clean up on disconnect</span>
+  <span class="var">process</span>.<span class="func">on</span>(<span class="string">'disconnect'</span>, () => {
+    <span class="var">server</span>.<span class="func">close</span>(() => {
+      <span class="var">process</span>.<span class="func">exit</span>(<span class="number">0</span>);
+    });
+  });
+}</code></pre>
+</div>
+
+<h2 style="margin-top:2rem; color:var(--heading); border-bottom:1px solid var(--border); padding-bottom:0.5rem;">📋 Quick Reference</h2>
+<table>
+  <tr><th>Purpose</th><th>Method</th><th>Where</th></tr>
+  <tr><td>Check if master</td><td><code>cluster.isMaster</code></td><td>Master & Worker</td></tr>
+  <tr><td>Check if worker</td><td><code>cluster.isWorker</code></td><td>Master & Worker</td></tr>
+  <tr><td>Fork a worker</td><td><code>cluster.fork()</code></td><td>Master</td></tr>
+  <tr><td>Access workers</td><td><code>cluster.workers</code></td><td>Master</td></tr>
+  <tr><td>Current worker</td><td><code>cluster.worker</code></td><td>Worker</td></tr>
+  <tr><td>Send message</td><td><code>worker.send()</code></td><td>Master/Worker</td></tr>
+  <tr><td>Receive messages</td><td><code>process.on('message')</code></td><td>Worker</td></tr>
+  <tr><td>Receive messages (master)</td><td><code>cluster.on('message')</code></td><td>Master</td></tr>
+  <tr><td>Kill worker</td><td><code>worker.kill()</code></td><td>Master</td></tr>
+  <tr><td>Disconnect worker</td><td><code>worker.disconnect()</code></td><td>Master</td></tr>
+</table>
+
+<h2 style="margin-top:2rem; color:var(--heading); border-bottom:1px solid var(--border); padding-bottom:0.5rem;">⚠️ Common Pitfalls</h2>
+<table>
+  <tr><th>Mistake</th><th>Why It's Wrong</th><th>Fix</th></tr>
+  <tr><td>Forking more workers than CPU cores</td><td>Wastes resources, context switching</td><td>Use <code>os.availableParallelism()</code></td></tr>
+  <tr><td>Not handling <code>exit</code> events</td><td>Workers die silently, reduced capacity</td><td>Always restart crashed workers</td></tr>
+  <tr><td>Stateful data in workers</td><td>Workers don't share memory</td><td>Use external stores (Redis, DB)</td></tr>
+  <tr><td>Using <code>cluster.workers</code> in worker</td><td>Returns <code>{}</code> in workers</td><td>Only use in master</td></tr>
+  <tr><td>Not checking <code>exitedAfterDisconnect</code></td><td>Restarts workers that were intentionally killed</td><td>Check before restarting</td></tr>
+  <tr><td>Using <code>cluster.fork()</code> inside workers</td><td>Workers can't fork other workers</td><td>Only master can fork</td></tr>
+  <tr><td>Assuming all workers are identical</td><td>Environment can differ</td><td>Pass configuration via env/args</td></tr>
+</table>
+
+<div class="footer">
+  Node.js cluster Module Cheat Sheet &mdash; Save this file and open in any browser for quick reference.<br>
+  Based on Node.js 18+ with <code>node:cluster</code> API. Leverage multi-core CPUs for better performance.
+</div>
+
+</body>
+</html>

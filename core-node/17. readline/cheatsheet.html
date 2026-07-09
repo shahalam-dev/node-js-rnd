@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Node.js readline Module Cheat Sheet</title>
+  <style>
+    :root {
+      --bg: #0d1117;
+      --card: #161b22;
+      --border: #30363d;
+      --text: #c9d1d9;
+      --heading: #f0f6fc;
+      --code-bg: #1f2937;
+      --code-text: #e6edf3;
+      --accent: #58a6ff;
+      --accent2: #3fb950;
+      --accent3: #d29922;
+      --accent4: #f85149;
+      --muted: #8b949e;
+      --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      line-height: 1.6;
+      padding: 2rem 1rem;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+    h1 {
+      color: var(--heading);
+      font-size: 2.2rem;
+      margin-bottom: 0.5rem;
+      border-bottom: 2px solid var(--accent);
+      padding-bottom: 0.5rem;
+    }
+    .subtitle {
+      color: var(--muted);
+      font-size: 0.95rem;
+      margin-bottom: 2rem;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 1.5rem;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem;
+      transition: border-color 0.2s;
+    }
+    .card:hover { border-color: var(--accent); }
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.75rem;
+    }
+    .badge {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      padding: 2px 8px;
+      border-radius: 4px;
+      letter-spacing: 0.5px;
+    }
+    .badge-interface { background: rgba(88,166,255,0.15); color: var(--accent); }
+    .badge-input { background: rgba(63,185,80,0.15); color: var(--accent2); }
+    .badge-file { background: rgba(210,153,34,0.15); color: var(--accent3); }
+    .badge-util { background: rgba(248,81,73,0.15); color: var(--accent4); }
+    h2 {
+      color: var(--heading);
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
+    .method {
+      font-family: "SFMono-Regular", Consolas, monospace;
+      font-size: 0.85rem;
+      color: var(--accent);
+      background: rgba(88,166,255,0.08);
+      padding: 2px 6px;
+      border-radius: 4px;
+      margin-bottom: 0.4rem;
+      display: inline-block;
+    }
+    p.desc {
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-bottom: 0.6rem;
+    }
+    pre {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      overflow-x: auto;
+      font-size: 0.8rem;
+      line-height: 1.5;
+    }
+    code {
+      font-family: "SFMono-Regular", Consolas, monospace;
+      color: var(--code-text);
+    }
+    .comment { color: #8b949e; }
+    .keyword { color: #ff7b72; }
+    .string { color: #a5d6ff; }
+    .func { color: #d2a8ff; }
+    .var { color: #79c0ff; }
+    .output { color: #7ee787; }
+    .note {
+      font-size: 0.8rem;
+      color: var(--accent3);
+      margin-top: 0.5rem;
+      padding-left: 0.5rem;
+      border-left: 2px solid var(--accent3);
+    }
+    .tip {
+      background: rgba(88,166,255,0.08);
+      border: 1px solid rgba(88,166,255,0.3);
+      border-radius: 8px;
+      padding: 1rem;
+      margin: 2rem 0;
+      font-size: 0.9rem;
+    }
+    .tip strong { color: var(--accent); }
+    .footer {
+      text-align: center;
+      margin-top: 3rem;
+      color: var(--muted);
+      font-size: 0.8rem;
+    }
+    .section-title {
+      grid-column: 1 / -1;
+      color: var(--heading);
+      font-size: 1.3rem;
+      margin-top: 1rem;
+      margin-bottom: -0.5rem;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 0.5rem;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+      margin-top: 0.5rem;
+    }
+    th, td {
+      text-align: left;
+      padding: 0.5rem 0.75rem;
+      border-bottom: 1px solid var(--border);
+    }
+    th { color: var(--heading); font-weight: 600; }
+    td code { color: var(--accent); }
+  </style>
+  <base target="_blank">
+</head>
+<body>
+
+<h1>📖 Node.js <code>readline</code> Module Cheat Sheet</h1>
+<p class="subtitle">Read user input, process files line-by-line, build CLIs — Node.js 18+</p>
+
+<div class="tip">
+  <strong>💡 Golden Rule:</strong> Use <code>readline</code> for <strong>interactive</strong> user input (CLI prompts) or <strong>processing</strong> files line-by-line without loading entire files into memory. Import with <code>node:readline</code> prefix. For simple one-off questions, <code>readline/promises</code> is the modern way.
+</div>
+
+<div class="grid">
+
+  <div class="section-title">🖥️ Interactive CLI (readline/promises)</div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-interface">Interface</span>
+      <span class="badge badge-input">Input</span>
+      <h2>readline.createInterface</h2>
+    </div>
+    <div class="method">readline.createInterface({ input, output, completer?, terminal? })</div>
+    <p class="desc">Create a readline interface for reading from stdin (keyboard) and writing to stdout.</p>
+    <pre><code><span class="keyword">import</span> <span class="var">readline</span> <span class="keyword">from</span> <span class="string">'node:readline/promises'</span>;
+<span class="keyword">import</span> { <span class="var">stdin</span>, <span class="var">stdout</span> } <span class="keyword">from</span> <span class="string">'node:process'</span>;
+
+<span class="comment">// Create interface (Promise-based)</span>
+<span class="keyword">const</span> <span class="var">rl</span> = <span class="var">readline</span>.<span class="func">createInterface</span>({
+  <span class="var">input</span>: <span class="var">stdin</span>,
+  <span class="var">output</span>: <span class="var">stdout</span>
+});
+
+<span class="comment">// Ask a question (returns Promise)</span>
+<span class="keyword">const</span> <span class="var">answer</span> = <span class="keyword">await</span> <span class="var">rl</span>.<span class="func">question</span>(<span class="string">'What is your name? '</span>);
+<span class="var">console</span>.<span class="func">log</span>(<span class="string">`Hello, ${answer}!`</span>);
+
+<span class="comment">// Close the interface (important!)</span>
+<span class="var">rl</span>.<span class="func">close</span>();</code></pre>
+    <div class="note">✅ Use <code>readline/promises</code> for modern async/await usage. Always close the interface when done.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-input">Input</span>
+      <h2>rl.question (promises) / rl.on('line') (events)</h2>
+    </div>
+    <div class="method">rl.question(query, options?) / rl.on('line', handler) / rl.on('close', handler)</div>
+    <p class="desc">Get user input. Promise-based or event-based. <code>line</code> event fires on Enter key.</p>
+    <pre><code><span class="keyword">import</span> <span class="var">readline</span> <span class="keyword">from</span> <span class="string">'node:readline/promises'</span>;
+<span class="keyword">import</span> { <span class="var">stdin</span>, <span class="var">stdout</span> } <span class="keyword">from</span> <span class="string">'node:process'</span>;
+
+<span class="keyword">const</span> <span class="var">rl</span> = <span class="var">readline</span>.<span class="func">createInterface</span>({ <span class="var">input</span>: <span class="var">stdin</span>, <span class="var">output</span>: <span class="var">stdout</span> });
+
+<span class="comment">// Promise-based (readline/promises)</span>
+<span class="keyword">try</span> {
+  <span class="keyword">const</span> <span class="var">name</span> = <span class="keyword">await</span> <span class="var">rl</span>.<span class="func">question</span>(<span class="string">'Your name? '</span>);
+  <span class="keyword">const</span> <span class="var">age</span> = <span class="keyword">await</span> <span class="var">rl</span>.<span class="func">question</span>(<span class="string">'Your age? '</span>, { <span class="var">signal</span>: <span class="var">AbortSignal</span>.<span class="func">timeout</span>(<span class="number">5000</span>) });
+  <span class="var">console</span>.<span class="func">log</span>(<span class="string">`${name} is ${age} years old`</span>);
+} <span class="keyword">catch</span> (<span class="var">err</span>) {
+  <span class="keyword">if</span> (<span class="var">err</span>.<span class="var">name</span> === <span class="string">'AbortError'</span>) {
+    <span class="var">console</span>.<span class="func">log</span>(<span class="string">'Timed out!'</span>);
+  }
+} <span class="keyword">finally</span> {
+  <span class="var">rl</span>.<span class="func">close</span>();
+}
+
+<span class="comment">// Event-based (traditional readline)</span>
+<span class="keyword">import</span> <span class="var">readline</span> <span class="keyword">from</span> <span class="string">'node:readline'</span>; <span class="comment">// Not promises</span>
+<span class="keyword">const</span> <span class="var">rl2</span> = <span class="var">readline</span>.<span class="func">createInterface</span>({ <span class="var">input</span>: <span class="var">stdin</span>, <span class="var">output</span>: <span class="var">stdout</span> });
+<span class="var">rl2</span>.<span class="func">on</span>(<span class="string">'line'</span>, (<span class="var">input</span>) => {
+  <span class="var">console</span>.<span class="func">log</span>(<span class="string">`You typed: ${input}`</span>);
+  <span class="keyword">if</span> (<span class="var">input</span> === <span class="string">'exit'</span>) <span class="var">rl2</span>.<span class="func">close</span>();
+});
+<span class="var">rl2</span>.<span class="func">on</span>(<span class="string">'close'</span>, () => <span class="var">console</span>.<span class="func">log</span>(<span class="string">'Goodbye!'</span>));</code></pre>
+    <div class="note">✅ <code>question()</code> supports an optional <code>signal</code> option for timeouts/abort.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-interface">Interface</span>
+      <h2>rl.write / rl.setPrompt / rl.prompt</h2>
+    </div>
+    <div class="method">rl.write(data) / rl.setPrompt(prompt) / rl.prompt()</div>
+    <p class="desc">Programmatically write to the readline interface, set a persistent prompt, and display it.</p>
+    <pre><code><span class="keyword">import</span> <span class="var">readline</span> <span class="keyword">from</span> <span class="string">'node:readline'</span>;
+<span class="keyword">import</span> { <span class="var">stdin</span>, <span class="var">stdout</span> } <span class="keyword">from</span> <span class="string">'node:process'</span>;
+
+<span class="keyword">const</span> <span class="var">rl</span> = <span class="var">readline</span>.<span class="func">createInterface</span>({ <span class="var">input</span>: <span class="var">stdin</span>, <span class="var">output</span>: <span class="var">stdout</span> });
+
+<span class="comment">// Set a persistent prompt</span>
+<span class="var">rl</span>.<span class="func">setPrompt</span>(<span class="string">'&gt; '</span>);
+<span class="var">rl</span>.<span class="func">prompt</span>(); <span class="comment">// Shows '> '</span>
+
+<span class="comment">// Handle lines</span>
+<span class="var">rl</span>.<span class="func">on</span>(<span class="string">'line'</span>, (<span class="var">line</span>) => {
+  <span class="keyword">if</span> (<span class="var">line</span> === <span class="string">'exit'</span>) {
+    <span class="var">rl</span>.<span class="func">close</span>();
+  } <span class="keyword">else</span> {
+    <span class="var">console</span>.<span class="func">log</span>(<span class="string">`You said: ${line}`</span>);
+    <span class="var">rl</span>.<span class="func">prompt</span>(); <span class="comment">// Show prompt again</span>
+  }
+});
+
+<span class="comment">// Programmatically write to the interface</span>
+<span class="var">rl</span>.<span class="func">write</span>(<span class="string">'Hello'</span>); <span class="comment">// Appears in input buffer</span>
+<span class="var">rl</span>.<span class="func">write</span>(<span class="string">'\n'</span>); <span class="comment">// Submits the line</span></code></pre>
+    <div class="note">✅ Use <code>setPrompt</code> + <code>prompt</code> for persistent CLI prompts (like a REPL).</div>
+  </div>
+
+  <div class="section-title">📄 Processing Files Line-by-Line</div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-file">File</span>
+      <h2>createInterface with file streams</h2>
+    </div>
+    <div class="method">readline.createInterface({ input: createReadStream, output? })</div>
+    <p class="desc">Process large files line-by-line without loading the whole file into memory.</p>
+    <pre><code><span class="keyword">import</span> <span class="var">readline</span> <span class="keyword">from</span> <span class="string">'node:readline'</span>;
+<span class="keyword">import</span> { <span class="var">createReadStream</span> } <span class="keyword">from</span> <span class="string">'node:fs'</span>;
+
+<span class="comment">// Process a large file line by line</span>
+<span class="keyword">const</span> <span class="var">fileStream</span> = <span class="func">createReadStream</span>(<span class="string">'./huge-file.log'</span>);
+
+<span class="keyword">const</span> <span class="var">rl</span> = <span class="var">readline</span>.<span class="func">createInterface</span>({
+  <span class="var">input</span>: <span class="var">fileStream</span>,
+  <span class="var">crlfDelay</span>: <span class="var">Infinity</span> <span class="comment">// Handle both \r\n and \n</span>
+});
+
+<span class="comment">// Process each line</span>
+<span class="keyword">let</span> <span class="var">lineCount</span> = <span class="number">0</span>;
+<span class="var">rl</span>.<span class="func">on</span>(<span class="string">'line'</span>, (<span class="var">line</span>) => {
+  <span class="var">lineCount</span>++;
+  <span class="comment">// Process line (e.g., parse JSON, filter, transform)</span>
+  <span class="keyword">if</span> (<span class="var">line</span>.<span class="func">includes</span>(<span class="string">'ERROR'</span>)) {
+    <span class="var">console</span>.<span class="func">log</span>(<span class="string">`Error found: ${line}`</span>);
+  }
+});
+
+<span class="comment">// File done</span>
+<span class="var">rl</span>.<span class="func">on</span>(<span class="string">'close'</span>, () => {
+  <span class="var">console</span>.<span class="func">log</span>(<span class="string">`Total lines: ${lineCount}`</span>);
+});
+
+<span class="comment">// Handle errors</span>
+<span class="var">rl</span>.<span class="func">on</span>(<span class="string">'error'</span>, (<span class="var">err</span>) => {
+  <span class="var">console</span>.<span class="func">error</span>(<span class="string">'Error reading file:'</span>, <span class="var">err</span>);
+});</code></pre>
+    <div class="note">✅ Great for processing log files, CSV files, or any large text file.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-file">File</span>
+      <h2>Reading file as async iterable</h2>
+    </div>
+    <div class="method">readline.createInterface returns AsyncIterable (Node.js 18+)</div>
+    <p class="desc">Use <code>for await...of</code> for cleaner line-by-line file processing.</p>
+    <pre><code><span class="keyword">import</span> <span class="var">readline</span> <span class="keyword">from</span> <span class="string">'node:readline'</span>;
+<span class="keyword">import</span> { <span class="var">createReadStream</span> } <span class="keyword">from</span> <span class="string">'node:fs'</span>;
+
+<span class="keyword">async function</span> <span class="func">processFile</span>(<span class="var">filePath</span>) {
+  <span class="keyword">const</span> <span class="var">fileStream</span> = <span class="func">createReadStream</span>(<span class="var">filePath</span>);
+  <span class="keyword">const</span> <span class="var">rl</span> = <span class="var">readline</span>.<span class="func">createInterface</span>({
+    <span class="var">input</span>: <span class="var">fileStream</span>,
+    <span class="var">crlfDelay</span>: <span class="var">Infinity</span>
+  });
+
+  <span class="comment">// Async iteration (Node.js 18+)</span>
+  <span class="keyword">for</span> <span class="keyword">await</span> (<span class="keyword">const</span> <span class="var">line</span> <span class="keyword">of</span> <span class="var">rl</span>) {
+    <span class="comment">// Process each line</span>
+    <span class="keyword">if</span> (<span class="var">line</span>.<span class="func">trim</span>()) {
+      <span class="var">console</span>.<span class="func">log</span>(<span class="string">'Line:'</span>, <span class="var">line</span>);
+    }
+  }
+  
+  <span class="var">console</span>.<span class="func">log</span>(<span class="string">'File processing complete'</span>);
+}
+
+<span class="comment">// Usage</span>
+<span class="keyword">await</span> <span class="func">processFile</span>(<span class="string">'./data.txt'</span>);</code></pre>
+    <div class="note">✅ <code>for await...of</code> is the cleanest way to process files line-by-line in modern Node.js.</div>
+  </div>
+
+  <div class="section-title">⚙️ Advanced Features</div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-util">Util</span>
+      <h2>Auto-completion (completer)</h2>
+    </div>
+    <div class="method">completer(line, callback) / completer(line) returns [[completions], matchedSubstring]</div>
+    <p class="desc">Add tab-completion to your CLI. Function receives the current input and returns suggestions.</p>
+    <pre><code><span class="keyword">import</span> <span class="var">readline</span> <span class="keyword">from</span> <span class="string">'node:readline'</span>;
+<span class="keyword">import</span> { <span class="var">stdin</span>, <span class="var">stdout</span> } <span class="keyword">from</span> <span class="string">'node:process'</span>;
+
+<span class="keyword">const</span> <span class="var">commands</span> = [<span class="string">'help'</span>, <span class="string">'exit'</span>, <span class="string">'list'</span>, <span class="string">'show'</span>, <span class="string">'delete'</span>];
+
+<span class="keyword">const</span> <span class="var">completer</span> = (<<span class="var">line</span>) => {
+  <span class="keyword">const</span> <span class="var">matches</span> = <span class="var">commands</span>.<span class="func">filter</span>(<span class="var">cmd</span> => <span class="var">cmd</span>.<span class="func">startsWith</span>(<span class="var">line</span>));
+  <span class="keyword">return</span> [<span class="var">matches</span>.<span class="var">length</span> ? <span class="var">matches</span> : <span class="var">commands</span>, <span class="var">line</span>];
+};
+
+<span class="keyword">const</span> <span class="var">rl</span> = <span class="var">readline</span>.<span class="func">createInterface</span>({
+  <span class="var">input</span>: <span class="var">stdin</span>,
+  <span class="var">output</span>: <span class="var">stdout</span>,
+  <span class="var">completer</span>
+});
+
+<span class="var">rl</span>.<span class="func">on</span>(<span class="string">'line'</span>, (<span class="var">line</span>) => {
+  <span class="keyword">if</span> (<span class="var">line</span> === <span class="string">'exit'</span>) <span class="var">rl</span>.<span class="func">close</span>();
+  <span class="keyword">else</span> <span class="keyword">if</span> (<span class="var">line</span> === <span class="string">'help'</span>) <span class="var">console</span>.<span class="func">log</span>(<span class="string">'Available commands: help, exit, list, show, delete'</span>);
+  <span class="keyword">else</span> <span class="var">console</span>.<span class="func">log</span>(<span class="string">`Unknown command: ${line}`</span>);
+  <span class="var">rl</span>.<span class="func">prompt</span>();
+});
+
+<span class="var">rl</span>.<span class="func">setPrompt</span>(<span class="string">'&gt; '</span>);
+<span class="var">rl</span>.<span class="func">prompt</span>();</code></pre>
+    <div class="note">✅ <code>completer</code> can return async results (callback) or sync results (array).</div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-util">Util</span>
+      <h2>rl.line / rl.cursor / rl.getCursorPos</h2>
+    </div>
+    <div class="method">rl.line (current line), rl.cursor (cursor position), rl.getCursorPos()</div>
+    <p class="desc">Access the current input line and cursor position. Useful for advanced CLI interactions.</p>
+    <pre><code><span class="keyword">import</span> <span class="var">readline</span> <span class="keyword">from</span> <span class="string">'node:readline'</span>;
+<span class="keyword">import</span> { <span class="var">stdin</span>, <span class="var">stdout</span> } <span class="keyword">from</span> <span class="string">'node:process'</span>;
+
+<span class="keyword">const</span> <span class="var">rl</span> = <span class="var">readline</span>.<span class="func">createInterface</span>({
+  <span class="var">input</span>: <span class="var">stdin</span>,
+  <span class="var">output</span>: <span class="var">stdout</span>,
+  <span class="var">terminal</span>: <span class="keyword">true</span>
+});
+
+<span class="comment">// Listen for keypress events</span>
+<span class="var">rl</span>.<span class="var">input</span>.<span class="func">on</span>(<span class="string">'keypress'</span>, (<span class="var">str</span>, <span class="var">key</span>) => {
+  <span class="keyword">if</span> (<span class="var">key</span>.<span class="var">name</span> === <span class="string">'tab'</span>) {
+    <span class="var">console</span>.<span class="func">log</span>(<span class="string">`\nCurrent line: "${rl.line}"`</span>);
+    <span class="var">console</span>.<span class="func">log</span>(<span class="string">`Cursor at: ${rl.cursor}`</span>);
+    <span class="keyword">const</span> <span class="var">pos</span> = <span class="var">rl</span>.<span class="func">getCursorPos</span>();
+    <span class="var">console</span>.<span class="func">log</span>(<span class="string">`Cursor position: row ${pos.rows}, col ${pos.cols}`</span>);
+  }
+});
+
+<span class="comment">// Enable raw mode for keypress events</span>
+<span class="var">rl</span>.<span class="var">input</span>.<span class="func">setRawMode</span>(<span class="keyword">true</span>);
+<span class="var">rl</span>.<span class="var">input</span>.<span class="func">resume</span>();
+
+<span class="var">rl</span>.<span class="func">on</span>(<span class="string">'close'</span>, () => <span class="var">process</span>.<span class="func">exit</span>(<span class="number">0</span>));</code></pre>
+    <div class="note">⚠️ Requires <code>terminal: true</code>. Use with care — advanced feature.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-util">Util</span>
+      <h2>rl.clearLine / rl.clearScreenDown / rl.moveCursor</h2>
+    </div>
+    <div class="method">rl.clearLine(dir) / rl.clearScreenDown() / rl.moveCursor(dx, dy)</div>
+    <p class="desc">Manipulate the terminal cursor and clear lines/screens. Great for animated CLIs.</p>
+    <pre><code><span class="keyword">import</span> <span class="var">readline</span> <span class="keyword">from</span> <span class="string">'node:readline'</span>;
+<span class="keyword">import</span> { <span class="var">stdin</span>, <span class="var">stdout</span> } <span class="keyword">from</span> <span class="string">'node:process'</span>;
+
+<span class="keyword">const</span> <span class="var">rl</span> = <span class="var">readline</span>.<span class="func">createInterface</span>({
+  <span class="var">input</span>: <span class="var">stdin</span>,
+  <span class="var">output</span>: <span class="var">stdout</span>,
+  <span class="var">terminal</span>: <span class="keyword">true</span>
+});
+
+<span class="comment">// Animation: loading spinner</span>
+<span class="keyword">const</span> <span class="var">spinner</span> = [<span class="string">'⠋'</span>, <span class="string">'⠙'</span>, <span class="string">'⠹'</span>, <span class="string">'⠸'</span>, <span class="string">'⠼'</span>, <span class="string">'⠴'</span>, <span class="string">'⠦'</span>, <span class="string">'⠧'</span>, <span class="string">'⠇'</span>, <span class="string">'⠏'</span>];
+<span class="keyword">let</span> <span class="var">i</span> = <span class="number">0</span>;
+<span class="keyword">const</span> <span class="var">interval</span> = <span class="func">setInterval</span>(() => {
+  <span class="comment">// Clear the current line</span>
+  <span class="var">rl</span>.<span class="func">clearLine</span>(<span class="number">0</span>); <span class="comment">// 0 = cursor to start</span>
+  <span class="var">rl</span>.<span class="func">cursorTo</span>(<span class="number">0</span>); <span class="comment">// Move cursor to beginning</span>
+  <span class="var">rl</span>.<span class="func">write</span>(<span class="string">`Loading ${spinner[i % spinner.length]}`</span>);
+  <span class="var">i</span>++;
+}, <span class="number">100</span>);
+
+<span class="comment">// Clear the screen down from cursor</span>
+<span class="func">setTimeout</span>(() => {
+  <span class="func">clearInterval</span>(<span class="var">interval</span>);
+  <span class="var">rl</span>.<span class="func">clearLine</span>(<span class="number">0</span>);
+  <span class="var">rl</span>.<span class="func">cursorTo</span>(<span class="number">0</span>);
+  <span class="var">rl</span>.<span class="func">write</span>(<span class="string">'✅ Done!'</span>);
+  <span class="var">rl</span>.<span class="func">close</span>();
+}, <span class="number">5000</span>);</code></pre>
+    <div class="note">✅ Use for progress bars, loading animations, and interactive terminal UIs.</div>
+  </div>
+
+  <div class="section-title">🧪 Legacy readline (Callback-based)</div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-interface">Interface</span>
+      <h2>Traditional readline (callback)</h2>
+    </div>
+    <div class="method">rl.question(query, callback) / rl.on('line', callback)</div>
+    <p class="desc">The original callback-based API. Still works but <code>readline/promises</code> is preferred.</p>
+    <pre><code><span class="keyword">import</span> <span class="var">readline</span> <span class="keyword">from</span> <span class="string">'node:readline'</span>;
+<span class="keyword">import</span> { <span class="var">stdin</span>, <span class="var">stdout</span> } <span class="keyword">from</span> <span class="string">'node:process'</span>;
+
+<span class="keyword">const</span> <span class="var">rl</span> = <span class="var">readline</span>.<span class="func">createInterface</span>({ <span class="var">input</span>: <span class="var">stdin</span>, <span class="var">output</span>: <span class="var">stdout</span> });
+
+<span class="comment">// Callback-based question</span>
+<span class="var">rl</span>.<span class="func">question</span>(<span class="string">'What is your name? '</span>, (<span class="var">name</span>) => {
+  <span class="var">rl</span>.<span class="func">question</span>(<span class="string">'What is your age? '</span>, (<span class="var">age</span>) => {
+    <span class="var">console</span>.<span class="func">log</span>(<span class="string">`${name} is ${age} years old`</span>);
+    <span class="var">rl</span>.<span class="func">close</span>();
+  });
+});
+
+<span class="comment">// Event-based</span>
+<span class="keyword">const</span> <span class="var">rl2</span> = <span class="var">readline</span>.<span class="func">createInterface</span>({ <span class="var">input</span>: <span class="var">stdin</span>, <span class="var">output</span>: <span class="var">stdout</span> });
+<span class="var">rl2</span>.<span class="func">on</span>(<span class="string">'line'</span>, (<span class="var">line</span>) => {
+  <span class="keyword">if</span> (<span class="var">line</span> === <span class="string">'exit'</span>) <span class="var">rl2</span>.<span class="func">close</span>();
+  <span class="keyword">else</span> <span class="var">console</span>.<span class="func">log</span>(<span class="string">`Echo: ${line}`</span>);
+});</code></pre>
+    <div class="note">⚠️ Legacy API — use <code>readline/promises</code> for new code with async/await.</div>
+  </div>
+
+</div>
+
+<div class="tip">
+  <strong>🚀 Pro Pattern — Robust CLI with Validation:</strong>
+  <pre style="margin-top:0.5rem; background:rgba(0,0,0,0.2); border:none;"><code><span class="keyword">import</span> <span class="var">readline</span> <span class="keyword">from</span> <span class="string">'node:readline/promises'</span>;
+<span class="keyword">import</span> { <span class="var">stdin</span>, <span class="var">stdout</span> } <span class="keyword">from</span> <span class="string">'node:process'</span>;
+
+<span class="keyword">const</span> <span class="var">rl</span> = <span class="var">readline</span>.<span class="func">createInterface</span>({ <span class="var">input</span>: <span class="var">stdin</span>, <span class="var">output</span>: <span class="var">stdout</span> });
+
+<span class="keyword">async function</span> <span class="func">prompt</span>(<span class="var">query</span>, <span class="var">validator</span>, <span class="var">errorMsg</span> = <span class="string">'Invalid input'</span>) {
+  <span class="keyword">while</span> (<span class="keyword">true</span>) {
+    <span class="keyword">const</span> <span class="var">answer</span> = <span class="keyword">await</span> <span class="var">rl</span>.<span class="func">question</span>(<span class="var">query</span>);
+    <span class="keyword">const</span> <span class="var">result</span> = <span class="keyword">await</span> <span class="func">validator</span>(<span class="var">answer</span>);
+    <span class="keyword">if</span> (<span class="var">result</span>.<span class="var">valid</span>) <span class="keyword">return</span> <span class="var">result</span>.<span class="var">value</span>;
+    <span class="var">console</span>.<span class="func">log</span>(<span class="var">errorMsg</span>);
+  }
+}
+
+<span class="comment">// Usage with validation</span>
+<span class="keyword">const</span> <span class="var">name</span> = <span class="keyword">await</span> <span class="func">prompt</span>(
+  <span class="string">'Enter your name: '</span>,
+  <span class="var">input</span> => ({
+    <span class="var">valid</span>: <span class="var">input</span>.<span class="var">length</span> > <span class="number">0</span>,
+    <span class="var">value</span>: <span class="var">input</span>.<span class="func">trim</span>()
+  }),
+  <span class="string">'Name cannot be empty'</span>
+);
+
+<span class="keyword">const</span> <span class="var">age</span> = <span class="keyword">await</span> <span class="func">prompt</span>(
+  <span class="string">'Enter your age: '</span>,
+  <span class="var">input</span> => {
+    <span class="keyword">const</span> <span class="var">num</span> = <span class="var">Number</span>(<span class="var">input</span>);
+    <span class="keyword">return</span> {
+      <span class="var">valid</span>: !<span class="var">isNaN</span>(<span class="var">num</span>) && <span class="var">num</span> > <span class="number">0</span>,
+      <span class="var">value</span>: <span class="var">num</span>
+    };
+  },
+  <span class="string">'Please enter a valid number'</span>
+);
+
+<span class="var">console</span>.<span class="func">log</span>(<span class="string">`Name: ${name}, Age: ${age}`</span>);
+<span class="var">rl</span>.<span class="func">close</span>();</code></pre>
+</div>
+
+<h2 style="margin-top:2rem; color:var(--heading); border-bottom:1px solid var(--border); padding-bottom:0.5rem;">📋 Quick Reference</h2>
+<table>
+  <tr><th>Purpose</th><th>Method (Promises)</th><th>Method (Events)</th></tr>
+  <tr><td>Create interface</td><td><code>readline.createInterface()</code></td><td><code>readline.createInterface()</code></td></tr>
+  <tr><td>Ask a question</td><td><code>rl.question(query)</code> → Promise</td><td><code>rl.on('line')</code></td></tr>
+  <tr><td>Set persistent prompt</td><td><code>rl.setPrompt()</code></td><td><code>rl.setPrompt()</code></td></tr>
+  <tr><td>Show prompt</td><td><code>rl.prompt()</code></td><td><code>rl.prompt()</code></td></tr>
+  <tr><td>Write to interface</td><td><code>rl.write()</code></td><td><code>rl.write()</code></td></tr>
+  <tr><td>Close interface</td><td><code>rl.close()</code></td><td><code>rl.close()</code></td></tr>
+  <tr><td>Process file line-by-line</td><td><code>for await (const line of rl)</code></td><td><code>rl.on('line')</code></td></tr>
+  <tr><td>Tab completion</td><td><code>completer</code> option</td><td><code>completer</code> option</td></tr>
+</table>
+
+<h2 style="margin-top:2rem; color:var(--heading); border-bottom:1px solid var(--border); padding-bottom:0.5rem;">⚠️ Common Pitfalls</h2>
+<table>
+  <tr><th>Mistake</th><th>Why It's Wrong</th><th>Fix</th></tr>
+  <tr><td>Not closing the readline interface</td><td>Process won't exit naturally</td><td>Always call <code>rl.close()</code></td></tr>
+  <tr><td>Using <code>rl.question</code> without await in promises</td><td>Returns Promise, must await</td><td>Use <code>await rl.question()</code></td></tr>
+  <tr><td>Forgetting <code>crlfDelay: Infinity</code> for files</td><td>May miss lines with \r\n</td><td>Set <code>crlfDelay: Infinity</code></td></tr>
+  <tr><td>Reading huge files with <code>fs.readFileSync</code></td><td>Memory exhaustion</td><td>Use <code>readline</code> with streams</td></tr>
+  <tr><td>Not handling <code>error</code> events</td><td>Uncaught exceptions</td><td>Add <code>.on('error')</code></td></tr>
+  <tr><td>Using <code>rl.question</code> inside <code>line</code> event</td><td>Race conditions</td><td>Use promises or restructure</td></tr>
+  <tr><td>Assuming terminal is always available</td><td>Fails in non-TTY environments</td><td>Check <code>process.stdout.isTTY</code></td></tr>
+</table>
+
+<div class="footer">
+  Node.js readline Module Cheat Sheet &mdash; Save this file and open in any browser for quick reference.<br>
+  Based on Node.js 18+ with <code>node:readline</code> and <code>node:readline/promises</code> APIs.
+</div>
+
+</body>
+</html>

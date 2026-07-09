@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Node.js Buffer Module Cheat Sheet</title>
+  <style>
+    :root {
+      --bg: #0d1117;
+      --card: #161b22;
+      --border: #30363d;
+      --text: #c9d1d9;
+      --heading: #f0f6fc;
+      --code-bg: #1f2937;
+      --code-text: #e6edf3;
+      --accent: #58a6ff;
+      --accent2: #3fb950;
+      --accent3: #d29922;
+      --accent4: #f85149;
+      --muted: #8b949e;
+      --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      line-height: 1.6;
+      padding: 2rem 1rem;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+    h1 {
+      color: var(--heading);
+      font-size: 2.2rem;
+      margin-bottom: 0.5rem;
+      border-bottom: 2px solid var(--accent2);
+      padding-bottom: 0.5rem;
+    }
+    .subtitle {
+      color: var(--muted);
+      font-size: 0.95rem;
+      margin-bottom: 2rem;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 1.5rem;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem;
+      transition: border-color 0.2s;
+    }
+    .card:hover { border-color: var(--accent2); }
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.75rem;
+    }
+    .badge {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      padding: 2px 8px;
+      border-radius: 4px;
+      letter-spacing: 0.5px;
+    }
+    .badge-create { background: rgba(88,166,255,0.15); color: var(--accent); }
+    .badge-read { background: rgba(63,185,80,0.15); color: var(--accent2); }
+    .badge-write { background: rgba(210,153,34,0.15); color: var(--accent3); }
+    .badge-util { background: rgba(248,81,73,0.15); color: var(--accent4); }
+    h2 {
+      color: var(--heading);
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
+    .method {
+      font-family: "SFMono-Regular", Consolas, monospace;
+      font-size: 0.85rem;
+      color: var(--accent2);
+      background: rgba(63,185,80,0.08);
+      padding: 2px 6px;
+      border-radius: 4px;
+      margin-bottom: 0.4rem;
+      display: inline-block;
+    }
+    p.desc {
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-bottom: 0.6rem;
+    }
+    pre {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      overflow-x: auto;
+      font-size: 0.8rem;
+      line-height: 1.5;
+    }
+    code {
+      font-family: "SFMono-Regular", Consolas, monospace;
+      color: var(--code-text);
+    }
+    .comment { color: #8b949e; }
+    .keyword { color: #ff7b72; }
+    .string { color: #a5d6ff; }
+    .func { color: #d2a8ff; }
+    .var { color: #79c0ff; }
+    .output { color: #7ee787; }
+    .note {
+      font-size: 0.8rem;
+      color: var(--accent3);
+      margin-top: 0.5rem;
+      padding-left: 0.5rem;
+      border-left: 2px solid var(--accent3);
+    }
+    .tip {
+      background: rgba(63,185,80,0.08);
+      border: 1px solid rgba(63,185,80,0.3);
+      border-radius: 8px;
+      padding: 1rem;
+      margin: 2rem 0;
+      font-size: 0.9rem;
+    }
+    .tip strong { color: var(--accent2); }
+    .footer {
+      text-align: center;
+      margin-top: 3rem;
+      color: var(--muted);
+      font-size: 0.8rem;
+    }
+    .section-title {
+      grid-column: 1 / -1;
+      color: var(--heading);
+      font-size: 1.3rem;
+      margin-top: 1rem;
+      margin-bottom: -0.5rem;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 0.5rem;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+      margin-top: 0.5rem;
+    }
+    th, td {
+      text-align: left;
+      padding: 0.5rem 0.75rem;
+      border-bottom: 1px solid var(--border);
+    }
+    th { color: var(--heading); font-weight: 600; }
+    td code { color: var(--accent2); }
+  </style>
+  <base target="_blank">
+</head>
+<body>
+
+<h1>📦 Node.js <code>Buffer</code> Module Cheat Sheet</h1>
+<p class="subtitle">Binary data handling — Node.js 18+ (Global API, no import needed)</p>
+
+<div class="tip">
+  <strong>💡 Golden Rule:</strong> <code>Buffer</code> is a global class — no import required. Always use <code>Buffer.from()</code>, <code>Buffer.alloc()</code>, or <code>Buffer.allocUnsafe()</code> to create buffers. Avoid <code>new Buffer()</code> (deprecated). Buffers are <strong>fixed-size</strong> and <strong>mutable</strong>.
+</div>
+
+<div class="grid">
+
+  <div class="section-title">🏗️ Creating Buffers</div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-create">Create</span>
+      <h2>Buffer.from()</h2>
+    </div>
+    <div class="method">Buffer.from(array) / Buffer.from(string, encoding?) / Buffer.from(buffer)</div>
+    <p class="desc">Create a buffer from various sources. Most common and safest way.</p>
+    <pre><code><span class="comment">// From string (default utf-8)</span>
+<span class="keyword">const</span> <span class="var">buf1</span> = <span class="var">Buffer</span>.<span class="func">from</span>(<span class="string">'hello'</span>);
+<span class="comment">// → <Buffer 68 65 6c 6c 6f></span>
+
+<span class="comment">// From string with encoding</span>
+<span class="keyword">const</span> <span class="var">buf2</span> = <span class="var">Buffer</span>.<span class="func">from</span>(<span class="string">'68656c6c6f'</span>, <span class="string">'hex'</span>);
+<span class="comment">// → <Buffer 68 65 6c 6c 6f></span>
+
+<span class="comment">// From array of bytes</span>
+<span class="keyword">const</span> <span class="var">buf3</span> = <span class="var">Buffer</span>.<span class="func">from</span>([<span class="number">0x68</span>, <span class="number">0x65</span>, <span class="number">0x6c</span>, <span class="number">0x6c</span>, <span class="number">0x6f</span>]);
+
+<span class="comment">// From another buffer (copy)</span>
+<span class="keyword">const</span> <span class="var">buf4</span> = <span class="var">Buffer</span>.<span class="func">from</span>(<span class="var">buf1</span>);</code></pre>
+    <div class="note">✅ Use <code>Buffer.from()</code> for converting strings or arrays to buffers.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-create">Create</span>
+      <h2>Buffer.alloc() / allocUnsafe()</h2>
+    </div>
+    <div class="method">Buffer.alloc(size, fill?, encoding?) / Buffer.allocUnsafe(size)</div>
+    <p class="desc">Allocate a buffer of a specific size. <code>alloc</code> initializes with zeros (safe). <code>allocUnsafe</code> is faster but may contain old data.</p>
+    <pre><code><span class="comment">// Allocate 10 bytes initialized to 0</span>
+<span class="keyword">const</span> <span class="var">buf1</span> = <span class="var">Buffer</span>.<span class="func">alloc</span>(<span class="number">10</span>);
+<span class="comment">// → <Buffer 00 00 00 00 00 00 00 00 00 00></span>
+
+<span class="comment">// Allocate and fill with a value</span>
+<span class="keyword">const</span> <span class="var">buf2</span> = <span class="var">Buffer</span>.<span class="func">alloc</span>(<span class="number">5</span>, <span class="string">'a'</span>);
+<span class="comment">// → <Buffer 61 61 61 61 61></span>
+
+<span class="comment">// Unsafe allocation (faster but may contain garbage)</span>
+<span class="keyword">const</span> <span class="var">buf3</span> = <span class="var">Buffer</span>.<span class="func">allocUnsafe</span>(<span class="number">1024</span>);
+<span class="comment">// ⚠️ Contains random old data — must fill before use</span>
+<span class="var">buf3</span>.<span class="func">fill</span>(<span class="number">0</span>); <span class="comment">// Clear it</span></code></pre>
+    <div class="note">✅ Use <code>Buffer.alloc()</code> for safety. Use <code>Buffer.allocUnsafe()</code> only when performance is critical and you'll fill it immediately.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-create">Create</span>
+      <h2>Buffer.allocUnsafeSlow() / Buffer.byteLength</h2>
+    </div>
+    <div class="method">Buffer.allocUnsafeSlow(size) / Buffer.byteLength(string, encoding?)</div>
+    <p class="desc">Allocate large buffers without pooling. Get byte length of a string without creating a buffer.</p>
+    <pre><code><span class="comment">// For large buffers (> 4KB) to avoid shared memory pool</span>
+<span class="keyword">const</span> <span class="var">large</span> = <span class="var">Buffer</span>.<span class="func">allocUnsafeSlow</span>(<span class="number">8192</span>);
+
+<span class="comment">// Get byte length (not character length!)</span>
+<span class="keyword">const</span> <span class="var">len</span> = <span class="var">Buffer</span>.<span class="func">byteLength</span>(<span class="string">'hello'</span>);      <span class="comment">// 5</span>
+<span class="keyword">const</span> <span class="var">len2</span> = <span class="var">Buffer</span>.<span class="func">byteLength</span>(<span class="string">'😊'</span>, <span class="string">'utf-8'</span>); <span class="comment">// 4 (emoji is 4 bytes)</span></code></pre>
+    <div class="note">ℹ️ Use <code>byteLength</code> to pre-allocate buffers of the right size for strings.</div>
+  </div>
+
+  <div class="section-title">📖 Reading Buffers</div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-read">Read</span>
+      <h2>toString() & encodings</h2>
+    </div>
+    <div class="method">buf.toString(encoding?, start?, end?)</div>
+    <p class="desc">Convert buffer to string. Supports various encodings: 'utf-8', 'hex', 'base64', 'latin1', and more.</p>
+    <pre><code><span class="keyword">const</span> <span class="var">buf</span> = <span class="var">Buffer</span>.<span class="func">from</span>(<span class="string">'hello world'</span>);
+
+<span class="var">buf</span>.<span class="func">toString</span>();                <span class="comment">// 'hello world' (default utf-8)</span>
+<span class="var">buf</span>.<span class="func">toString</span>(<span class="string">'hex'</span>);           <span class="comment">// '68656c6c6f20776f726c64'</span>
+<span class="var">buf</span>.<span class="func">toString</span>(<span class="string">'base64'</span>);        <span class="comment">// 'aGVsbG8gd29ybGQ='</span>
+<span class="var">buf</span>.<span class="func">toString</span>(<span class="string">'latin1'</span>);        <span class="comment">// 'hello world'</span>
+
+<span class="comment">// Substring (byte indices)</span>
+<span class="var">buf</span>.<span class="func">toString</span>(<span class="string">'utf-8'</span>, <span class="number">0</span>, <span class="number">5</span>); <span class="comment">// 'hello'</span></code></pre>
+    <div class="note">✅ Common encodings: <code>'utf8'</code>, <code>'hex'</code>, <code>'base64'</code>, <code>'latin1'</code> (binary).</div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-read">Read</span>
+      <h2>toJSON() & .values()</h2>
+    </div>
+    <div class="method">buf.toJSON() / buf.values() / buf.entries()</div>
+    <p class="desc">Convert buffer to JSON or iterate over bytes.</p>
+    <pre><code><span class="keyword">const</span> <span class="var">buf</span> = <span class="var">Buffer</span>.<span class="func">from</span>([<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>]);
+
+<span class="comment">// JSON representation</span>
+<span class="var">buf</span>.<span class="func">toJSON</span>();
+<span class="comment">// → { type: 'Buffer', data: [1, 2, 3, 4] }</span>
+
+<span class="comment">// Iterate over bytes (values)</span>
+<span class="keyword">for</span> (<span class="keyword">const</span> <span class="var">byte</span> <span class="keyword">of</span> <span class="var">buf</span>.<span class="func">values</span>()) {
+  <span class="var">console</span>.<span class="func">log</span>(<span class="var">byte</span>);
+}
+
+<span class="comment">// Iterate with indices</span>
+<span class="keyword">for</span> (<span class="keyword">const</span> [<span class="var">index</span>, <span class="var">byte</span>] <span class="keyword">of</span> <span class="var">buf</span>.<span class="func">entries</span>()) {
+  <span class="var">console</span>.<span class="func">log</span>(<span class="var">index</span>, <span class="var">byte</span>);
+}</code></pre>
+  </div>
+
+  <div class="section-title">✏️ Writing & Modifying</div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-write">Write</span>
+      <h2>buf.write() & .fill()</h2>
+    </div>
+    <div class="method">buf.write(string, offset?, length?, encoding?) / buf.fill(value, offset?, end?)</div>
+    <p class="desc">Write data to a buffer at a specific position. Fill the buffer with a value.</p>
+    <pre><code><span class="keyword">const</span> <span class="var">buf</span> = <span class="var">Buffer</span>.<span class="func">alloc</span>(<span class="number">10</span>);
+
+<span class="comment">// Write string at offset 0</span>
+<span class="var">buf</span>.<span class="func">write</span>(<span class="string">'hello'</span>);
+<span class="comment">// → <Buffer 68 65 6c 6c 6f 00 00 00 00 00></span>
+
+<span class="comment">// Write at offset 5</span>
+<span class="var">buf</span>.<span class="func">write</span>(<span class="string">'world'</span>, <span class="number">5</span>);
+<span class="comment">// → <Buffer 68 65 6c 6c 6f 77 6f 72 6c 64></span>
+
+<span class="comment">// Fill with a value</span>
+<span class="keyword">const</span> <span class="var">buf2</span> = <span class="var">Buffer</span>.<span class="func">alloc</span>(<span class="number">5</span>);
+<span class="var">buf2</span>.<span class="func">fill</span>(<span class="number">0x61</span>); <span class="comment">// fill with 'a' (97)</span>
+<span class="comment">// → <Buffer 61 61 61 61 61></span>
+
+<span class="comment">// Fill a range</span>
+<span class="var">buf2</span>.<span class="func">fill</span>(<span class="number">0x62</span>, <span class="number">1</span>, <span class="number">3</span>); <span class="comment">// fill positions 1-2 with 'b'</span></code></pre>
+    <div class="note">⚠️ <code>write()</code> returns the number of bytes written. Be careful not to exceed buffer length.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-write">Write</span>
+      <h2>buf.set() & .copy()</h2>
+    </div>
+    <div class="method">buf.set(array, offset?) / buf.copy(target, targetStart?, sourceStart?, sourceEnd?)</div>
+    <p class="desc">Copy data between buffers or from arrays.</p>
+    <pre><code><span class="keyword">const</span> <span class="var">src</span> = <span class="var">Buffer</span>.<span class="func">from</span>(<span class="string">'hello'</span>);
+<span class="keyword">const</span> <span class="var">dst</span> = <span class="var">Buffer</span>.<span class="func">alloc</span>(<span class="number">10</span>);
+
+<span class="comment">// Copy src to dst starting at offset 2</span>
+<span class="var">src</span>.<span class="func">copy</span>(<span class="var">dst</span>, <span class="number">2</span>);
+<span class="comment">// → dst: <Buffer 00 00 68 65 6c 6c 6f 00 00 00></span>
+
+<span class="comment">// Copy only part of src</span>
+<span class="var">src</span>.<span class="func">copy</span>(<span class="var">dst</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">3</span>); <span class="comment">// copy first 3 bytes ('hel')</span>
+
+<span class="comment">// Set bytes from array</span>
+<span class="keyword">const</span> <span class="var">buf</span> = <span class="var">Buffer</span>.<span class="func">alloc</span>(<span class="number">4</span>);
+<span class="var">buf</span>.<span class="func">set</span>([<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>]);</code></pre>
+    <div class="note">✅ <code>copy()</code> is efficient for moving data between buffers.</div>
+  </div>
+
+  <div class="section-title">🔧 Buffer Utilities</div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-util">Util</span>
+      <h2>buf.slice() & .subarray()</h2>
+    </div>
+    <div class="method">buf.slice(start?, end?) / buf.subarray(start?, end?)</div>
+    <p class="desc">Create a new buffer that references the same memory (no copy). <code>slice</code> and <code>subarray</code> are similar but with different behavior.</p>
+    <pre><code><span class="keyword">const</span> <span class="var">buf</span> = <span class="var">Buffer</span>.<span class="func">from</span>(<span class="string">'hello world'</span>);
+
+<span class="comment">// Slice (views original memory)</span>
+<span class="keyword">const</span> <span class="var">slice</span> = <span class="var">buf</span>.<span class="func">slice</span>(<span class="number">0</span>, <span class="number">5</span>);
+<span class="comment">// → <Buffer 68 65 6c 6c 6f> (references same memory)</span>
+
+<span class="comment">// Modifying slice affects original</span>
+<span class="var">slice</span>[<span class="number">0</span>] = <span class="number">0x48</span>; <span class="comment">// 'H'</span>
+<span class="comment">// buf now: 'Hello world'</span>
+
+<span class="comment">// subarray is similar but more aligned with TypedArray</span>
+<span class="keyword">const</span> <span class="var">sub</span> = <span class="var">buf</span>.<span class="func">subarray</span>(<span class="number">6</span>); <span class="comment">// 'world'</span></code></pre>
+    <div class="note">⚠️ <code>slice()</code> and <code>subarray()</code> do <strong>not</strong> copy data — they share memory. Use <code>Buffer.from()</code> to create a copy.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-util">Util</span>
+      <h2>Buffer.concat() & .compare()</h2>
+    </div>
+    <div class="method">Buffer.concat(list, totalLength?) / buf.compare(target)</div>
+    <p class="desc">Concatenate multiple buffers. Compare buffers for sorting or equality.</p>
+    <pre><code><span class="keyword">const</span> <span class="var">buf1</span> = <span class="var">Buffer</span>.<span class="func">from</span>(<span class="string">'hello '</span>);
+<span class="keyword">const</span> <span class="var">buf2</span> = <span class="var">Buffer</span>.<span class="func">from</span>(<span class="string">'world'</span>);
+
+<span class="comment">// Concatenate</span>
+<span class="keyword">const</span> <span class="var">combined</span> = <span class="var">Buffer</span>.<span class="func">concat</span>([<span class="var">buf1</span>, <span class="var">buf2</span>]);
+<span class="comment">// → <Buffer 68 65 6c 6c 6f 20 77 6f 72 6c 64></span>
+
+<span class="comment">// Compare buffers</span>
+<span class="keyword">const</span> <span class="var">a</span> = <span class="var">Buffer</span>.<span class="func">from</span>(<span class="string">'abc'</span>);
+<span class="keyword">const</span> <span class="var">b</span> = <span class="var">Buffer</span>.<span class="func">from</span>(<span class="string">'def'</span>);
+<span class="var">a</span>.<span class="func">compare</span>(<span class="var">b</span>); <span class="comment">// -1 (a < b)</span>
+<span class="var">b</span>.<span class="func">compare</span>(<span class="var">a</span>); <span class="comment">// 1 (b > a)</span>
+<span class="var">a</span>.<span class="func">compare</span>(<span class="var">a</span>); <span class="comment">// 0 (equal)</span></code></pre>
+    <div class="note">✅ Use <code>concat</code> for joining buffers. Use <code>compare</code> for sorting or equality checks.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-util">Util</span>
+      <h2>buf.indexOf() & .includes()</h2>
+    </div>
+    <div class="method">buf.indexOf(value, byteOffset?, encoding?) / buf.includes(value, byteOffset?, encoding?)</div>
+    <p class="desc">Search for a value in the buffer. Returns index or -1.</p>
+    <pre><code><span class="keyword">const</span> <span class="var">buf</span> = <span class="var">Buffer</span>.<span class="func">from</span>(<span class="string">'hello world'</span>);
+
+<span class="var">buf</span>.<span class="func">indexOf</span>(<span class="string">'world'</span>);   <span class="comment">// 6</span>
+<span class="var">buf</span>.<span class="func">indexOf</span>(<span class="string">'o'</span>);        <span class="comment">// 4</span>
+<span class="var">buf</span>.<span class="func">indexOf</span>(<span class="string">'o'</span>, <span class="number">5</span>);    <span class="comment">// 7 (search from offset 5)</span>
+<span class="var">buf</span>.<span class="func">indexOf</span>(<span class="number">0x68</span>);      <span class="comment">// 0 ('h')</span>
+
+<span class="var">buf</span>.<span class="func">includes</span>(<span class="string">'hello'</span>);   <span class="comment">// true</span>
+<span class="var">buf</span>.<span class="func">includes</span>(<span class="string">'xyz'</span>);      <span class="comment">// false</span></code></pre>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-util">Util</span>
+      <h2>buf.isBuffer() & .isEncoding()</h2>
+    </div>
+    <div class="method">Buffer.isBuffer(obj) / Buffer.isEncoding(encoding)</div>
+    <p class="desc">Check if an object is a buffer. Check if an encoding is supported.</p>
+    <pre><code><span class="keyword">const</span> <span class="var">buf</span> = <span class="var">Buffer</span>.<span class="func">from</span>(<span class="string">'hello'</span>);
+<span class="keyword">const</span> <span class="var">str</span> = <span class="string">'hello'</span>;
+
+<span class="var">Buffer</span>.<span class="func">isBuffer</span>(<span class="var">buf</span>);  <span class="comment">// true</span>
+<span class="var">Buffer</span>.<span class="func">isBuffer</span>(<span class="var">str</span>);  <span class="comment">// false</span>
+
+<span class="var">Buffer</span>.<span class="func">isEncoding</span>(<span class="string">'utf-8'</span>);   <span class="comment">// true</span>
+<span class="var">Buffer</span>.<span class="func">isEncoding</span>(<span class="string">'hex'</span>);      <span class="comment">// true</span>
+<span class="var">Buffer</span>.<span class="func">isEncoding</span>(<span class="string">'invalid'</span>); <span class="comment">// false</span></code></pre>
+    <div class="note">✅ Use <code>isBuffer</code> to validate buffer inputs. Use <code>isEncoding</code> to check encoding support.</div>
+  </div>
+
+</div>
+
+<div class="tip">
+  <strong>🚀 Pro Pattern — Efficient Buffer Operations:</strong>
+  <pre style="margin-top:0.5rem; background:rgba(0,0,0,0.2); border:none;"><code><span class="comment">// Safe string to buffer with proper encoding</span>
+<span class="keyword">function</span> <span class="func">safeBuffer</span>(<span class="var">str</span>, <span class="var">encoding</span> = <span class="string">'utf-8'</span>) {
+  <span class="keyword">if</span> (!<span class="var">Buffer</span>.<span class="func">isEncoding</span>(<span class="var">encoding</span>)) {
+    <span class="keyword">throw</span> <span class="keyword">new</span> <span class="func">Error</span>(<span class="string">`Invalid encoding: ${encoding}`</span>);
+  }
+  <span class="keyword">return</span> <span class="var">Buffer</span>.<span class="func">from</span>(<span class="var">str</span>, <span class="var">encoding</span>);
+}
+
+<span class="comment">// Chunked buffer concatenation with pre-allocation</span>
+<span class="keyword">function</span> <span class="func">concatBuffers</span>(<span class="var">buffers</span>) {
+  <span class="keyword">const</span> <span class="var">totalLen</span> = <span class="var">buffers</span>.<span class="func">reduce</span>((<span class="var">sum</span>, <span class="var">b</span>) => <span class="var">sum</span> + <span class="var">b</span>.<span class="var">length</span>, <span class="number">0</span>);
+  <span class="keyword">const</span> <span class="var">result</span> = <span class="var">Buffer</span>.<span class="func">allocUnsafe</span>(<span class="var">totalLen</span>);
+  <span class="keyword">let</span> <span class="var">offset</span> = <span class="number">0</span>;
+  <span class="keyword">for</span> (<span class="keyword">const</span> <span class="var">buf</span> <span class="keyword">of</span> <span class="var">buffers</span>) {
+    <span class="var">buf</span>.<span class="func">copy</span>(<span class="var">result</span>, <span class="var">offset</span>);
+    <span class="var">offset</span> += <span class="var">buf</span>.<span class="var">length</span>;
+  }
+  <span class="keyword">return</span> <span class="var">result</span>;
+}
+
+<span class="comment">// Read integer from buffer (big endian)</span>
+<span class="keyword">const</span> <span class="var">buf</span> = <span class="var">Buffer</span>.<span class="func">from</span>([<span class="number">0x00</span>, <span class="number">0x00</span>, <span class="number">0x01</span>, <span class="number">0x2A</span>]);
+<span class="keyword">const</span> <span class="var">num</span> = <span class="var">buf</span>.<span class="func">readUInt32BE</span>(<span class="number">0</span>); <span class="comment">// 298</span></code></pre>
+</div>
+
+<h2 style="margin-top:2rem; color:var(--heading); border-bottom:1px solid var(--border); padding-bottom:0.5rem;">📋 Common Encoding Reference</h2>
+<table>
+  <tr><th>Encoding</th><th>Description</th><th>Example</th></tr>
+  <tr><td><code>'utf-8'</code></td><td>Default. Multi-byte Unicode</td><td><code>Buffer.from('hello')</code></td></tr>
+  <tr><td><code>'hex'</code></td><td>Hexadecimal string</td><td><code>Buffer.from('68656c6c6f', 'hex')</code></td></tr>
+  <tr><td><code>'base64'</code></td><td>Base64 encoding</td><td><code>Buffer.from('aGVsbG8=', 'base64')</code></td></tr>
+  <tr><td><code>'latin1'</code></td><td>Binary / 8-bit</td><td><code>Buffer.from('\x68\x65', 'latin1')</code></td></tr>
+  <tr><td><code>'utf-16le'</code></td><td>UTF-16 little endian</td><td><code>Buffer.from('hello', 'utf-16le')</code></td></tr>
+</table>
+
+<h2 style="margin-top:2rem; color:var(--heading); border-bottom:1px solid var(--border); padding-bottom:0.5rem;">⚠️ Common Pitfalls</h2>
+<table>
+  <tr><th>Mistake</th><th>Why It's Wrong</th><th>Fix</th></tr>
+  <tr><td><code>new Buffer(size)</code></td><td>Deprecated, behaves unpredictably</td><td>Use <code>Buffer.alloc()</code> or <code>Buffer.from()</code></td></tr>
+  <tr><td>Mutating <code>slice()</code> output</td><td>Modifies original buffer too</td><td>Use <code>Buffer.from(slice)</code> for a copy</td></tr>
+  <tr><td>Assuming <code>toString()</code> returns full string</td><td>Truncation if buffer contains partial multi-byte chars</td><td>Use <code>string_decoder</code> for multi-byte safety</td></tr>
+  <tr><td>Using <code>allocUnsafe()</code> without filling</td><td>Contains old sensitive data</td><td>Always fill with <code>.fill(0)</code> or overwrite</td></tr>
+  <tr><td>Not checking buffer length before write</td><td>Buffer overflow or truncation</td><td>Check <code>buf.length</code> and write length</td></tr>
+  <tr><td>Using <code>==</code> to compare buffers</td><td>Compares references, not content</td><td>Use <code>buf.compare()</code> or <code>buf.equals()</code></td></tr>
+</table>
+
+<div class="footer">
+  Node.js Buffer Module Cheat Sheet &mdash; Save this file and open in any browser for quick reference.<br>
+  Based on Node.js 18+ with global <code>Buffer</code> API. Always use <code>Buffer.from()</code> and <code>Buffer.alloc()</code>.
+</div>
+
+</body>
+</html>

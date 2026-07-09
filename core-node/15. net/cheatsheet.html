@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Node.js net Module Cheat Sheet</title>
+  <style>
+    :root {
+      --bg: #0d1117;
+      --card: #161b22;
+      --border: #30363d;
+      --text: #c9d1d9;
+      --heading: #f0f6fc;
+      --code-bg: #1f2937;
+      --code-text: #e6edf3;
+      --accent: #58a6ff;
+      --accent2: #3fb950;
+      --accent3: #d29922;
+      --accent4: #f85149;
+      --muted: #8b949e;
+      --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      line-height: 1.6;
+      padding: 2rem 1rem;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+    h1 {
+      color: var(--heading);
+      font-size: 2.2rem;
+      margin-bottom: 0.5rem;
+      border-bottom: 2px solid var(--accent4);
+      padding-bottom: 0.5rem;
+    }
+    .subtitle {
+      color: var(--muted);
+      font-size: 0.95rem;
+      margin-bottom: 2rem;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 1.5rem;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem;
+      transition: border-color 0.2s;
+    }
+    .card:hover { border-color: var(--accent4); }
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.75rem;
+    }
+    .badge {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      padding: 2px 8px;
+      border-radius: 4px;
+      letter-spacing: 0.5px;
+    }
+    .badge-server { background: rgba(88,166,255,0.15); color: var(--accent); }
+    .badge-client { background: rgba(63,185,80,0.15); color: var(--accent2); }
+    .badge-socket { background: rgba(210,153,34,0.15); color: var(--accent3); }
+    .badge-util { background: rgba(248,81,73,0.15); color: var(--accent4); }
+    h2 {
+      color: var(--heading);
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
+    .method {
+      font-family: "SFMono-Regular", Consolas, monospace;
+      font-size: 0.85rem;
+      color: var(--accent4);
+      background: rgba(248,81,73,0.08);
+      padding: 2px 6px;
+      border-radius: 4px;
+      margin-bottom: 0.4rem;
+      display: inline-block;
+    }
+    p.desc {
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-bottom: 0.6rem;
+    }
+    pre {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      overflow-x: auto;
+      font-size: 0.8rem;
+      line-height: 1.5;
+    }
+    code {
+      font-family: "SFMono-Regular", Consolas, monospace;
+      color: var(--code-text);
+    }
+    .comment { color: #8b949e; }
+    .keyword { color: #ff7b72; }
+    .string { color: #a5d6ff; }
+    .func { color: #d2a8ff; }
+    .var { color: #79c0ff; }
+    .output { color: #7ee787; }
+    .note {
+      font-size: 0.8rem;
+      color: var(--accent3);
+      margin-top: 0.5rem;
+      padding-left: 0.5rem;
+      border-left: 2px solid var(--accent3);
+    }
+    .tip {
+      background: rgba(248,81,73,0.08);
+      border: 1px solid rgba(248,81,73,0.3);
+      border-radius: 8px;
+      padding: 1rem;
+      margin: 2rem 0;
+      font-size: 0.9rem;
+    }
+    .tip strong { color: var(--accent4); }
+    .footer {
+      text-align: center;
+      margin-top: 3rem;
+      color: var(--muted);
+      font-size: 0.8rem;
+    }
+    .section-title {
+      grid-column: 1 / -1;
+      color: var(--heading);
+      font-size: 1.3rem;
+      margin-top: 1rem;
+      margin-bottom: -0.5rem;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 0.5rem;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+      margin-top: 0.5rem;
+    }
+    th, td {
+      text-align: left;
+      padding: 0.5rem 0.75rem;
+      border-bottom: 1px solid var(--border);
+    }
+    th { color: var(--heading); font-weight: 600; }
+    td code { color: var(--accent4); }
+  </style>
+  <base target="_blank">
+</head>
+<body>
+
+<h1>🌐 Node.js <code>net</code> Module Cheat Sheet</h1>
+<p class="subtitle">TCP networking — servers, clients, and sockets — Node.js 18+</p>
+
+<div class="tip">
+  <strong>💡 Golden Rule:</strong> The <code>net</code> module provides <strong>TCP</strong> (not HTTP) networking. Use <code>net.createServer()</code> for TCP servers, <code>net.connect()</code> for clients. Always handle errors and clean up sockets. Import with <code>node:net</code> prefix.
+</div>
+
+<div class="grid">
+
+  <div class="section-title">🖥️ TCP Servers</div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-server">Server</span>
+      <h2>net.createServer</h2>
+    </div>
+    <div class="method">net.createServer(options?, connectionListener?)</div>
+    <p class="desc">Create a TCP server. Listens for connections and emits 'connection' events with socket objects.</p>
+    <pre><code><span class="keyword">import</span> <span class="var">net</span> <span class="keyword">from</span> <span class="string">'node:net'</span>;
+
+<span class="comment">// Create server with connection listener</span>
+<span class="keyword">const</span> <span class="var">server</span> = <span class="var">net</span>.<span class="func">createServer</span>((<span class="var">socket</span>) => {
+  <span class="var">console</span>.<span class="func">log</span>(<span class="string">'Client connected:'</span>, <span class="var">socket</span>.<span class="var">remoteAddress</span>);
+
+  <span class="comment">// Handle data</span>
+  <span class="var">socket</span>.<span class="func">on</span>(<span class="string">'data'</span>, (<span class="var">data</span>) => {
+    <span class="var">console</span>.<span class="func">log</span>(<span class="string">'Received:'</span>, <span class="var">data</span>.<span class="func">toString</span>());
+    <span class="var">socket</span>.<span class="func">write</span>(<span class="string">'Echo: '</span> + <span class="var">data</span>);
+  });
+
+  <span class="comment">// Handle client disconnect</span>
+  <span class="var">socket</span>.<span class="func">on</span>(<span class="string">'end'</span>, () => {
+    <span class="var">console</span>.<span class="func">log</span>(<span class="string">'Client disconnected'</span>);
+  });
+
+  <span class="comment">// Handle errors</span>
+  <span class="var">socket</span>.<span class="func">on</span>(<span class="string">'error'</span>, (<span class="var">err</span>) => {
+    <span class="var">console</span>.<span class="func">error</span>(<span class="string">'Socket error:'</span>, <span class="var">err</span>);
+  });
+});
+
+<span class="comment">// Start listening</span>
+<span class="var">server</span>.<span class="func">listen</span>(<span class="number">3000</span>, () => {
+  <span class="var">console</span>.<span class="func">log</span>(<span class="string">'Server listening on port 3000'</span>);
+});</code></pre>
+    <div class="note">✅ Each connection gets a <code>Socket</code> object. Use <code>socket.write()</code> to send data.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-server">Server</span>
+      <h2>server.listen / server.close</h2>
+    </div>
+    <div class="method">server.listen(port?, host?, backlog?, callback?) / server.close(callback?)</div>
+    <p class="desc">Start and stop the server. <code>listen</code> can bind to port, host, or a Unix socket.</p>
+    <pre><code><span class="keyword">import</span> <span class="var">net</span> <span class="keyword">from</span> <span class="string">'node:net'</span>;
+
+<span class="keyword">const</span> <span class="var">server</span> = <span class="var">net</span>.<span class="func">createServer</span>();
+
+<span class="comment">// Listen on port 3000</span>
+<span class="var">server</span>.<span class="func">listen</span>(<span class="number">3000</span>, () => {
+  <span class="var">console</span>.<span class="func">log</span>(<span class="string">'Server listening'</span>);
+});
+
+<span class="comment">// Listen on port with host</span>
+<span class="var">server</span>.<span class="func">listen</span>(<span class="number">3000</span>, <span class="string">'127.0.0.1'</span>);
+
+<span class="comment">// Listen on a random port (0 = any available)</span>
+<span class="var">server</span>.<span class="func">listen</span>(<span class="number">0</span>, () => {
+  <span class="var">console</span>.<span class="func">log</span>(<span class="string">'Random port:'</span>, <span class="var">server</span>.<span class="func">address</span>().<span class="var">port</span>);
+});
+
+<span class="comment">// Listen on Unix socket (Linux/Mac)</span>
+<span class="var">server</span>.<span class="func">listen</span>(<span class="string">'/tmp/socket.sock'</span>);
+
+<span class="comment">// Close server</span>
+<span class="var">server</span>.<span class="func">close</span>(() => {
+  <span class="var">console</span>.<span class="func">log</span>(<span class="string">'Server closed'</span>);
+});</code></pre>
+    <div class="note">✅ Use <code>server.address()</code> to get the bound address after listening.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-server">Server</span>
+      <h2>Server Events & Properties</h2>
+    </div>
+    <div class="method">server.on('connection'), server.maxConnections, server.getConnections()</div>
+    <p class="desc">Monitor server activity and set connection limits.</p>
+    <pre><code><span class="keyword">import</span> <span class="var">net</span> <span class="keyword">from</span> <span class="string">'node:net'</span>;
+
+<span class="keyword">const</span> <span class="var">server</span> = <span class="var">net</span>.<span class="func">createServer</span>();
+
+<span class="comment">// Connection event</span>
+<span class="var">server</span>.<span class="func">on</span>(<span class="string">'connection'</span>, (<span class="var">socket</span>) => {
+  <span class="var">console</span>.<span class="func">log</span>(<span class="string">'New connection'</span>);
+});
+
+<span class="comment">// Listening event</span>
+<span class="var">server</span>.<span class="func">on</span>(<span class="string">'listening'</span>, () => {
+  <span class="var">console</span>.<span class="func">log</span>(<span class="string">'Server started'</span>);
+});
+
+<span class="comment">// Error event</span>
+<span class="var">server</span>.<span class="func">on</span>(<span class="string">'error'</span>, (<span class="var">err</span>) => {
+  <span class="var">console</span>.<span class="func">error</span>(<span class="string">'Server error:'</span>, <span class="var">err</span>);
+});
+
+<span class="comment">// Close event</span>
+<span class="var">server</span>.<span class="func">on</span>(<span class="string">'close'</span>, () => {
+  <span class="var">console</span>.<span class="func">log</span>(<span class="string">'Server closed'</span>);
+});
+
+<span class="comment">// Set max connections</span>
+<span class="var">server</span>.<span class="var">maxConnections</span> = <span class="number">100</span>;
+
+<span class="comment">// Get active connections</span>
+<span class="var">server</span>.<span class="func">getConnections</span>((<span class="var">err</span>, <span class="var">count</span>) => {
+  <span class="var">console</span>.<span class="func">log</span>(<span class="string">`Active connections: ${count}`</span>);
+});</code></pre>
+  </div>
+
+  <div class="section-title">🔌 TCP Clients</div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-client">Client</span>
+      <h2>net.connect / net.createConnection</h2>
+    </div>
+    <div class="method">net.connect(port, host?, connectListener?) / net.createConnection(...)</div>
+    <p class="desc">Create a TCP client connection. Returns a Socket object. <code>createConnection</code> is the preferred method.</p>
+    <pre><code><span class="keyword">import</span> <span class="var">net</span> <span class="keyword">from</span> <span class="string">'node:net'</span>;
+
+<span class="comment">// Connect to a server</span>
+<span class="keyword">const</span> <span class="var">client</span> = <span class="var">net</span>.<span class="func">createConnection</span>({ <span class="var">port</span>: <span class="number">3000</span>, <span class="var">host</span>: <span class="string">'127.0.0.1'</span> }, () => {
+  <span class="var">console</span>.<span class="func">log</span>(<span class="string">'Connected to server!'</span>);
+  <span class="var">client</span>.<span class="func">write</span>(<span class="string">'Hello from client'</span>);
+});
+
+<span class="comment">// Or with separate arguments</span>
+<span class="keyword">const</span> <span class="var">client2</span> = <span class="var">net</span>.<span class="func">connect</span>(<span class="number">3000</span>, <span class="string">'localhost'</span>, () => {
+  <span class="var">console</span>.<span class="func">log</span>(<span class="string">'Connected'</span>);
+});
+
+<span class="comment">// Connect to Unix socket</span>
+<span class="keyword">const</span> <span class="var">client3</span> = <span class="var">net</span>.<span class="func">createConnection</span>(<span class="string">'/tmp/socket.sock'</span>);
+
+<span class="comment">// Handle data from server</span>
+<span class="var">client</span>.<span class="func">on</span>(<span class="string">'data'</span>, (<span class="var">data</span>) => {
+  <span class="var">console</span>.<span class="func">log</span>(<span class="string">'Server says:'</span>, <span class="var">data</span>.<span class="func">toString</span>());
+});
+
+<span class="var">client</span>.<span class="func">on</span>(<span class="string">'end'</span>, () => {
+  <span class="var">console</span>.<span class="func">log</span>(<span class="string">'Server closed connection'</span>);
+});
+
+<span class="var">client</span>.<span class="func">on</span>(<span class="string">'error'</span>, (<span class="var">err</span>) => {
+  <span class="var">console</span>.<span class="func">error</span>(<span class="string">'Connection error:'</span>, <span class="var">err</span>);
+});</code></pre>
+    <div class="note">✅ <code>createConnection</code> is preferred over <code>connect</code> (they are aliases, but <code>createConnection</code> is more consistent with other Node.js APIs).</div>
+  </div>
+
+  <div class="section-title">🔌 Socket API</div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-socket">Socket</span>
+      <h2>socket.write / socket.end</h2>
+    </div>
+    <div class="method">socket.write(data, encoding?, callback?) / socket.end(data?, encoding?, callback?)</div>
+    <p class="desc">Send data to the connected peer. <code>end</code> sends data and closes the connection.</p>
+    <pre><code><span class="keyword">import</span> <span class="var">net</span> <span class="keyword">from</span> <span class="string">'node:net'</span>;
+
+<span class="keyword">const</span> <span class="var">server</span> = <span class="var">net</span>.<span class="func">createServer</span>((<span class="var">socket</span>) => {
+  <span class="comment">// Write data (String or Buffer)</span>
+  <span class="var">socket</span>.<span class="func">write</span>(<span class="string">'Hello client\n'</span>);
+  <span class="var">socket</span>.<span class="func">write</span>(<span class="var">Buffer</span>.<span class="func">from</span>([<span class="number">0x48</span>, <span class="number">0x69</span>])); <span class="comment">// 'Hi'</span>
+
+  <span class="comment">// Write with callback</span>
+  <span class="var">socket</span>.<span class="func">write</span>(<span class="string">'Data sent'</span>, <span class="string">'utf-8'</span>, () => {
+    <span class="var">console</span>.<span class="func">log</span>(<span class="string">'Write complete'</span>);
+  });
+
+  <span class="comment">// End the connection (send FIN packet)</span>
+  <span class="var">socket</span>.<span class="func">end</span>(<span class="string">'Goodbye\n'</span>, () => {
+    <span class="var">console</span>.<span class="func">log</span>(<span class="string">'Connection ended'</span>);
+  });
+});</code></pre>
+    <div class="note">⚠️ <code>socket.write()</code> may buffer data internally. Check <code>socket.writableLength</code> and the <code>'drain'</code> event for backpressure handling.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-socket">Socket</span>
+      <h2>socket.pipe / socket.unpipe</h2>
+    </div>
+    <div class="method">socket.pipe(destination, options?) / socket.unpipe(destination?)</div>
+    <p class="desc">Pipe data from a socket to another stream (e.g., another socket, file, or process). Great for proxying.</p>
+    <pre><code><span class="keyword">import</span> <span class="var">net</span> <span class="keyword">from</span> <span class="string">'node:net'</span>;
+
+<span class="comment">// Simple TCP proxy</span>
+<span class="keyword">const</span> <span class="var">proxy</span> = <span class="var">net</span>.<span class="func">createServer</span>((<span class="var">clientSocket</span>) => {
+  <span class="comment">// Connect to backend</span>
+  <span class="keyword">const</span> <span class="var">backend</span> = <span class="var">net</span>.<span class="func">createConnection</span>({ <span class="var">port</span>: <span class="number">8080</span>, <span class="var">host</span>: <span class="string">'backend'</span> });
+
+  <span class="comment">// Pipe data both ways</span>
+  <span class="var">clientSocket</span>.<span class="func">pipe</span>(<span class="var">backend</span>);
+  <span class="var">backend</span>.<span class="func">pipe</span>(<span class="var">clientSocket</span>);
+
+  <span class="comment">// Handle errors</span>
+  <span class="var">clientSocket</span>.<span class="func">on</span>(<span class="string">'error'</span>, () => <span class="var">backend</span>.<span class="func">destroy</span>());
+  <span class="var">backend</span>.<span class="func">on</span>(<span class="string">'error'</span>, () => <span class="var">clientSocket</span>.<span class="func">destroy</span>());
+});</code></pre>
+    <div class="note">✅ Piping automatically handles backpressure and is very efficient for streaming data.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-socket">Socket</span>
+      <h2>socket.setTimeout / socket.setKeepAlive / socket.setNoDelay</h2>
+    </div>
+    <div class="method">socket.setTimeout(timeout, callback?) / socket.setKeepAlive(enable, initialDelay?) / socket.setNoDelay(noDelay?)</div>
+    <p class="desc">Control socket behavior: timeouts, keep-alive, and Nagle's algorithm.</p>
+    <pre><code><span class="keyword">import</span> <span class="var">net</span> <span class="keyword">from</span> <span class="string">'node:net'</span>;
+
+<span class="keyword">const</span> <span class="var">server</span> = <span class="var">net</span>.<span class="func">createServer</span>((<span class="var">socket</span>) => {
+  <span class="comment">// Set idle timeout (10 seconds)</span>
+  <span class="var">socket</span>.<span class="func">setTimeout</span>(<span class="number">10000</span>, () => {
+    <span class="var">console</span>.<span class="func">log</span>(<span class="string">'Socket timeout'</span>);
+    <span class="var">socket</span>.<span class="func">end</span>();
+  });
+
+  <span class="comment">// Enable TCP keep-alive (prevents stale connections)</span>
+  <span class="var">socket</span>.<span class="func">setKeepAlive</span>(<span class="keyword">true</span>, <span class="number">30000</span>); <span class="comment">// 30 seconds initial delay</span>
+
+  <span class="comment">// Disable Nagle's algorithm (send data immediately)</span>
+  <span class="var">socket</span>.<span class="func">setNoDelay</span>(<span class="keyword">true</span>);
+});
+
+<span class="comment">// Reset timeout after receiving data</span>
+<span class="var">socket</span>.<span class="func">on</span>(<span class="string">'data'</span>, () => {
+  <span class="var">socket</span>.<span class="func">setTimeout</span>(<span class="number">10000</span>); <span class="comment">// Reset the timer</span>
+});</code></pre>
+    <div class="note">✅ Use <code>setNoDelay(true)</code> for low-latency applications. Use <code>setKeepAlive</code> to detect dead connections.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-socket">Socket</span>
+      <h2>Socket Properties & Events</h2>
+    </div>
+    <div class="method">socket.remoteAddress, socket.remotePort, socket.localAddress, socket.localPort</div>
+    <p class="desc">Get connection details. Listen for socket events.</p>
+    <pre><code><span class="keyword">import</span> <span class="var">net</span> <span class="keyword">from</span> <span class="string">'node:net'</span>;
+
+<span class="keyword">const</span> <span class="var">server</span> = <span class="var">net</span>.<span class="func">createServer</span>((<span class="var">socket</span>) => {
+  <span class="comment">// Connection info</span>
+  <span class="var">console</span>.<span class="func">log</span>(<span class="string">`Remote: ${socket.remoteAddress}:${socket.remotePort}`</span>);
+  <span class="var">console</span>.<span class="func">log</span>(<span class="string">`Local: ${socket.localAddress}:${socket.localPort}`</span>);
+
+  <span class="comment">// Socket state</span>
+  <span class="var">console</span>.<span class="func">log</span>(<span class="string">'Bytes written:'</span>, <span class="var">socket</span>.<span class="var">bytesWritten</span>);
+  <span class="var">console</span>.<span class="func">log</span>(<span class="string">'Bytes read:'</span>, <span class="var">socket</span>.<span class="var">bytesRead</span>);
+
+  <span class="comment">// Events</span>
+  <span class="var">socket</span>.<span class="func">on</span>(<span class="string">'connect'</span>, () => <span class="var">console</span>.<span class="func">log</span>(<span class="string">'Connected'</span>));
+  <span class="var">socket</span>.<span class="func">on</span>(<span class="string">'ready'</span>, () => <span class="var">console</span>.<span class="func">log</span>(<span class="string">'Ready'</span>));
+  <span class="var">socket</span>.<span class="func">on</span>(<span class="string">'drain'</span>, () => <span class="var">console</span>.<span class="func">log</span>(<span class="string">'Drain'</span>));
+  <span class="var">socket</span>.<span class="func">on</span>(<span class="string">'close'</span>, (<span class="var">hadError</span>) => <span class="var">console</span>.<span class="func">log</span>(<span class="string">`Closed: ${hadError}`</span>));
+  <span class="var">socket</span>.<span class="func">on</span>(<span class="string">'error'</span>, (<span class="var">err</span>) => <span class="var">console</span>.<span class="func">error</span>(<span class="var">err</span>));
+});</code></pre>
+  </div>
+
+  <div class="section-title">🔧 Utility Functions</div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-util">Util</span>
+      <h2>net.isIP / net.isIPv4 / net.isIPv6</h2>
+    </div>
+    <div class="method">net.isIP(input) / net.isIPv4(input) / net.isIPv6(input)</div>
+    <p class="desc">Check if a string is a valid IP address.</p>
+    <pre><code><span class="keyword">import</span> <span class="var">net</span> <span class="keyword">from</span> <span class="string">'node:net'</span>;
+
+<span class="var">net</span>.<span class="func">isIP</span>(<span class="string">'192.168.1.1'</span>);   <span class="comment">// 4</span>
+<span class="var">net</span>.<span class="func">isIP</span>(<span class="string">'::1'</span>);          <span class="comment">// 6</span>
+<span class="var">net</span>.<span class="func">isIP</span>(<span class="string">'invalid'</span>);     <span class="comment">// 0</span>
+<span class="var">net</span>.<span class="func">isIPv4</span>(<span class="string">'192.168.1.1'</span>); <span class="comment">// true</span>
+<span class="var">net</span>.<span class="func">isIPv6</span>(<span class="string">'::1'</span>);        <span class="comment">// true</span></code></pre>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-util">Util</span>
+      <h2>Socket Buffer & Backpressure</h2>
+    </div>
+    <div class="method">socket.writableLength, socket.writableHighWaterMark, socket.writableCorked</div>
+    <p class="desc">Monitor and manage socket write buffers to handle backpressure.</p>
+    <pre><code><span class="keyword">import</span> <span class="var">net</span> <span class="keyword">from</span> <span class="string">'node:net'</span>;
+
+<span class="keyword">const</span> <span class="var">server</span> = <span class="var">net</span>.<span class="func">createServer</span>((<span class="var">socket</span>) => {
+  <span class="keyword">function</span> <span class="func">sendData</span>(<span class="var">chunk</span>) {
+    <span class="comment">// Check if we can write without buffering</span>
+    <span class="keyword">if</span> (<span class="var">socket</span>.<span class="var">writableLength</span> < <span class="var">socket</span>.<span class="var">writableHighWaterMark</span>) {
+      <span class="keyword">const</span> <span class="var">written</span> = <span class="var">socket</span>.<span class="func">write</span>(<span class="var">chunk</span>);
+      <span class="var">console</span>.<span class="func">log</span>(<span class="string">'Written:'</span>, <span class="var">written</span>);
+    } <span class="keyword">else</span> {
+      <span class="comment">// Buffer is full, wait for drain</span>
+      <span class="var">socket</span>.<span class="func">once</span>(<span class="string">'drain'</span>, () => <span class="func">sendData</span>(<span class="var">chunk</span>));
+    }
+  }
+
+  <span class="comment">// Cork/uncork for batched writes (performance)</span>
+  <span class="var">socket</span>.<span class="func">cork</span>();
+  <span class="var">socket</span>.<span class="func">write</span>(<span class="string">'chunk 1'</span>);
+  <span class="var">socket</span>.<span class="func">write</span>(<span class="string">'chunk 2'</span>);
+  <span class="var">socket</span>.<span class="func">uncork</span>(); <span class="comment">// Flush all writes at once</span>
+});</code></pre>
+    <div class="note">✅ Use <code>cork()</code>/<code>uncork()</code> for performance when writing multiple chunks. Handle backpressure to avoid memory issues.</div>
+  </div>
+
+</div>
+
+<div class="tip">
+  <strong>🚀 Pro Pattern — TCP Echo Server with Graceful Shutdown:</strong>
+  <pre style="margin-top:0.5rem; background:rgba(0,0,0,0.2); border:none;"><code><span class="keyword">import</span> <span class="var">net</span> <span class="keyword">from</span> <span class="string">'node:net'</span>;
+
+<span class="keyword">const</span> <span class="var">server</span> = <span class="var">net</span>.<span class="func">createServer</span>(<span class="var">socket</span> => {
+  <span class="var">socket</span>.<span class="func">on</span>(<span class="string">'data'</span>, <span class="var">data</span> => {
+    <span class="comment">// Echo back with prefix</span>
+    <span class="var">socket</span>.<span class="func">write</span>(<span class="string">'ECHO: '</span> + <span class="var">data</span>);
+  });
+  
+  <span class="var">socket</span>.<span class="func">on</span>(<span class="string">'error'</span>, <span class="var">err</span> => {
+    <span class="var">console</span>.<span class="func">error</span>(<span class="string">'Socket error:'</span>, <span class="var">err</span>);
+  });
+});
+
+<span class="comment">// Graceful shutdown</span>
+<span class="keyword">const</span> <span class="var">shutdown</span> = () => {
+  <span class="var">console</span>.<span class="func">log</span>(<span class="string">'Shutting down...'</span>);
+  <span class="var">server</span>.<span class="func">close</span>(() => {
+    <span class="var">console</span>.<span class="func">log</span>(<span class="string">'Server closed'</span>);
+    <span class="var">process</span>.<span class="func">exit</span>(<span class="number">0</span>);
+  });
+  
+  <span class="comment">// Force exit after 5s if graceful close fails</span>
+  <span class="func">setTimeout</span>(() => {
+    <span class="var">console</span>.<span class="func">log</span>(<span class="string">'Force exit'</span>);
+    <span class="var">process</span>.<span class="func">exit</span>(<span class="number">1</span>);
+  }, <span class="number">5000</span>).<span class="func">unref</span>();
+};
+
+<span class="var">process</span>.<span class="func">on</span>(<span class="string">'SIGTERM'</span>, <span class="var">shutdown</span>);
+<span class="var">process</span>.<span class="func">on</span>(<span class="string">'SIGINT'</span>, <span class="var">shutdown</span>);
+
+<span class="var">server</span>.<span class="func">listen</span>(<span class="number">3000</span>, () => {
+  <span class="var">console</span>.<span class="func">log</span>(<span class="string">'Server running on port 3000'</span>);
+});</code></pre>
+</div>
+
+<h2 style="margin-top:2rem; color:var(--heading); border-bottom:1px solid var(--border); padding-bottom:0.5rem;">📋 Quick Reference</h2>
+<table>
+  <tr><th>Purpose</th><th>Method</th><th>Description</th></tr>
+  <tr><td>Create server</td><td><code>net.createServer()</code></td><td>Returns a Server instance</td></tr>
+  <tr><td>Start server</td><td><code>server.listen(port)</code></td><td>Bind and listen</td></tr>
+  <tr><td>Stop server</td><td><code>server.close()</code></td><td>Graceful shutdown</td></tr>
+  <tr><td>Create client</td><td><code>net.createConnection()</code></td><td>Returns a Socket instance</td></tr>
+  <tr><td>Send data</td><td><code>socket.write(data)</code></td><td>Write to socket</td></tr>
+  <tr><td>Close connection</td><td><code>socket.end()</code></td><td>Send FIN and close</td></tr>
+  <tr><td>Pipe data</td><td><code>socket.pipe(dest)</code></td><td>Stream data to another stream</td></tr>
+  <tr><td>Timeout</td><td><code>socket.setTimeout(ms)</code></td><td>Idle timeout</td></tr>
+  <tr><td>Keep-alive</td><td><code>socket.setKeepAlive(true)</code></td><td>Detect dead connections</td></tr>
+  <tr><td>IP validation</td><td><code>net.isIPv4()</code>, <code>net.isIPv6()</code></td><td>Check IP format</td></tr>
+</table>
+
+<h2 style="margin-top:2rem; color:var(--heading); border-bottom:1px solid var(--border); padding-bottom:0.5rem;">⚠️ Common Pitfalls</h2>
+<table>
+  <tr><th>Mistake</th><th>Why It's Wrong</th><th>Fix</th></tr>
+  <tr><td>Not handling <code>error</code> events</td><td>Unhandled errors crash the process</td><td>Always add <code>socket.on('error')</code></td></tr>
+  <tr><td>Assuming data is one message</td><td>TCP is a stream — data can be chunked</td><td>Implement your own message framing</td></tr>
+  <tr><td>Not handling backpressure</td><td>Memory exhaustion from buffering</td><td>Check <code>writableLength</code> and listen for <code>'drain'</code></td></tr>
+  <tr><td>Leaking sockets</td><td>Resource exhaustion</td><td>Always <code>socket.end()</code> or <code>socket.destroy()</code></td></tr>
+  <tr><td>Binding to all interfaces (<code>0.0.0.0</code>) in production</td><td>Security risk</td><td>Bind to specific interfaces or localhost</td></tr>
+  <tr><td>Using <code>socket.write()</code> after <code>socket.end()</code></td><td>Throws error</td><td>Check <code>socket.writable</code> before writing</td></tr>
+</table>
+
+<div class="footer">
+  Node.js net Module Cheat Sheet &mdash; Save this file and open in any browser for quick reference.<br>
+  Based on Node.js 18+ with <code>node:net</code> API. TCP networking for servers and clients.
+</div>
+
+</body>
+</html>
