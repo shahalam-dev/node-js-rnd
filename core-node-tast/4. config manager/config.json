@@ -1,0 +1,1 @@
+{"database":{"host":"localhost","port":5432,"username":"admin","password":"secret45000"},"logging":{"level":"info","file":"app.log"},"timeout":5000}
